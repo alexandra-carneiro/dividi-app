@@ -298,7 +298,7 @@ function LoginContent() {
         <div className="mt-10 text-center">
           <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-2">
             <span className="w-8 h-px bg-slate-800"></span>
-            Dividi Security Core v2.0
+            Desenvolvido por Avante Digital 2026
             <span className="w-8 h-px bg-slate-800"></span>
           </p>
         </div>

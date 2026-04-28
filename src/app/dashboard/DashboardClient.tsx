@@ -402,7 +402,12 @@ export default function DashboardClient({
       <header className="bg-gradient-to-br from-indigo-600 to-indigo-500 text-white p-6 md:py-8 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nossos Gastos</h1>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm p-1.5 ring-1 ring-white/20">
+                <img src="/logo-premium.png" alt="Dividi Symbol" className="w-full h-full object-contain" />
+              </div>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic">Dividi</h1>
+            </div>
             <div className="flex gap-3">
               <button onClick={openSettings} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Configurações">
                 <Settings size={20} />
