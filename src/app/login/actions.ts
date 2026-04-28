@@ -50,3 +50,18 @@ export async function signout() {
   await supabase.auth.signOut()
   redirect('/login')
 }
+
+export async function resetPassword(formData: FormData) {
+  const supabase = await createClient()
+  const email = formData.get('email') as string
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/login/update-password`,
+  })
+
+  if (error) {
+    redirect(`/login?message=Erro ao enviar e-mail: ${error.message}`)
+  }
+
+  redirect('/login?message=E-mail de recuperação enviado! Verifique sua caixa de entrada.')
+}
