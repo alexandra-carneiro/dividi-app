@@ -404,7 +404,7 @@ export default function DashboardClient({
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm p-1.5 ring-1 ring-white/20">
-                <img src="/logo-premium.png" alt="Dividi Symbol" className="w-full h-full object-contain" />
+                <img src="/icon.svg" alt="Dividi Symbol" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic">Dividi</h1>
             </div>
