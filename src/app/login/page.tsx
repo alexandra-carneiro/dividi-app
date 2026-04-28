@@ -1,4 +1,5 @@
 import { login, signup } from './actions'
+import Image from 'next/image'
 
 export default async function LoginPage({
   searchParams,
@@ -6,69 +7,105 @@ export default async function LoginPage({
   searchParams: Promise<{ message: string }>
 }) {
   const { message } = await searchParams
+  
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-xl">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-            Controle de Gastos
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Acesse sua conta ou crie uma nova
+    <div className="flex min-h-screen items-center justify-center bg-[#0a0a0c] p-4 relative overflow-hidden font-sans">
+      {/* Background Decorativo - Gradientes Suaves */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+
+      <div className="w-full max-w-[420px] z-10">
+        {/* Logo e Cabeçalho */}
+        <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-2xl shadow-indigo-500/20">
+            <div className="w-full h-full bg-[#111114] rounded-[14px] flex items-center justify-center overflow-hidden">
+              <Image 
+                src="/icon.png" 
+                alt="Dividi Logo" 
+                width={60} 
+                height={60}
+                className="object-contain"
+              />
+            </div>
+          </div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-white mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-slate-400">
+            Dividi
+          </h1>
+          <p className="text-slate-400 font-medium">
+            Gastos Compartilhados sem Complicação
           </p>
         </div>
 
-        {message && (
-          <div className="p-4 bg-indigo-50 text-indigo-700 text-sm text-center rounded-lg border border-indigo-200">
-            {message}
-          </div>
-        )}
-
-        <form className="mt-8 space-y-6">
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                placeholder="seu@email.com"
-              />
+        {/* Card de Login com Glassmorphism */}
+        <div className="bg-[#16161a]/80 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          
+          {message && (
+            <div className="mb-6 p-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm rounded-xl text-center leading-relaxed">
+              {message}
             </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
-                Senha
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
+          )}
 
-          <div className="flex gap-4">
-            <button
-              formAction={login}
-              className="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Entrar
-            </button>
-            <button
-              formAction={signup}
-              className="flex w-full justify-center rounded-md border border-slate-300 bg-white py-2 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Cadastrar
-            </button>
-          </div>
-        </form>
+          <form className="space-y-6">
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-semibold text-slate-300 ml-1">
+                  E-mail
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className="w-full bg-[#0a0a0c]/50 border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-slate-600 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-300"
+                  placeholder="exemplo@email.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-slate-300 ml-1">
+                  Senha
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className="w-full bg-[#0a0a0c]/50 border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-slate-600 outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-300"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 pt-2">
+              <button
+                formAction={login}
+                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 active:scale-[0.98] transition-all duration-200"
+              >
+                Entrar
+              </button>
+              
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/5"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-[#16161a] px-3 text-slate-500 font-bold tracking-widest">OU</span>
+                </div>
+              </div>
+
+              <button
+                formAction={signup}
+                className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold rounded-xl active:scale-[0.98] transition-all duration-200"
+              >
+                Criar Nova Conta
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <p className="mt-8 text-center text-slate-500 text-sm">
+          Feito com ❤️ para facilitar suas contas.
+        </p>
       </div>
     </div>
   )
