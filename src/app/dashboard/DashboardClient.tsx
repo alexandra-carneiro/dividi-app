@@ -11,21 +11,25 @@ export default function DashboardClient({
   householdId, 
   userEmail,
   initialMonthlyBudget,
-  initialWeeklyBudget
+  initialWeeklyBudget,
+  initialCurrency
 }: { 
   initialExpenses: any[], 
   householdId: string, 
   userEmail: string,
   initialMonthlyBudget: number,
-  initialWeeklyBudget: number
+  initialWeeklyBudget: number,
+  initialCurrency: string
 }) {
   const [expenses, setExpenses] = useState(initialExpenses)
   const [monthlyBudget, setMonthlyBudget] = useState(initialMonthlyBudget)
   const [weeklyBudget, setWeeklyBudget] = useState(initialWeeklyBudget)
+  const [currency, setCurrency] = useState(initialCurrency)
   
   // Estados para o formulário de configurações
   const [localMonthly, setLocalMonthly] = useState(initialMonthlyBudget)
   const [localWeekly, setLocalWeekly] = useState(initialWeeklyBudget)
+  const [localCurrency, setLocalCurrency] = useState(initialCurrency)
   
   const [currentDate, setCurrentDate] = useState(new Date())
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -72,7 +76,12 @@ export default function DashboardClient({
     }))
   }, [monthExpenses])
 
-  const formatMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  const formatMoney = (v: number) => {
+    return v.toLocaleString('pt-BR', { 
+      style: 'currency', 
+      currency: currency 
+    })
+  }
 
   const handleAddExpense = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -366,22 +375,25 @@ export default function DashboardClient({
 
     const { error } = await supabase.from('households').update({
       monthly_budget: localMonthly,
-      weekly_budget: localWeekly
+      weekly_budget: localWeekly,
+      currency: localCurrency
     }).eq('id', householdId)
 
     if (!error) {
       setMonthlyBudget(localMonthly)
       setWeeklyBudget(localWeekly)
+      setCurrency(localCurrency)
       setIsSettingsOpen(false)
-      alert('Limites atualizados com sucesso!')
+      alert('Configurações atualizadas com sucesso!')
     } else {
-      alert('Erro ao atualizar limites.')
+      alert('Erro ao atualizar configurações.')
     }
   }
 
   const openSettings = () => {
     setLocalMonthly(monthlyBudget)
     setLocalWeekly(weeklyBudget)
+    setLocalCurrency(currency)
     setIsSettingsOpen(true)
   }
 
@@ -463,11 +475,23 @@ export default function DashboardClient({
 
         {isSettingsOpen && (
           <form onSubmit={handleUpdateLimits} className="bg-white p-6 rounded-2xl shadow-xl mb-6 animate-in slide-in-from-top-4 border border-slate-200">
-            <h3 className="font-bold text-xl mb-2 text-slate-800">Configurar Limites</h3>
-            <p className="text-sm text-slate-500 mb-6">Defina seus orçamentos mensal e semanal.</p>
+            <h3 className="font-bold text-xl mb-2 text-slate-800">Configurações do App</h3>
+            <p className="text-sm text-slate-500 mb-6">Ajuste seu orçamento e moeda de preferência.</p>
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Orçamento Mensal (R$)</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Moeda</label>
+                <select 
+                  value={localCurrency}
+                  onChange={(e) => setLocalCurrency(e.target.value)}
+                  className="w-full p-3 border border-slate-300 rounded-xl text-slate-900 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                >
+                  <option value="BRL">Real (R$)</option>
+                  <option value="EUR">Euro (€)</option>
+                  <option value="USD">Dólar (US$)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Orçamento Mensal</label>
                 <input 
                   type="number" 
                   step="0.01" 
@@ -581,7 +605,7 @@ export default function DashboardClient({
                 <input type="date" name="date" required defaultValue={expenseToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-2 border rounded-lg" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Valor (R$)</label>
+                <label className="block text-sm font-medium mb-1">Valor</label>
                 <input type="number" name="amount" step="0.01" min="0.01" required defaultValue={expenseToEdit?.amount || ''} className="w-full p-2 border rounded-lg" />
               </div>
               <div>

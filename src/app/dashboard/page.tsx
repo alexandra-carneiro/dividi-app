@@ -56,7 +56,7 @@ export default async function DashboardPage() {
 
     const { data: hh } = await supabase
       .from('households')
-      .select('monthly_budget, weekly_budget')
+      .select('monthly_budget, weekly_budget, currency')
       .eq('id', householdId)
       .single()
 
@@ -70,6 +70,7 @@ export default async function DashboardPage() {
       userEmail={user.email || ''} 
       initialMonthlyBudget={householdData?.monthly_budget ?? 250.00}
       initialWeeklyBudget={householdData?.weekly_budget ?? 62.50}
+      initialCurrency={householdData?.currency ?? 'BRL'}
     />
   )
 }
