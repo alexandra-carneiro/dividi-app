@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💸 Dividi - Gastos Compartilhados Premium
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/tailwind%20css-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
-First, run the development server:
+O **Dividi** é uma aplicação de controle financeiro focada em casais e pessoas que compartilham gastos domésticos. Com um design "Dark Premium" e foco em experiência do usuário, ele transforma a tarefa chata de anotar gastos em algo rápido, seguro e visualmente agradável.
 
+---
+
+## ✨ Funcionalidades Principais
+
+- 🛡️ **Autenticação de Segurança Avançada**: Sistema de login robusto com validação de senha, confirmação de cadastro e recuperação de conta.
+- 📊 **Dashboard Dinâmico**: Visão clara dos gastos mensais e semanais com cálculos automáticos de saldo restante.
+- 🌍 **Suporte Multi-Moedas**: Escolha entre Real (R$), Euro (€) ou Dólar (US$) nas configurações.
+- 📂 **Importação de Planilhas**: Migre seus dados do Excel ou Google Sheets (CSV/XLSX) com um sistema de validação inteligente.
+- 📱 **Interface Adaptável**: Design responsivo com efeitos de *glassmorphism* e animações fluidas.
+- 🤝 **Compartilhamento em Tempo Real**: Convide seu parceiro(a) para visualizar e editar os mesmos gastos.
+
+---
+
+## 🛠️ Stack Tecnológica
+
+- **Framework**: [Next.js 16+](https://nextjs.org/) (App Router & Turbopack)
+- **Banco de Dados & Auth**: [Supabase](https://supabase.com/)
+- **Estilização**: [Tailwind CSS](https://tailwindcss.com/)
+- **Ícones**: [Lucide React](https://lucide.dev/)
+- **Processamento de Dados**: [PapaParse](https://www.papaparse.com/) & [SheetJS (XLSX)](https://sheetjs.com/)
+
+---
+
+## 🚀 Como Começar
+
+### 1. Pré-requisitos
+Certifique-se de ter o [Node.js](https://nodejs.org/) instalado.
+
+### 2. Clonar e Instalar
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/alexandra-carneiro/dividi-app.git
+cd dividi-app
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Variáveis de Ambiente
+Crie um arquivo `.env.local` na raiz e adicione suas chaves do Supabase:
+```env
+NEXT_PUBLIC_SUPABASE_URL=sua_url_aqui
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_aqui
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Executar
+```bash
+npm run dev
+```
+Acesse [http://localhost:3000](http://localhost:3000) no seu navegador.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🔒 Segurança
 
-To learn more about Next.js, take a look at the following resources:
+O projeto utiliza **Row Level Security (RLS)** do Supabase, garantindo que:
+- Cada usuário só possa ver os gastos da sua própria "casa" (household).
+- As ações de alteração de limites e moeda sejam restritas aos membros autorizados.
+- Dados sensíveis de autenticação sejam gerenciados pelo Supabase Auth com criptografia de ponta.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📄 Licença
 
-## Deploy on Vercel
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Desenvolvido com ❤️ por **Alexandra Carneiro**
