@@ -55,7 +55,7 @@ function LoginContent() {
           <div className="relative inline-flex mb-4">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-2xl">
               <div className="w-full h-full bg-[#0d0d10] rounded-[22px] flex items-center justify-center overflow-hidden">
-                <Image src="/icon.png" alt="Dividi Logo" width={56} height={56} className="object-contain" />
+                <Image src="/logo-premium.png" alt="Dividi Logo" width={64} height={64} className="object-contain" />
               </div>
             </div>
             <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg border-4 border-[#060608]">
