@@ -189,55 +189,66 @@ function LoginContent() {
               )}
             </div>
 
-            {/* Modal de Termos e Condições */}
+            {/* Modal de Termos e Condições - Versão Clean & Premium */}
             {showTerms && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-                <div className="bg-[#0d0d10]/95 border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-10 shadow-[0_0_100px_rgba(79,70,229,0.15)] max-h-[85vh] overflow-y-auto custom-scrollbar relative ring-1 ring-white/10">
-                  <div className="flex justify-between items-center mb-8 sticky top-0 bg-[#0d0d10]/50 backdrop-blur-md py-2 -mt-2 z-10">
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-in fade-in duration-300">
+                <div className="bg-[#0d0d10] border border-white/10 w-full max-w-xl rounded-[2rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden ring-1 ring-white/10">
+                  
+                  {/* Header Fixo e Sólido */}
+                  <div className="flex justify-between items-center px-8 py-6 border-b border-white/5 bg-[#111114]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">
-                        <ShieldCheck size={24} />
-                      </div>
-                      <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Diretrizes & Segurança</h3>
+                      <ShieldCheck size={20} className="text-indigo-500" />
+                      <h3 className="text-sm font-black text-white uppercase tracking-[0.2em]">Diretrizes de Segurança</h3>
                     </div>
-                    <button onClick={() => setShowTerms(false)} className="p-2 hover:bg-white/5 rounded-full text-slate-500 hover:text-white transition-all">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button 
+                      onClick={() => setShowTerms(false)} 
+                      className="text-slate-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
-                  <div className="space-y-8 text-slate-400 text-base leading-relaxed">
+
+                  {/* Área de Texto com Scroll Limpo */}
+                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
                     <section className="space-y-3">
-                      <p className="font-black text-indigo-400 text-xs uppercase tracking-[0.2em]">01. Compromisso de Transparência</p>
-                      <h4 className="text-lg font-bold text-white">Aceitação dos Termos</h4>
-                      <p>Ao utilizar a plataforma Dividi, você concorda plenamente com o compartilhamento de registros financeiros exclusivamente com os membros que você autorizar dentro da sua célula familiar (Household).</p>
+                      <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">01. Uso da Plataforma</h4>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        O Dividi é um serviço de gestão financeira compartilhada. Ao utilizar o sistema, você concorda que seus registros serão visíveis apenas para os membros da sua casa (household) devidamente autorizados.
+                      </p>
                     </section>
                     
                     <section className="space-y-3">
-                      <p className="font-black text-purple-400 text-xs uppercase tracking-[0.2em]">02. Blindagem de Dados</p>
-                      <h4 className="text-lg font-bold text-white">Privacidade e Criptografia</h4>
-                      <p>Sua segurança é nossa prioridade core. Todos os dados são protegidos por camadas de RLS (Row Level Security) do Supabase. Nós não processamos, vendemos ou compartilhamos seus dados com parceiros externos sob nenhuma circunstância.</p>
+                      <h4 className="text-xs font-black text-purple-400 uppercase tracking-widest">02. Blindagem de Dados</h4>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        Implementamos camadas de segurança de nível bancário através de RLS (Row Level Security). Seus dados são criptografados e nunca serão compartilhados com terceiros sem seu consentimento explícito.
+                      </p>
                     </section>
                     
                     <section className="space-y-3">
-                      <p className="font-black text-emerald-400 text-xs uppercase tracking-[0.2em]">03. Integridade das Informações</p>
-                      <h4 className="text-lg font-bold text-white">Responsabilidade do Usuário</h4>
-                      <p>O Dividi atua como uma ferramenta de organização. A precisão dos dados inseridos é de responsabilidade do usuário, assim como as decisões financeiras derivadas destas informações.</p>
+                      <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest">03. Responsabilidades</h4>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        Você é responsável pela veracidade dos dados inseridos. O Dividi é uma ferramenta de auxílio, e decisões financeiras tomadas a partir dos relatórios são de inteira responsabilidade do usuário.
+                      </p>
                     </section>
 
                     <section className="space-y-3">
-                      <p className="font-black text-indigo-400 text-xs uppercase tracking-[0.2em]">04. Continuidade do Serviço</p>
-                      <h4 className="text-lg font-bold text-white">Uso Ético e Lícito</h4>
-                      <p>Reservamos o direito de suspender acessos que violem a integridade do sistema ou tentem burlar as proteções de criptografia implementadas.</p>
+                      <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">04. Atualizações</h4>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        Estes termos podem ser atualizados para refletir melhorias no sistema. Notificaremos você sobre mudanças significativas através da própria plataforma.
+                      </p>
                     </section>
                   </div>
-                  <div className="mt-12 sticky bottom-0 bg-gradient-to-t from-[#0d0d10] via-[#0d0d10] to-transparent pt-6 pb-2">
+
+                  {/* Footer com Botão Sólido */}
+                  <div className="p-8 border-t border-white/5 bg-[#111114]">
                     <button 
                       type="button"
                       onClick={() => setShowTerms(false)}
-                      className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black rounded-2xl transition-all shadow-xl hover:shadow-indigo-500/20 tracking-widest uppercase text-xs active:scale-[0.98]"
+                      className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl transition-all shadow-xl shadow-indigo-600/20 tracking-widest uppercase text-xs active:scale-[0.98]"
                     >
-                      LI E ESTOU DE ACORDO
+                      Li e aceito os termos
                     </button>
                   </div>
                 </div>
