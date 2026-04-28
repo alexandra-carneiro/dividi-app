@@ -33,6 +33,7 @@ function SubmitButton({ text, loadingText, className, formAction }: { text: stri
 function LoginContent() {
   const [mode, setMode] = useState<Mode>('login')
   const [showPassword, setShowPassword] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
   const searchParams = useSearchParams()
   const message = searchParams.get('message')
   const initialMode = searchParams.get('mode') as Mode
@@ -182,11 +183,42 @@ function LoginContent() {
                     <CheckCircle2 size={12} className="absolute left-1 top-1 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                   </label>
                   <span className="text-[11px] text-slate-400 font-medium">
-                    Li e aceito os <button type="button" className="text-purple-400 hover:underline">Termos e Condições</button>
+                    Li e aceito os <button type="button" onClick={() => setShowTerms(true)} className="text-purple-400 hover:underline">Termos e Condições</button>
                   </span>
                 </div>
               )}
             </div>
+
+            {/* Modal de Termos e Condições */}
+            {showTerms && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="bg-[#111114] border border-white/10 w-full max-w-lg rounded-[2rem] p-8 shadow-3xl max-h-[80vh] overflow-y-auto custom-scrollbar">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-black text-white uppercase tracking-wider">Termos e Condições</h3>
+                    <button onClick={() => setShowTerms(false)} className="text-slate-500 hover:text-white transition-colors">
+                      <Lock size={20} />
+                    </button>
+                  </div>
+                  <div className="space-y-4 text-slate-400 text-sm leading-relaxed">
+                    <p className="font-bold text-white">1. Aceitação dos Termos</p>
+                    <p>Ao utilizar o Dividi, você concorda em compartilhar seus dados de gastos com os membros da sua "household" (casa) que você convidar.</p>
+                    <p className="font-bold text-white">2. Privacidade e Segurança</p>
+                    <p>Seus dados são protegidos por criptografia e Row Level Security (RLS). Nós não vendemos suas informações para terceiros.</p>
+                    <p className="font-bold text-white">3. Responsabilidade</p>
+                    <p>O Dividi é uma ferramenta de auxílio financeiro. Não nos responsabilizamos por decisões financeiras tomadas com base nos dados do aplicativo.</p>
+                    <p className="font-bold text-white">4. Uso do Serviço</p>
+                    <p>Você se compromete a usar o serviço de forma lícita, não inserindo conteúdos ofensivos ou falsos na plataforma.</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setShowTerms(false)}
+                    className="w-full mt-8 py-4 bg-white/5 hover:bg-white/10 text-white font-black rounded-2xl transition-all tracking-widest uppercase text-xs border border-white/5"
+                  >
+                    Entendi e concordo
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="pt-4">
               {mode === 'login' && (
