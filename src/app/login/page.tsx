@@ -104,7 +104,7 @@ function LoginContent() {
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
                   <Mail size={12} className="text-indigo-500" />
-                  E-mail Profissional
+                  E-mail
                 </label>
                 <input
                   name="email"
