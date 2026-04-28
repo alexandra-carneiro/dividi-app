@@ -30,13 +30,8 @@ export default async function DashboardPage() {
 
     if (newHousehold) {
       householdId = newHousehold.id
-      await supabase
-        .from('household_members')
-        .insert({
-          household_id: householdId,
-          user_id: user.id,
-          email: user.email
-        })
+      // O trigger 'on_household_created' no banco de dados cuidará 
+      // de adicionar o usuário à tabela household_members automaticamente.
     }
   }
 
