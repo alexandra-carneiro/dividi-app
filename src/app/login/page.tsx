@@ -9,11 +9,12 @@ import { Suspense } from 'react'
 
 type Mode = 'login' | 'signup' | 'reset'
 
-function SubmitButton({ text, loadingText, className }: { text: string, loadingText: string, className: string }) {
+function SubmitButton({ text, loadingText, className, formAction }: { text: string, loadingText: string, className: string, formAction?: any }) {
   const { pending } = useFormStatus()
   
   return (
     <button
+      formAction={formAction}
       disabled={pending}
       className={`${className} flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed`}
     >
