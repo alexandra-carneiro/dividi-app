@@ -3,7 +3,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { addExpense, updateExpense, deleteExpense } from '../actions/expenses'
 import { updateHouseholdSettings } from '../actions/settings'
 import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses } from '../actions/recurring'
-import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X } from 'lucide-react'
+import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import Charts from './Charts'
@@ -511,10 +511,13 @@ export default function DashboardClient({
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm p-1.5 ring-1 ring-white/20">
-                <img src="/icon.svg" alt="Dividi Symbol" className="w-full h-full object-contain" />
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center p-1 shadow-lg transform -rotate-3 hover:rotate-0 transition duration-300">
+                <img src="/logo.png" alt="Dividi Logo" className="w-full h-full object-contain rounded-xl" />
               </div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic">Dividi</h1>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white drop-shadow-md leading-none">Dividi</h1>
+                <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest mt-0.5">Gestão Compartilhada</p>
+              </div>
             </div>
             <div className="flex gap-3">
               <button onClick={() => setIsRecurringOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Gastos Fixos">
@@ -598,10 +601,10 @@ export default function DashboardClient({
         {isSettingsOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsSettingsOpen(false)}>
             <form onSubmit={handleUpdateLimits} onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-xl text-slate-800">Configurações do App</h3>
-                <button type="button" onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition">
-                   <X size={20} />
+              <div className="relative mb-6">
+                <h3 className="font-bold text-2xl text-slate-800 pr-10">Configurações do App</h3>
+                <button type="button" onClick={() => setIsSettingsOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
+                   <X size={24} />
                 </button>
               </div>
             <p className="text-sm text-slate-500 mb-6">Ajuste seu orçamento e moeda de preferência.</p>
@@ -658,10 +661,10 @@ export default function DashboardClient({
         {isRecurringOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
             <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-xl text-slate-800">Gastos Fixos Recorrentes</h3>
-              <button onClick={() => setIsRecurringOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition">
-                <X size={20} />
+            <div className="relative mb-4">
+              <h3 className="font-bold text-2xl text-slate-800 pr-10">Gastos Fixos Recorrentes</h3>
+              <button onClick={() => setIsRecurringOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
+                <X size={24} />
               </button>
             </div>
             <p className="text-sm text-slate-500 mb-4">Defina contas fixas (ex: Aluguel, Internet) e lance todas de uma vez no mês atual.</p>
@@ -737,118 +740,138 @@ export default function DashboardClient({
         </div>
       )}
 
-        {isImportOpen && pendingImports.length === 0 && (
-          <div className="bg-white p-5 rounded-2xl shadow-lg mb-6 animate-in slide-in-from-top-4">
-            <h3 className="font-semibold mb-2">Importar Planilha (Excel ou CSV)</h3>
-            <p className="text-xs text-slate-500 mb-4">Arquivos suportados: .xlsx, .xls, .csv. As planilhas do Google Docs podem ser baixadas como .xlsx e enviadas aqui.</p>
-            <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFileUpload} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-          </div>
-        )}
-
-        {pendingImports.length > 0 && (
-          <div className="bg-white p-5 rounded-2xl shadow-lg mb-6 animate-in slide-in-from-bottom-4 border-2 border-indigo-500">
-            <h3 className="font-bold text-xl mb-2 text-indigo-700">Validar Importação</h3>
-            <p className="text-sm text-slate-500 mb-2">Verifique se os dados da planilha foram lidos corretamente. Linhas com erros serão ignoradas.</p>
-            
-            {detectedHeaders.length > 0 && (
-              <div className="mb-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600 font-mono">
-                <strong>Colunas detectadas no seu arquivo:</strong> {detectedHeaders.join(', ')}
+        {isImportOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsImportOpen(false)}>
+            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-xl text-slate-800">Importar Planilha</h3>
+                <button type="button" onClick={() => setIsImportOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition">
+                  <X size={20} />
+                </button>
               </div>
-            )}
-            
-            <div className="overflow-x-auto max-h-96 overflow-y-auto mb-4 border rounded-xl">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50 sticky top-0 border-b">
-                  <tr>
-                    <th className="p-3 font-semibold text-slate-600">Data</th>
-                    <th className="p-3 font-semibold text-slate-600">Descrição</th>
-                    <th className="p-3 font-semibold text-slate-600">Pagador</th>
-                    <th className="p-3 font-semibold text-slate-600">Valor</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {pendingImports.map((exp) => {
-                    const isValid = exp.date && !isNaN(exp.amount) && exp.payer;
-                    return (
-                      <tr key={exp._id} className={isValid ? "hover:bg-slate-50 text-slate-800 font-medium" : "bg-red-50 text-red-500"}>
-                        <td className="p-3">{exp.date || 'Faltando'}</td>
-                        <td className="p-3 truncate max-w-[200px]">{exp.description}</td>
-                        <td className="p-3">{exp.payer || 'Faltando'}</td>
-                        <td className="p-3 font-bold">{!isNaN(exp.amount) ? formatMoney(exp.amount) : 'Inválido'}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
 
-            <div className="flex gap-4">
-              <button onClick={cancelImport} className="flex-1 p-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200">Cancelar</button>
-              <button onClick={confirmImport} className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-md">
-                Confirmar e Salvar no Banco
-              </button>
+              {pendingImports.length === 0 ? (
+                <div className="border-2 border-dashed border-slate-200 p-12 text-center rounded-2xl">
+                  <Upload size={40} className="mx-auto text-slate-300 mb-4" />
+                  <p className="text-sm text-slate-500 mb-4">Arraste seu arquivo .xlsx, .xls ou .csv aqui ou clique para selecionar.</p>
+                  <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFileUpload} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-500 mb-2">Verifique se os dados da planilha foram lidos corretamente. Linhas com erros serão ignoradas.</p>
+                  {detectedHeaders.length > 0 && (
+                    <div className="mb-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600 font-mono">
+                      <strong>Colunas detectadas:</strong> {detectedHeaders.join(', ')}
+                    </div>
+                  )}
+                  <div className="overflow-x-auto max-h-96 overflow-y-auto mb-6 border rounded-xl">
+                    <table className="w-full text-left text-sm whitespace-nowrap">
+                      <thead className="bg-slate-50 sticky top-0 border-b">
+                        <tr>
+                          <th className="p-3 font-semibold text-slate-600">Data</th>
+                          <th className="p-3 font-semibold text-slate-600">Descrição</th>
+                          <th className="p-3 font-semibold text-slate-600">Pagador</th>
+                          <th className="p-3 font-semibold text-slate-600">Valor</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {pendingImports.map((exp) => {
+                          const isValid = exp.date && !isNaN(exp.amount) && exp.payer;
+                          return (
+                            <tr key={exp._id} className={isValid ? "hover:bg-slate-50 text-slate-800" : "bg-red-50 text-red-500"}>
+                              <td className="p-3">{exp.date || 'Faltando'}</td>
+                              <td className="p-3 truncate max-w-[200px]">{exp.description}</td>
+                              <td className="p-3">{exp.payer || 'Faltando'}</td>
+                              <td className="p-3 font-bold">{!isNaN(exp.amount) ? formatMoney(exp.amount) : 'Inválido'}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex gap-4">
+                    <button onClick={cancelImport} className="flex-1 p-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200">Cancelar</button>
+                    <button onClick={confirmImport} className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-md">Confirmar e Salvar</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
 
         {isInviteOpen && (
-          <form onSubmit={handleInvite} className="bg-white p-5 rounded-2xl shadow-lg mb-6 animate-in slide-in-from-top-4">
-            <h3 className="font-semibold mb-2">Compartilhar Conta</h3>
-            <p className="text-xs text-slate-500 mb-4">Digite o e-mail da pessoa que irá dividir os gastos com você.</p>
-            <div className="space-y-4">
-              <div>
-                <input type="email" name="email" required placeholder="email@exemplo.com" className="w-full p-2 border rounded-lg" />
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsInviteOpen(false)}>
+            <form onSubmit={handleInvite} onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 border border-slate-200">
+              <div className="relative mb-6">
+                <h3 className="font-bold text-2xl text-slate-800 pr-10">Convidar para a Casa</h3>
+                <button type="button" onClick={() => setIsInviteOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
+                   <X size={24} />
+                </button>
               </div>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setIsInviteOpen(false)} className="flex-1 p-2 bg-slate-100 rounded-lg font-medium">Cancelar</button>
-                <button type="submit" className="flex-1 p-2 bg-indigo-600 text-white rounded-lg font-medium">Convidar</button>
+              <p className="text-sm text-slate-500 mb-4">Insira o e-mail da pessoa que você deseja convidar para compartilhar estes dados.</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">E-mail do convidado</label>
+                  <input type="email" name="email" required placeholder="email@exemplo.com" className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setIsInviteOpen(false)} className="flex-1 p-3 bg-slate-100 rounded-xl font-bold">Cancelar</button>
+                  <button type="submit" className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md hover:bg-indigo-700 transition">Convidar</button>
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         )}
 
         {isFormOpen && (
-          <form id="expenseForm" onSubmit={handleAddExpense} className="bg-white p-5 rounded-2xl shadow-lg mb-6 animate-in slide-in-from-top-4">
-            <h3 className="font-semibold mb-4">{expenseToEdit ? 'Editar Gasto' : 'Novo Gasto'}</h3>
-            <input type="hidden" name="household_id" value={householdId} />
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Data</label>
-                <input type="date" name="date" required defaultValue={expenseToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-2 border rounded-lg" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Valor</label>
-                <input type="number" name="amount" step="0.01" min="0.01" required defaultValue={expenseToEdit?.amount || ''} className="w-full p-2 border rounded-lg" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Quem pagou?</label>
-                <div className="flex gap-2">
-                  <label className="flex-1 text-center p-2 border rounded-lg cursor-pointer has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50">
-                    <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Alê'} /> Alê
-                  </label>
-                  <label className="flex-1 text-center p-2 border rounded-lg cursor-pointer has-[:checked]:border-pink-600 has-[:checked]:bg-pink-50">
-                    <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Maria'} /> Maria
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Descrição</label>
-                <input type="text" name="description" defaultValue={expenseToEdit?.description || ''} className="w-full p-2 border rounded-lg" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Categoria</label>
-                <select name="category" defaultValue={expenseToEdit?.category || 'Outros'} className="w-full p-2 border rounded-lg bg-white">
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="flex-1 p-2 bg-slate-100 rounded-lg font-medium">Cancelar</button>
-                <button type="submit" disabled={isPending} className="flex-1 p-2 bg-indigo-600 text-white rounded-lg font-medium disabled:opacity-50">
-                  {isPending ? 'Salvando...' : 'Salvar'}
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }}>
+            <form id="expenseForm" onSubmit={handleAddExpense} onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="relative mb-6">
+                <h3 className="font-bold text-2xl text-slate-800 pr-10">{expenseToEdit ? 'Editar Gasto' : 'Novo Gasto'}</h3>
+                <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
+                   <X size={24} />
                 </button>
               </div>
-            </div>
-          </form>
+              <input type="hidden" name="household_id" value={householdId} />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Data</label>
+                  <input type="date" name="date" required defaultValue={expenseToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Valor</label>
+                  <input type="number" name="amount" step="0.01" min="0.01" required defaultValue={expenseToEdit?.amount || ''} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-700">Quem pagou?</label>
+                  <div className="flex gap-2">
+                    <label className="flex-1 text-center p-3 border-2 rounded-xl cursor-pointer transition-all has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 font-bold text-blue-600">
+                      <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Alê'} /> Alê
+                    </label>
+                    <label className="flex-1 text-center p-3 border-2 rounded-xl cursor-pointer transition-all has-[:checked]:border-pink-600 has-[:checked]:bg-pink-50 font-bold text-pink-600">
+                      <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Maria'} /> Maria
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Descrição</label>
+                  <input type="text" name="description" placeholder="Ex: Mercado Semanal" defaultValue={expenseToEdit?.description || ''} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Categoria</label>
+                  <select name="category" defaultValue={expenseToEdit?.category || 'Outros'} className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="flex-1 p-3 bg-slate-100 rounded-xl font-bold">Cancelar</button>
+                  <button type="submit" disabled={isPending} className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md hover:bg-indigo-700 transition disabled:opacity-50">
+                    {isPending ? 'Salvando...' : 'Salvar'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         )}
 
         <div className="space-y-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:space-y-0">
