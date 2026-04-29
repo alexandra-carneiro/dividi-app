@@ -104,6 +104,12 @@ export default function DashboardClient({
     })
   }, [expenses, currentDate])
 
+  // --- Cálculo de Semanas no Mês ---
+  const totalWeeksInMonth = useMemo(() => {
+    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+    return getWeekOfMonth(lastDay)
+  }, [currentDate])
+
   const filteredExpenses = useMemo(() => {
     if (categoryFilter === 'Todas') return monthExpenses
     return monthExpenses.filter(exp => exp.category === categoryFilter)
@@ -115,16 +121,14 @@ export default function DashboardClient({
     const maria = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
     
     let currentLimit = monthlyBudget
-    let currentWeeklyLimit = weeklyBudget
+    let currentWeeklyLimit = monthlyBudget / totalWeeksInMonth
 
     if (categoryFilter !== 'Todas') {
       const catBudget = categoryBudgets.find(b => b.category === categoryFilter)
       if (catBudget) {
         currentLimit = Number(catBudget.monthly_limit)
-        currentWeeklyLimit = currentLimit / 4
+        currentWeeklyLimit = currentLimit / totalWeeksInMonth
       } else {
-        // Se não tem limite definido para a categoria, podemos ou zerar ou manter o global.
-        // Vou manter o global como fallback mas sinalizar.
         currentLimit = 0 
         currentWeeklyLimit = 0
       }
@@ -1015,7 +1019,7 @@ export default function DashboardClient({
             <p className="text-center text-slate-500 py-8 md:col-span-2">Nenhum gasto neste mês.</p>
           ) : (
             weeks.map(week => {
-              const weekLimit = totals.weeklyLimit > 0 ? totals.weeklyLimit : weeklyBudget
+              const weekLimit = totals.weeklyLimit > 0 ? totals.weeklyLimit : (monthlyBudget / totalWeeksInMonth)
               const remaining = weekLimit - week.total
               return (
                 <div key={week.number} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
