@@ -348,25 +348,34 @@ export default function DashboardClient({
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
     
-    // Na vida real, o usuário precisaria aceitar o convite. 
-    // Por simplicidade, vamos apenas adicionar o email na tabela household_members.
-    // Quando o usuário com esse email se cadastrar (ou se já existir), 
-    // a RLS do banco permitirá que ele veja essa household.
-    // Mas antes precisamos do user_id. Como Supabase Auth não permite buscar users livremente pelo client,
-    // Em um app real, faríamos um Edge Function ou o parceiro usaria um "Código de Convite".
-    // Para resolver isso agora, vamos fazer um upsert na tabela usando Edge functions ou o Server Actions.
-    // Vamos adaptar: instruiremos o parceiro a criar a conta primeiro.
+    // 1. Buscar o perfil pelo e-mail para obter o user_id
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single()
+
+    if (profileError || !profile) {
+      alert('A pessoa precisa criar a conta primeiro com o e-mail: ' + email)
+      return
+    }
+
+    // 2. Adicionar na tabela household_members usando o user_id encontrado
     const { error } = await supabase.from('household_members').insert({
         household_id: householdId,
+        user_id: profile.id,
         email: email
-        // nota: sem user_id por enquanto se ele não existe. O ideal é o parceiro dar a ele o código.
     })
     
     if(!error) {
-       alert('Convite enviado! Peça para a pessoa se cadastrar com o email: ' + email)
+       alert('Sucesso! Agora a pessoa já tem acesso a esta conta.')
        setIsInviteOpen(false)
     } else {
-       alert('A pessoa precisa criar a conta primeiro, ou você não tem permissão.')
+       if (error.code === '23505') {
+         alert('Esta pessoa já foi convidada ou já faz parte do grupo.')
+       } else {
+         alert('Erro ao convidar: ' + error.message)
+       }
     }
   }
 
