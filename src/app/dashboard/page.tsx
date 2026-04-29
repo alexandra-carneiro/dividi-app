@@ -35,37 +35,38 @@ export default async function DashboardPage() {
     }
   }
 
-  // Buscar despesas iniciais
+  // Buscar despesas iniciais (Apenas do mês atual para carregar rápido)
   let initialExpenses: any[] = []
   let initialRecurring: any[] = []
   let householdData = null
+
   if (householdId) {
-    const { data: exps } = await supabase
-      .from('expenses')
-      .select('*')
-      .eq('household_id', householdId)
-      .order('date', { ascending: false })
-    
-    if (exps) {
-      initialExpenses = exps
-    }
+    const now = new Date()
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
 
-    const { data: hh } = await supabase
-      .from('households')
-      .select('monthly_budget, weekly_budget, currency')
-      .eq('id', householdId)
-      .single()
+    const [expsRes, hhRes, recRes] = await Promise.all([
+      supabase
+        .from('expenses')
+        .select('*')
+        .eq('household_id', householdId)
+        .gte('date', firstDay.split('T')[0])
+        .lte('date', lastDay.split('T')[0])
+        .order('date', { ascending: false }),
+      supabase
+        .from('households')
+        .select('monthly_budget, weekly_budget, currency')
+        .eq('id', householdId)
+        .single(),
+      supabase
+        .from('recurring_expenses')
+        .select('*')
+        .eq('household_id', householdId)
+    ])
 
-    householdData = hh
-
-    const { data: recExps } = await supabase
-      .from('recurring_expenses')
-      .select('*')
-      .eq('household_id', householdId)
-    
-    if (recExps) {
-      initialRecurring = recExps
-    }
+    if (expsRes.data) initialExpenses = expsRes.data
+    if (hhRes.data) householdData = hhRes.data
+    if (recRes.data) initialRecurring = recRes.data
   }
 
   return (

@@ -46,6 +46,15 @@ export default function DashboardClient({
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isRecurringOpen, setIsRecurringOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  const closeAllModals = () => {
+    setIsFormOpen(false)
+    setIsSettingsOpen(false)
+    setIsRecurringOpen(false)
+    setIsInviteOpen(false)
+    setIsImportOpen(false)
+    setExpenseToEdit(null)
+  }
   
   const CATEGORIES = ['Mercado', 'Contas', 'Lazer', 'Saúde', 'Transporte', 'Outros']
   
@@ -510,15 +519,15 @@ export default function DashboardClient({
       <header className="bg-gradient-to-br from-indigo-600 to-indigo-500 text-white p-6 md:py-8 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center p-1 shadow-lg transform -rotate-3 hover:rotate-0 transition duration-300">
+            <button onClick={closeAllModals} className="flex items-center gap-4 group text-left focus:outline-none">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center p-1 shadow-lg transform -rotate-3 group-hover:rotate-0 group-active:scale-95 transition duration-300">
                 <img src="/logo.png" alt="Dividi Logo" className="w-full h-full object-contain rounded-xl" />
               </div>
-              <div>
+              <div className="group-hover:translate-x-1 transition-transform">
                 <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white drop-shadow-md leading-none">Dividi</h1>
                 <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest mt-0.5">Gestão Compartilhada</p>
               </div>
-            </div>
+            </button>
             <div className="flex gap-3">
               <button onClick={() => setIsRecurringOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Gastos Fixos">
                 <Repeat size={20} />
