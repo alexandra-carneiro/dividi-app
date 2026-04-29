@@ -66,13 +66,19 @@ export default async function DashboardPage() {
       supabase
         .from('category_budgets')
         .select('*')
+        .eq('household_id', householdId),
+      supabase
+        .from('incomes')
+        .select('*')
         .eq('household_id', householdId)
+        .order('date', { ascending: false })
     ])
 
     if (expsRes.data) initialExpenses = expsRes.data
     if (hhRes.data) householdData = hhRes.data
     if (recRes.data) initialRecurring = recRes.data
     if (budgetsRes.data) initialCategoryBudgets = budgetsRes.data
+    if (incomesRes.data) initialIncomes = incomesRes.data
   }
 
   return (
@@ -85,6 +91,7 @@ export default async function DashboardPage() {
       initialCurrency={householdData?.currency ?? 'BRL'}
       initialRecurringExpenses={initialRecurring}
       initialCategoryBudgets={initialCategoryBudgets || []}
+      initialIncomes={initialIncomes}
     />
   )
 }

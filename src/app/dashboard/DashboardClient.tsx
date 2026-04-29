@@ -7,20 +7,16 @@ import { updateHouseholdSettings } from '../actions/settings'
 import { inviteUser } from '../actions/invite'
 import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses, updateRecurringExpense } from '../actions/recurring'
 import { updateCategoryBudget } from '../actions/budgets'
+import { addIncome, deleteIncome, updateIncome } from '../actions/incomes'
 import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp, Receipt } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import Charts from './Charts'
 
-export default function DashboardClient({ 
-  initialExpenses, 
-  householdId, 
-  userEmail,
-  initialMonthlyBudget,
-  initialWeeklyBudget,
   initialCurrency,
   initialRecurringExpenses,
-  initialCategoryBudgets
+  initialCategoryBudgets,
+  initialIncomes
 }: { 
   initialExpenses: any[], 
   householdId: string, 
@@ -29,9 +25,11 @@ export default function DashboardClient({
   initialWeeklyBudget: number,
   initialCurrency: string,
   initialRecurringExpenses: any[],
-  initialCategoryBudgets: any[]
+  initialCategoryBudgets: any[],
+  initialIncomes: any[]
 }) {
   const [expenses, setExpenses] = useState(initialExpenses)
+  const [incomes, setIncomes] = useState(initialIncomes)
   const [recurringExpenses, setRecurringExpenses] = useState(initialRecurringExpenses)
   const [monthlyBudget, setMonthlyBudget] = useState(initialMonthlyBudget)
   const [weeklyBudget, setWeeklyBudget] = useState(initialWeeklyBudget)
@@ -56,6 +54,11 @@ export default function DashboardClient({
   const [recurringToEdit, setRecurringToEdit] = useState<any>(null)
   const [recurringDate, setRecurringDate] = useState(new Date().toISOString().split('T')[0])
   const [categoryFilter, setCategoryFilter] = useState('Todas')
+  
+  // Novos estados para Receitas e Abas
+  const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(false)
+  const [incomeToEdit, setIncomeToEdit] = useState<any>(null)
+  const [settingsTab, setSettingsTab] = useState<'budget' | 'family' | 'account'>('budget')
   const [isPending, startTransition] = useTransition()
 
   const closeAllModals = () => {
@@ -91,8 +94,22 @@ export default function DashboardClient({
       })
       .subscribe()
 
+    // Incomes Realtime
+    const incomeChannel = supabase.channel('realtime_incomes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incomes', filter: `household_id=eq.${householdId}` }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setIncomes(prev => [...prev, payload.new])
+        } else if (payload.eventType === 'UPDATE') {
+          setIncomes(prev => prev.map(i => i.id === payload.new.id ? payload.new : i))
+        } else if (payload.eventType === 'DELETE') {
+          setIncomes(prev => prev.filter(i => i.id !== payload.old.id))
+        }
+      })
+      .subscribe()
+
     return () => {
       supabase.removeChannel(channel)
+      supabase.removeChannel(incomeChannel)
     }
   }, [householdId, supabase])
 
@@ -135,17 +152,23 @@ export default function DashboardClient({
 
     const currentWeeklyLimit = currentLimit / totalWeeksInMonth
 
+    const totalIncome = incomes
+      .filter(i => i.date.startsWith(monthStr))
+      .reduce((acc, i) => acc + Number(i.amount), 0)
+
     return { 
       total, 
       ale, 
       maria, 
+      income: totalIncome,
+      balance: totalIncome - total,
       remaining: currentLimit > 0 ? currentLimit - total : 0,
       limit: currentLimit,
       weeklyLimit: currentWeeklyLimit,
       totalPlanned: totalCategoryBudget,
-      hideWeeklyProgress: categoryFilter === 'Contas' // Esconde progresso semanal para Contas
+      hideWeeklyProgress: categoryFilter === 'Contas'
     }
-  }, [filteredExpenses, categoryFilter, categoryBudgets, totalWeeksInMonth])
+  }, [filteredExpenses, incomes, categoryFilter, categoryBudgets, totalWeeksInMonth, currentDate])
 
   const weeks = useMemo(() => {
     const w: Record<number, any> = {}
@@ -166,6 +189,39 @@ export default function DashboardClient({
     return v.toLocaleString('pt-BR', { 
       style: 'currency', 
       currency: currency 
+    })
+  }
+
+  const handleAddIncome = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    startTransition(async () => {
+      let result
+      if (incomeToEdit) {
+        result = await updateIncome(incomeToEdit.id, formData)
+      } else {
+        result = await addIncome(formData)
+      }
+
+      if (result.success) {
+        setIsIncomeFormOpen(false)
+        setIncomeToEdit(null)
+      } else {
+        alert('Erro: ' + result.error)
+      }
+    })
+  }
+
+  const openEditIncome = (income: any) => {
+    setIncomeToEdit(income)
+    setIsIncomeFormOpen(true)
+  }
+
+  const handleDeleteIncome = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta receita?')) return
+    startTransition(async () => {
+      const result = await deleteIncome(id)
+      if (!result.success) alert('Erro ao excluir: ' + result.error)
     })
   }
 
@@ -623,22 +679,63 @@ export default function DashboardClient({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-10">
+        
+        {/* CARDS DE RESUMO NO TOPO */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl group hover:bg-white/15 transition-all">
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Saldo do Mês</p>
+            <h3 className={`text-3xl font-black ${totals.balance < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+              {formatMoney(totals.balance)}
+            </h3>
+            <div className="mt-4 w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+               <div className={`h-full transition-all duration-1000 ${totals.balance < 0 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: '100%' }}></div>
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl group hover:bg-white/15 transition-all">
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Receitas</p>
+            <h3 className="text-3xl font-black text-white">{formatMoney(totals.income)}</h3>
+            <div className="flex items-center gap-2 mt-4">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">Dinheiro que entrou</p>
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl group hover:bg-white/15 transition-all">
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Gastos</p>
+            <h3 className="text-3xl font-black text-white">{formatMoney(totals.total)}</h3>
+            <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+              <span className="text-blue-400">Alê: {formatMoney(totals.ale)}</span>
+              <span className="text-pink-400">Maria: {formatMoney(totals.maria)}</span>
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl group hover:bg-white/15 transition-all">
+            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Planejado (Limite)</p>
+            <h3 className="text-3xl font-black text-white">{formatMoney(totals.totalPlanned)}</h3>
+            <div className="mt-4 w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+               <div className="bg-white/20 h-full" style={{ width: `${Math.min((totals.total / totals.totalPlanned) * 100, 100)}%` }}></div>
+            </div>
+          </div>
+        </div>
+
         <Charts expenses={filteredExpenses} budget={totals.limit > 0 ? totals.limit : monthlyBudget} currency={currency} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <section className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-xl flex flex-col justify-center">
-            <div className="flex flex-col sm:flex-row justify-between border-b border-slate-100 pb-4 mb-4 sm:items-center gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-10">
+          <section className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-xl flex flex-col justify-center border border-slate-100">
+            <div className="flex flex-col sm:flex-row justify-between border-b border-slate-100 pb-6 mb-6 sm:items-center gap-6">
               <div>
-                <p className="text-sm text-slate-500">Total Gasto</p>
-                <p className="text-3xl md:text-4xl font-bold text-slate-900">{formatMoney(totals.total)}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Gasto Total do Mês</p>
+                <p className="text-4xl font-black text-slate-900">{formatMoney(totals.total)}</p>
               </div>
               <div className="text-left sm:text-right">
-                <p className="text-sm text-slate-500">{totals.remaining < 0 ? 'Passou do Orçamento' : 'Resta no Mês'}</p>
-                <p className={`text-3xl md:text-4xl font-bold ${totals.remaining < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">{totals.remaining < 0 ? 'Passou do Orçamento' : 'Resta no Mês'}</p>
+                <p className={`text-4xl font-black ${totals.remaining < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                   {formatMoney(Math.abs(totals.remaining))}
                 </p>
               </div>
             </div>
+            
             <div className="flex justify-around sm:justify-start sm:gap-16">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-lg">A</div>
@@ -658,92 +755,151 @@ export default function DashboardClient({
           </section>
 
           <section className="flex flex-col gap-4 justify-center">
-            <button onClick={() => { setExpenseToEdit(null); setIsFormOpen(!isFormOpen) }} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-indigo-700 transition transform hover:-translate-y-1">
-              + Adicionar Gasto
+            <div className="flex flex-wrap gap-2 md:gap-3">
+            <button onClick={() => setIsIncomeFormOpen(true)} className="flex items-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 px-4 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-widest border border-emerald-500/30 group">
+              <TrendingUp size={18} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+              Lançar Receita
             </button>
-            <button onClick={() => setIsImportOpen(!isImportOpen)} className="w-full flex items-center justify-center gap-2 p-4 bg-white text-slate-700 rounded-2xl shadow-md hover:bg-slate-50 transition font-medium border border-slate-200" aria-label="Importar Planilha">
-              <Upload size={20} /> Importar Arquivo (Excel/CSV)
+            <button onClick={() => setIsFormOpen(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-900/20 group">
+              <Upload size={18} className="group-hover:translate-y-[-2px] transition-transform" />
+              Lançar Gasto
             </button>
+            <button onClick={() => setIsRecurringOpen(true)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-widest border border-white/20 group">
+              <Receipt size={18} className="group-hover:scale-110 transition-transform" />
+              Pagar Contas
+            </button>
+            
+            <div className="w-[1px] h-8 bg-white/10 mx-1 hidden md:block"></div>
+
+            <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20" title="Configurações">
+              <Settings size={20} />
+            </button>
+            <button onClick={() => setIsImportOpen(true)} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20" title="Importar Planilha">
+              <Download size={20} />
+            </button>
+          </div>
           </section>
         </div>
 
         {isSettingsOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsSettingsOpen(false)}>
-            <form onSubmit={handleUpdateLimits} onClick={(e) => e.stopPropagation()} className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
-              <div className="relative mb-6">
-                <h3 className="font-bold text-2xl text-slate-800 pr-10">Configurações do App</h3>
-                <button type="button" onClick={() => setIsSettingsOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
+            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl animate-in zoom-in-95 duration-200 border border-slate-200 overflow-hidden flex flex-col md:flex-row min-h-[600px] max-h-[90vh]">
+              
+              {/* Sidebar das Configurações */}
+              <div className="w-full md:w-64 bg-slate-50 border-r border-slate-100 p-8 flex flex-col">
+                <h3 className="font-black text-slate-800 text-xl mb-8 uppercase tracking-widest">Ajustes</h3>
+                <nav className="space-y-2 flex-1">
+                  <button 
+                    onClick={() => setSettingsTab('budget')}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${settingsTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-200/50'}`}
+                  >
+                    <Wallet size={18} /> Orçamento
+                  </button>
+                  <button 
+                    onClick={() => setSettingsTab('family')}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${settingsTab === 'family' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-200/50'}`}
+                  >
+                    <Users size={18} /> Família
+                  </button>
+                  <button 
+                    onClick={() => setSettingsTab('account')}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${settingsTab === 'account' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-200/50'}`}
+                  >
+                    <Settings size={18} /> Minha Conta
+                  </button>
+                </nav>
+                <form action="/auth/signout" method="post" className="mt-8">
+                  <button type="submit" className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all">
+                    <LogOut size={18} /> Sair do App
+                  </button>
+                </form>
+              </div>
+
+              {/* Conteúdo das Abas */}
+              <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar relative">
+                <button type="button" onClick={() => setIsSettingsOpen(false)} className="absolute top-8 right-8 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm">
                    <X size={24} />
                 </button>
-              </div>
-            <p className="text-sm text-slate-500 mb-6">Ajuste seu orçamento e moeda de preferência.</p>
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Moeda</label>
-                <select 
-                  value={localCurrency}
-                  onChange={(e) => setLocalCurrency(e.target.value)}
-                  className="w-full p-3 border border-slate-300 rounded-xl text-slate-900 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
-                >
-                  <option value="BRL">Real (R$)</option>
-                  <option value="EUR">Euro (€)</option>
-                  <option value="USD">Dólar (US$)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Orçamento Total Planejado</label>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl">
-                    <p className="text-2xl font-black text-slate-900">{formatMoney(totals.totalPlanned)}</p>
-                  </div>
-                  <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
-                    <p className="text-[10px] font-bold text-indigo-400 uppercase leading-none mb-1">Por Semana</p>
-                    <p className="font-black text-indigo-600 leading-none">{formatMoney(totals.totalPlanned / totalWeeksInMonth)}</p>
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-2 italic">* Este valor é a soma automática de todos os limites de categoria definidos abaixo.</p>
-              </div>
 
-            <div className="mt-10 border-t pt-8">
-              <h4 className="font-black text-indigo-900 text-sm uppercase tracking-widest mb-4">Orçamentos por Categoria</h4>
-              <p className="text-[11px] text-slate-500 mb-6 uppercase font-bold">Defina limites mensais específicos para cada tipo de gasto.</p>
-              
-              <div className="space-y-4">
-                {CATEGORIES.map(cat => {
-                  const budget = categoryBudgets.find(b => b.category === cat)
-                  return (
-                    <div key={cat} className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                      <span className="font-bold text-slate-700 text-sm">{cat}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-400 font-bold text-xs">{currency === 'EUR' ? '€' : 'R$'}</span>
-                        <input 
-                          type="number" 
-                          step="1"
-                          placeholder="Sem limite"
-                          defaultValue={budget?.monthly_limit || ''}
-                          onBlur={(e) => {
-                            const val = parseFloat(e.target.value)
-                            if (!isNaN(val)) {
-                              updateCategoryBudget(householdId, cat, val).then(res => {
-                                if (res.success) {
-                                  setCategoryBudgets(prev => {
-                                    const existing = prev.find(b => b.category === cat)
-                                    if (existing) return prev.map(b => b.category === cat ? { ...b, monthly_limit: val } : b)
-                                    return [...prev, { category: cat, monthly_limit: val }]
-                                  })
-                                }
-                              })
-                            }
-                          }}
-                          className="w-24 p-2 border-2 border-slate-200 rounded-xl text-right font-black text-slate-900 focus:border-indigo-500 outline-none transition-all"
-                        />
+                {settingsTab === 'budget' && (
+                  <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                    <header className="mb-10">
+                      <h4 className="font-black text-slate-800 text-2xl mb-2">Orçamento e Moeda</h4>
+                      <p className="text-slate-500 font-medium">Defina como você quer visualizar e controlar seus gastos.</p>
+                    </header>
+
+                    <div className="space-y-8">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-3 tracking-[0.2em] ml-1">Moeda Principal</label>
+                        <select 
+                          value={localCurrency}
+                          onChange={(e) => setLocalCurrency(e.target.value)}
+                          className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                        >
+                          <option value="BRL">Real (R$)</option>
+                          <option value="EUR">Euro (€)</option>
+                          <option value="USD">Dólar (US$)</option>
+                        </select>
+                      </div>
+
+                      <div className="pt-8 border-t border-slate-100">
+                        <h5 className="font-black text-indigo-900 text-sm uppercase tracking-widest mb-6">Limites por Categoria</h5>
+                        <div className="space-y-3">
+                          {CATEGORIES.map(cat => {
+                            const budget = categoryBudgets.find(b => b.category === cat)
+                            return (
+                              <div key={cat} className="flex items-center justify-between gap-4 p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-indigo-100 transition-all">
+                                <span className="font-black text-slate-700 text-sm uppercase tracking-wider">{cat}</span>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-slate-400 font-black text-xs">{currency}</span>
+                                  <input 
+                                    type="number" 
+                                    step="1"
+                                    placeholder="Sem limite"
+                                    defaultValue={budget?.monthly_limit || ''}
+                                    onBlur={(e) => {
+                                      const val = parseFloat(e.target.value)
+                                      if (!isNaN(val)) {
+                                        updateCategoryBudget(householdId, cat, val).then(res => {
+                                          if (res.success) {
+                                            setCategoryBudgets(prev => {
+                                              const existing = prev.find(p => p.category === cat)
+                                              if (existing) return prev.map(p => p.category === cat ? { ...p, monthly_limit: val } : p)
+                                              return [...prev, { category: cat, monthly_limit: val }]
+                                            })
+                                          }
+                                        })
+                                      }
+                                    }}
+                                    className="w-28 p-2.5 bg-white border-2 border-slate-100 rounded-xl font-black text-slate-900 text-right focus:border-indigo-500 outline-none"
+                                  />
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
-            </div>
+                  </div>
+                )}
 
+                {settingsTab === 'family' && (
+                  <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                    <header className="mb-10">
+                      <h4 className="font-black text-slate-800 text-2xl mb-2">Membros da Família</h4>
+                      <p className="text-slate-500 font-medium">Compartilhe este dashboard com outras pessoas.</p>
+                    </header>
+
+                    <form onSubmit={handleInvite} className="bg-indigo-50 p-6 rounded-[2rem] border-2 border-indigo-100 mb-10">
+                      <label className="block text-[10px] font-black uppercase text-indigo-400 mb-3 tracking-[0.2em] ml-1">Convidar por E-mail</label>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <input 
+                          type="email" 
+                          name="email" 
+                          required 
+                          placeholder="email@exemplo.com" 
+                          className="flex-1 p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none shadow-sm"
+                        />
             <div className="mt-8 flex gap-3">
               <button type="button" onClick={() => setIsSettingsOpen(false)} className="flex-1 p-3 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl font-bold transition">Cancelar</button>
               <button type="submit" className="flex-1 p-3 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md rounded-xl font-bold transition">Salvar</button>
@@ -1006,6 +1162,54 @@ export default function DashboardClient({
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => setIsInviteOpen(false)} className="flex-1 p-3 bg-slate-100 rounded-xl font-bold">Cancelar</button>
                   <button type="submit" className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md hover:bg-indigo-700 transition">Convidar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {isIncomeFormOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }}>
+            <form id="incomeForm" onSubmit={handleAddIncome} onClick={(e) => e.stopPropagation()} className="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="relative mb-8 text-center">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                  <TrendingUp size={32} />
+                </div>
+                <h3 className="font-black text-2xl text-slate-800">{incomeToEdit ? 'Editar Receita' : 'Lançar Receita'}</h3>
+                <button type="button" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm">
+                   <X size={24} />
+                </button>
+              </div>
+              <input type="hidden" name="household_id" value={householdId} />
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em] ml-1">Data</label>
+                  <input type="date" name="date" required defaultValue={incomeToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em] ml-1">Valor</label>
+                  <input type="number" name="amount" step="0.01" min="0.01" required defaultValue={incomeToEdit?.amount || ''} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all" placeholder="0,00" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em] ml-1">Quem recebeu?</label>
+                  <div className="flex gap-3">
+                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 font-black text-xs uppercase tracking-widest has-[:checked]:text-emerald-700 text-slate-400 border-slate-100 bg-slate-50">
+                      <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={incomeToEdit?.payer === 'Alê'} /> Alê
+                    </label>
+                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 font-black text-xs uppercase tracking-widest has-[:checked]:text-emerald-700 text-slate-400 border-slate-100 bg-slate-50">
+                      <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={incomeToEdit?.payer === 'Maria'} /> Maria
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em] ml-1">Descrição</label>
+                  <input type="text" name="description" placeholder="Ex: Salário" defaultValue={incomeToEdit?.description || ''} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all" />
+                </div>
+                <div className="flex gap-4 pt-4">
+                  <button type="button" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }} className="flex-1 p-4 bg-slate-100 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500">Cancelar</button>
+                  <button type="submit" disabled={isPending} className="flex-1 p-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-emerald-700 transition-all">
+                    {isPending ? 'Salvando...' : 'Salvar Receita'}
+                  </button>
                 </div>
               </div>
             </form>
