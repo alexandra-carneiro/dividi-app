@@ -3,7 +3,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { addExpense, updateExpense, deleteExpense } from '../actions/expenses'
 import { updateHouseholdSettings } from '../actions/settings'
 import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses } from '../actions/recurring'
-import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download } from 'lucide-react'
+import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import Charts from './Charts'
@@ -596,8 +596,14 @@ export default function DashboardClient({
         </div>
 
         {isSettingsOpen && (
-          <form onSubmit={handleUpdateLimits} className="bg-white p-6 rounded-2xl shadow-xl mb-6 animate-in slide-in-from-top-4 border border-slate-200">
-            <h3 className="font-bold text-xl mb-2 text-slate-800">Configurações do App</h3>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsSettingsOpen(false)}>
+            <form onSubmit={handleUpdateLimits} onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-xl text-slate-800">Configurações do App</h3>
+                <button type="button" onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition">
+                   <X size={20} />
+                </button>
+              </div>
             <p className="text-sm text-slate-500 mb-6">Ajuste seu orçamento e moeda de preferência.</p>
             <div className="space-y-5">
               <div>
@@ -646,13 +652,17 @@ export default function DashboardClient({
               </div>
             </div>
           </form>
-        )}
+        </div>
+      )}
 
         {isRecurringOpen && (
-          <div className="bg-white p-6 rounded-2xl shadow-xl mb-6 animate-in slide-in-from-top-4 border border-slate-200">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
+            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-xl text-slate-800">Gastos Fixos Recorrentes</h3>
-              <button onClick={() => setIsRecurringOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+              <button onClick={() => setIsRecurringOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition">
+                <X size={20} />
+              </button>
             </div>
             <p className="text-sm text-slate-500 mb-4">Defina contas fixas (ex: Aluguel, Internet) e lance todas de uma vez no mês atual.</p>
             
@@ -724,7 +734,8 @@ export default function DashboardClient({
               </button>
             </form>
           </div>
-        )}
+        </div>
+      )}
 
         {isImportOpen && pendingImports.length === 0 && (
           <div className="bg-white p-5 rounded-2xl shadow-lg mb-6 animate-in slide-in-from-top-4">
