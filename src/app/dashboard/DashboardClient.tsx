@@ -533,16 +533,13 @@ export default function DashboardClient({
     }
   }
 
-  const handleApplyRecurring = async () => {
+  const handleApplyRecurring = async (expenseId?: string) => {
     startTransition(async () => {
-      const result = await applyRecurringExpenses(householdId, recurringDate)
+      const result = await applyRecurringExpenses(householdId, recurringDate, expenseId)
       if (result.success) {
-        alert(`${result.count} gastos fixos lançados neste mês! Atualize a página se os dados não aparecerem imediatamente (o realtime pode estar desativado).`)
-        setIsRecurringOpen(false)
-        // Forçar reload na tela para carregar do DB, ou depender do revalidatePath
-        window.location.reload()
+        alert(expenseId ? 'Gasto lançado com sucesso!' : `${result.count} gastos lançados com sucesso!`)
       } else {
-        alert('Erro ao lançar gastos fixos: ' + result.error)
+        alert('Erro ao lançar: ' + result.error)
       }
     })
   }
@@ -777,17 +774,24 @@ export default function DashboardClient({
                         </p>
                         <div className="flex items-center gap-2 text-xs text-slate-500">
                           <span>Pagador: {req.payer}</span>
-                          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                          <span className="font-bold text-indigo-600 underline decoration-indigo-200 underline-offset-2">Todo dia {req.day_of_month}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-bold">{formatMoney(Number(req.amount))}</span>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => setRecurringToEdit(req)} className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg transition-colors" title="Editar">
+                          <button 
+                            onClick={() => handleApplyRecurring(req.id)} 
+                            className="bg-emerald-500 text-white hover:bg-emerald-600 p-2 rounded-lg transition-all shadow-sm flex items-center gap-1 group"
+                            title="Lançar este gasto agora"
+                          >
+                            <Repeat size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                            <span className="text-[10px] font-black uppercase">Lançar</span>
+                          </button>
+                          <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
+                          <button onClick={() => setRecurringToEdit(req)} className="text-slate-400 hover:text-indigo-600 p-1 transition-colors" title="Editar">
                             <Edit2 size={16} />
                           </button>
-                          <button onClick={() => handleDeleteRecurring(req.id)} className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Excluir">
+                          <button onClick={() => handleDeleteRecurring(req.id)} className="text-slate-400 hover:text-red-600 p-1 transition-colors" title="Excluir">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -805,9 +809,9 @@ export default function DashboardClient({
                       onChange={(e) => setRecurringDate(e.target.value)}
                       className="p-2 text-sm border rounded-lg bg-white font-medium outline-none focus:ring-2 focus:ring-emerald-500"
                     />
-                    <button 
-                      onClick={handleApplyRecurring} 
-                      disabled={isPending}
+                     <button 
+                       onClick={() => handleApplyRecurring()} 
+                       disabled={isPending}
                       className="flex-1 p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       <Repeat size={18} className={isPending ? "animate-spin" : ""} /> 
@@ -830,13 +834,9 @@ export default function DashboardClient({
               </div>
               <input type="hidden" name="household_id" value={householdId} />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium mb-1 text-slate-600">Descrição</label>
+                <div className="sm:col-span-3">
+                  <label className="block text-xs font-medium mb-1 text-slate-600">Descrição do Gasto Fixo (Ex: Aluguel, Internet)</label>
                   <input type="text" name="description" required defaultValue={recurringToEdit?.description || ''} className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Aluguel" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1 text-slate-600">Dia Venc.</label>
-                  <input type="number" name="day_of_month" min="1" max="31" defaultValue={recurringToEdit?.day_of_month || '1'} required className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">

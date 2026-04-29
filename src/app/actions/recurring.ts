@@ -57,42 +57,38 @@ export async function getRecurringExpenses(householdId: string) {
   return { data }
 }
 
-export async function applyRecurringExpenses(householdId: string, baseDate: string) {
-  // baseDate formato YYYY-MM-DD (usaremos apenas o ano e mês)
+export async function applyRecurringExpenses(householdId: string, date: string, expenseId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autorizado' }
 
-  const { data: recurring } = await supabase
+  let query = supabase
     .from('recurring_expenses')
     .select('*')
     .eq('household_id', householdId)
-
-  if (!recurring || recurring.length === 0) return { error: 'Nenhum gasto recorrente encontrado' }
-
-  const [year, month] = baseDate.split('-')
-
-  const expensesToInsert = recurring.map(r => {
-    // Garantir que o dia não ultrapasse o último dia do mês (ex: dia 31 em Fevereiro)
-    const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).getDate()
-    const day = Math.min(r.day_of_month, lastDayOfMonth)
-    const formattedDate = `${year}-${month}-${String(day).padStart(2, '0')}`
-
-    return {
-      household_id: householdId,
-      date: formattedDate,
-      amount: r.amount,
-      payer: r.payer,
-      description: r.description,
-      category: r.category,
-      created_by: user.id
-    }
-  })
-
-  const { error } = await supabase.from('expenses').insert(expensesToInsert)
   
-  if (error) return { error: error.message }
-  
+  if (expenseId) {
+    query = query.eq('id', expenseId)
+  }
+
+  const { data: recurring, error: recError } = await query
+
+  if (recError) return { error: recError.message }
+  if (!recurring || recurring.length === 0) return { success: true, count: 0 }
+
+  const expensesToInsert = recurring.map(rec => ({
+    household_id: householdId,
+    description: rec.description,
+    amount: rec.amount,
+    payer: rec.payer,
+    category: rec.category,
+    date: date,
+    created_by: user.id
+  }))
+
+  const { error: insError } = await supabase.from('expenses').insert(expensesToInsert)
+  if (insError) return { error: insError.message }
+
   revalidatePath('/dashboard')
   return { success: true, count: expensesToInsert.length }
 }
