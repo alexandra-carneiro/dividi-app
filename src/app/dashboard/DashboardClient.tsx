@@ -141,7 +141,8 @@ export default function DashboardClient({
       remaining: currentLimit > 0 ? currentLimit - total : 0,
       limit: currentLimit,
       weeklyLimit: currentWeeklyLimit,
-      totalPlanned: totalCategoryBudget
+      totalPlanned: totalCategoryBudget,
+      hideWeeklyProgress: categoryFilter === 'Contas' // Esconde progresso semanal para Contas
     }
   }, [filteredExpenses, categoryFilter, categoryBudgets, totalWeeksInMonth])
 
@@ -1009,14 +1010,16 @@ export default function DashboardClient({
               const remaining = weekLimit - week.total
               return (
                 <div key={week.number} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-                  <div className="flex justify-between border-b pb-3 mb-3">
+                  <div className="flex justify-between border-b pb-3 mb-3 items-center">
                     <h3 className="font-bold text-slate-800">Semana {week.number}</h3>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-500">Gasto: {formatMoney(week.total)}</p>
-                      <p className={`font-semibold ${remaining < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                        {remaining < 0 ? 'Passou: ' : 'Resta: '}{formatMoney(Math.abs(remaining))}
-                      </p>
-                    </div>
+                    {!totals.hideWeeklyProgress && (
+                      <div className="text-right">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Gasto: {formatMoney(week.total)}</p>
+                        <p className={`text-sm font-black ${remaining < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                          {remaining < 0 ? 'Passou: ' : 'Resta: '}{formatMoney(Math.abs(remaining))}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-3">
                     {week.expenses.map((exp: any) => (
