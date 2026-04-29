@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useMemo, useTransition, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { addExpense, updateExpense, deleteExpense } from '../actions/expenses'
@@ -519,7 +521,7 @@ export default function DashboardClient({
       <header className="bg-gradient-to-br from-indigo-600 to-indigo-500 text-white p-6 md:py-8 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <button onClick={closeAllModals} className="flex items-center gap-4 group text-left focus:outline-none">
+            <button onClick={closeAllModals} className="flex items-center gap-4 group text-left focus:outline-none cursor-pointer">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center p-1 shadow-lg transform -rotate-3 group-hover:rotate-0 group-active:scale-95 transition duration-300">
                 <img src="/logo.png" alt="Dividi Logo" className="w-full h-full object-contain rounded-xl" />
               </div>

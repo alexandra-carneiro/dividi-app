@@ -49,7 +49,7 @@ export default function Charts({ expenses, currency }: { expenses: any[], curren
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatMoney(value)} />
+              <Tooltip formatter={(value: any) => formatMoney(Number(value))} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -64,7 +64,7 @@ export default function Charts({ expenses, currency }: { expenses: any[], curren
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="name" />
               <YAxis tickFormatter={(val) => val.toLocaleString('pt-BR')} />
-              <Tooltip formatter={(value: number) => formatMoney(value)} cursor={{fill: 'transparent'}}/>
+              <Tooltip formatter={(value: any) => formatMoney(Number(value))} cursor={{fill: 'transparent'}}/>
               <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                 {payerData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.name === 'Alê' ? '#3b82f6' : '#ec4899'} />
