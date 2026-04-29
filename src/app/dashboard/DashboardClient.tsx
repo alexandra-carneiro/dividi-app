@@ -120,19 +120,19 @@ export default function DashboardClient({
     const ale = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
     const maria = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
     
-    let currentLimit = monthlyBudget
-    let currentWeeklyLimit = monthlyBudget / totalWeeksInMonth
-
+    const totalCategoryBudget = categoryBudgets.reduce((sum, b) => sum + Number(b.monthly_limit), 0)
+    let currentLimit = totalCategoryBudget
+    
     if (categoryFilter !== 'Todas') {
       const catBudget = categoryBudgets.find(b => b.category === categoryFilter)
       if (catBudget) {
         currentLimit = Number(catBudget.monthly_limit)
-        currentWeeklyLimit = currentLimit / totalWeeksInMonth
       } else {
         currentLimit = 0 
-        currentWeeklyLimit = 0
       }
     }
+
+    const currentWeeklyLimit = currentLimit / totalWeeksInMonth
 
     return { 
       total, 
@@ -140,9 +140,10 @@ export default function DashboardClient({
       maria, 
       remaining: currentLimit > 0 ? currentLimit - total : 0,
       limit: currentLimit,
-      weeklyLimit: currentWeeklyLimit
+      weeklyLimit: currentWeeklyLimit,
+      totalPlanned: totalCategoryBudget
     }
-  }, [filteredExpenses, monthlyBudget, categoryFilter, categoryBudgets, weeklyBudget])
+  }, [filteredExpenses, categoryFilter, categoryBudgets, totalWeeksInMonth])
 
   const weeks = useMemo(() => {
     const w: Record<number, any> = {}
@@ -689,22 +690,17 @@ export default function DashboardClient({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Orçamento Mensal (Geral)</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Orçamento Total Planejado</label>
                 <div className="flex items-center gap-3">
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    min="0" 
-                    value={localMonthly}
-                    onChange={(e) => setLocalMonthly(parseFloat(e.target.value))}
-                    className="flex-1 p-3 border-2 border-slate-200 rounded-xl text-slate-900 font-black text-xl focus:border-indigo-500 outline-none transition-all" 
-                  />
+                  <div className="flex-1 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl">
+                    <p className="text-2xl font-black text-slate-900">{formatMoney(totals.totalPlanned)}</p>
+                  </div>
                   <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
                     <p className="text-[10px] font-bold text-indigo-400 uppercase leading-none mb-1">Por Semana</p>
-                    <p className="font-black text-indigo-600 leading-none">{formatMoney(localMonthly / totalWeeksInMonth)}</p>
+                    <p className="font-black text-indigo-600 leading-none">{formatMoney(totals.totalPlanned / totalWeeksInMonth)}</p>
                   </div>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2 italic">* Valor semanal calculado automaticamente com base nas {totalWeeksInMonth} semanas deste mês.</p>
+                <p className="text-[10px] text-slate-400 mt-2 italic">* Este valor é a soma automática de todos os limites de categoria definidos abaixo.</p>
               </div>
 
             <div className="mt-10 border-t pt-8">
