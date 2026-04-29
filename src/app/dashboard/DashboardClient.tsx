@@ -47,6 +47,7 @@ export default function DashboardClient({
   const [detectedHeaders, setDetectedHeaders] = useState<string[]>([])
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isRecurringOpen, setIsRecurringOpen] = useState(false)
+  const [recurringDate, setRecurringDate] = useState(new Date().toISOString().split('T')[0])
   const [isPending, startTransition] = useTransition()
 
   const closeAllModals = () => {
@@ -502,9 +503,8 @@ export default function DashboardClient({
   }
 
   const handleApplyRecurring = async () => {
-    const monthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-01`
     startTransition(async () => {
-      const result = await applyRecurringExpenses(householdId, monthStr)
+      const result = await applyRecurringExpenses(householdId, recurringDate)
       if (result.success) {
         alert(`${result.count} gastos fixos lançados neste mês! Atualize a página se os dados não aparecerem imediatamente (o realtime pode estar desativado).`)
         setIsRecurringOpen(false)
@@ -704,15 +704,25 @@ export default function DashboardClient({
                   ))}
                 </ul>
               )}
-              {recurringExpenses.length > 0 && (
-                <button 
-                  onClick={handleApplyRecurring} 
-                  disabled={isPending}
-                  className="w-full mt-4 p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <Repeat size={18} /> {isPending ? 'Lançando...' : 'Lançar todos neste mês'}
-                </button>
-              )}
+                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 mt-4">
+                  <label className="block text-xs font-bold text-emerald-800 mb-2 uppercase tracking-wider">Data de Registro</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="date" 
+                      value={recurringDate}
+                      onChange={(e) => setRecurringDate(e.target.value)}
+                      className="p-2 text-sm border rounded-lg bg-white font-medium outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button 
+                      onClick={handleApplyRecurring} 
+                      disabled={isPending}
+                      className="flex-1 p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Repeat size={18} className={isPending ? "animate-spin" : ""} /> 
+                      {isPending ? 'Lançando...' : 'Lançar Tudo'}
+                    </button>
+                  </div>
+                </div>
             </div>
 
             <form onSubmit={handleAddRecurring} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
