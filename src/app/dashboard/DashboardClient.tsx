@@ -163,7 +163,7 @@ export default function DashboardClient({
         const descKey = keys.find(k => k.toLowerCase().includes('desc') || k.toLowerCase().includes('nome') || k.toLowerCase().includes('item') || k.toLowerCase().includes('lugar') || k.toLowerCase().includes('local'))
 
         let rawDate = dateKey ? String(r[dateKey]).trim() : ''
-        let rawDesc = descKey ? String(r[descKey]).trim() : 'Gasto Diário' // Padrão mais amigável que "Importado"
+        let rawDesc = descKey ? String(r[descKey]).trim() : 'Mercado' // Padrão solicitado pelo usuário
         const sheetName = r._sheetName ? String(r._sheetName).toLowerCase().trim() : ''
 
         // Ignorar completamente linhas que são apenas subtotais da planilha
