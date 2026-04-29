@@ -885,7 +885,7 @@ export default function DashboardClient({
           </div>
         )}
 
-        <div className="space-y-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-6 md:space-y-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {weeks.length === 0 ? (
             <p className="text-center text-slate-500 py-8 md:col-span-2">Nenhum gasto neste mês.</p>
           ) : (
@@ -913,10 +913,9 @@ export default function DashboardClient({
 
                           {/* Conteúdo */}
                           <div className="flex-1 min-w-0">
-                            {/* Linha 1: Nome e Valor */}
-                            <div className="flex justify-between items-start gap-2 mb-1">
-                              <p className="font-bold text-sm text-slate-800 truncate leading-none">{exp.description || 'Gasto'}</p>
-                              <span className="font-black text-sm text-slate-900 whitespace-nowrap leading-none">{formatMoney(Number(exp.amount))}</span>
+                            <div className="flex justify-between items-start gap-4 mb-2">
+                              <p className="font-bold text-base text-slate-800 leading-tight break-words">{exp.description || 'Gasto'}</p>
+                              <span className="font-black text-base text-slate-900 whitespace-nowrap leading-none mt-0.5">{formatMoney(Number(exp.amount))}</span>
                             </div>
 
                             {/* Linha 2: Categoria, Data e Ações */}
