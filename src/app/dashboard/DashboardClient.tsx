@@ -676,11 +676,11 @@ export default function DashboardClient({
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-bold">{formatMoney(Number(req.amount))}</span>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => setRecurringToEdit(req)} className="text-indigo-400 hover:text-indigo-600 p-1">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setRecurringToEdit(req)} className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg transition-colors" title="Editar">
                             <Edit2 size={16} />
                           </button>
-                          <button onClick={() => handleDeleteRecurring(req.id)} className="text-red-400 hover:text-red-600 p-1">
+                          <button onClick={() => handleDeleteRecurring(req.id)} className="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Excluir">
                             <Trash2 size={16} />
                           </button>
                         </div>
