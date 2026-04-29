@@ -904,26 +904,31 @@ export default function DashboardClient({
                   </div>
                   <div className="space-y-3">
                     {week.expenses.map((exp: any) => (
-                      <div key={exp.id} className="flex items-center justify-between group p-1 hover:bg-slate-50 rounded-lg transition-colors">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${exp.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                            {exp.payer.charAt(0)}
+                      <div key={exp.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-colors border-b border-slate-50 last:border-0">
+                        {/* Coluna 1: Avatar */}
+                        <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${exp.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
+                          {exp.payer.charAt(0)}
+                        </div>
+
+                        {/* Coluna 2: Info (Descrição e Categoria) */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="font-bold text-sm text-slate-800 truncate leading-tight">{exp.description || 'Gasto'}</p>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-semibold text-sm text-slate-800 truncate">{exp.description || 'Gasto'}</p>
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-400 uppercase rounded-md tracking-wider">{exp.category || 'Outros'}</span>
-                            </div>
-                            <p className="text-[10px] text-slate-400 font-medium">{exp.date.split('-').reverse().slice(0,2).join('/')}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 uppercase rounded-md tracking-wider">{exp.category || 'Outros'}</span>
+                            <span className="text-[10px] text-slate-400 font-medium">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-3">
-                          <span className="font-bold text-sm text-slate-900">{formatMoney(Number(exp.amount))}</span>
-                          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => openEditExpense(exp)} className="text-slate-300 hover:text-indigo-600 p-1.5 transition-colors" title="Editar">
+
+                        {/* Coluna 3: Valor e Ações */}
+                        <div className="flex items-center gap-2 text-right">
+                          <span className="font-bold text-sm text-slate-900 whitespace-nowrap">{formatMoney(Number(exp.amount))}</span>
+                          <div className="flex items-center gap-0.5 border-l pl-2 border-slate-100">
+                            <button onClick={() => openEditExpense(exp)} className="text-slate-400 hover:text-indigo-600 p-1.5 transition-colors" title="Editar">
                               <Edit2 size={14} />
                             </button>
-                            <button onClick={() => handleDelete(exp.id)} className="text-slate-300 hover:text-red-600 p-1.5 transition-colors" title="Excluir">
+                            <button onClick={() => handleDelete(exp.id)} className="text-slate-400 hover:text-red-600 p-1.5 transition-colors" title="Excluir">
                               <Trash2 size={14} />
                             </button>
                           </div>
