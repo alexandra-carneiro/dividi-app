@@ -97,6 +97,39 @@ export async function applyRecurringExpenses(householdId: string, baseDate: stri
   return { success: true, count: expensesToInsert.length }
 }
 
+export async function updateRecurringExpense(id: string, formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autorizado' }
+
+  const rawData = {
+    household_id: formData.get('household_id'),
+    amount: parseFloat(formData.get('amount') as string),
+    payer: formData.get('payer'),
+    description: formData.get('description'),
+    category: formData.get('category') || 'Contas',
+    day_of_month: parseInt(formData.get('day_of_month') as string || '1')
+  }
+
+  const validatedData = RecurringSchema.safeParse(rawData)
+
+  if (!validatedData.success) {
+    return { error: 'Dados inválidos' }
+  }
+
+  const { data, error } = await supabase
+    .from('recurring_expenses')
+    .update(validatedData.data)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard')
+  return { success: true, data }
+}
+
 export async function deleteRecurringExpense(id: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

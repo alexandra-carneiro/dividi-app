@@ -4,7 +4,8 @@ import { useState, useMemo, useTransition, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { addExpense, updateExpense, deleteExpense } from '../actions/expenses'
 import { updateHouseholdSettings } from '../actions/settings'
-import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses } from '../actions/recurring'
+import { inviteUser } from '../actions/invite'
+import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses, updateRecurringExpense } from '../actions/recurring'
 import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
@@ -47,6 +48,7 @@ export default function DashboardClient({
   const [detectedHeaders, setDetectedHeaders] = useState<string[]>([])
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isRecurringOpen, setIsRecurringOpen] = useState(false)
+  const [recurringToEdit, setRecurringToEdit] = useState<any>(null)
   const [recurringDate, setRecurringDate] = useState(new Date().toISOString().split('T')[0])
   const [isPending, startTransition] = useTransition()
 
@@ -388,42 +390,6 @@ export default function DashboardClient({
     window.location.href = '/login'
   }
 
-  const handleInvite = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    
-    // 1. Buscar o perfil pelo e-mail para obter o user_id
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .single()
-
-    if (profileError || !profile) {
-      alert('A pessoa precisa criar a conta primeiro com o e-mail: ' + email)
-      return
-    }
-
-    // 2. Adicionar na tabela household_members usando o user_id encontrado
-    const { error } = await supabase.from('household_members').insert({
-        household_id: householdId,
-        user_id: profile.id,
-        email: email
-    })
-    
-    if(!error) {
-       alert('Sucesso! Agora a pessoa já tem acesso aos dados e gastos compartilhados.')
-       setIsInviteOpen(false)
-    } else {
-       if (error.code === '23505') {
-         alert('Esta pessoa já foi convidada ou já faz parte do grupo.')
-       } else {
-         alert('Erro ao convidar: ' + error.message)
-       }
-    }
-  }
-
   const exportToExcel = () => {
     if (monthExpenses.length === 0) {
       alert('Não há gastos neste mês para exportar.')
@@ -478,13 +444,23 @@ export default function DashboardClient({
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     startTransition(async () => {
-      const result = await addRecurringExpense(formData)
-      if (result.success && result.data) {
-        setRecurringExpenses(prev => [...prev, result.data])
-        const formElement = e.target as HTMLFormElement
-        formElement.reset()
+      let result
+      if (recurringToEdit) {
+        result = await updateRecurringExpense(recurringToEdit.id, formData)
       } else {
-        alert('Erro ao adicionar gasto fixo: ' + result.error)
+        result = await addRecurringExpense(formData)
+      }
+
+      if (result.success && result.data) {
+        if (recurringToEdit) {
+          setRecurringExpenses(prev => prev.map(r => r.id === recurringToEdit.id ? result.data : r))
+          setRecurringToEdit(null)
+        } else {
+          setRecurringExpenses(prev => [...prev, result.data])
+        }
+        e.currentTarget.reset()
+      } else {
+        alert('Erro ao salvar gasto fixo: ' + result.error)
       }
     })
   }
@@ -700,9 +676,14 @@ export default function DashboardClient({
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-bold">{formatMoney(Number(req.amount))}</span>
-                        <button onClick={() => handleDeleteRecurring(req.id)} className="text-red-400 hover:text-red-600 p-1">
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setRecurringToEdit(req)} className="text-indigo-400 hover:text-indigo-600 p-1">
+                            <Edit2 size={16} />
+                          </button>
+                          <button onClick={() => handleDeleteRecurring(req.id)} className="text-red-400 hover:text-red-600 p-1">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -729,40 +710,49 @@ export default function DashboardClient({
                 </div>
             </div>
 
-            <form onSubmit={handleAddRecurring} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <h4 className="font-semibold text-sm mb-3 text-indigo-800 uppercase tracking-wider">Adicionar Novo Gasto Fixo</h4>
+            <form onSubmit={handleAddRecurring} className={`p-4 rounded-xl border transition-all ${recurringToEdit ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-semibold text-sm text-indigo-800 uppercase tracking-wider">
+                  {recurringToEdit ? 'Editando Gasto Fixo' : 'Adicionar Novo Gasto Fixo'}
+                </h4>
+                {recurringToEdit && (
+                  <button type="button" onClick={() => setRecurringToEdit(null)} className="text-[10px] font-bold text-indigo-600 hover:underline">
+                    CANCELAR EDIÇÃO
+                  </button>
+                )}
+              </div>
               <input type="hidden" name="household_id" value={householdId} />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-medium mb-1 text-slate-600">Descrição</label>
-                  <input type="text" name="description" required className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Aluguel" />
+                  <input type="text" name="description" required defaultValue={recurringToEdit?.description || ''} className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Aluguel" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 text-slate-600">Dia Venc.</label>
-                  <input type="number" name="day_of_month" min="1" max="31" defaultValue="1" required className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  <input type="number" name="day_of_month" min="1" max="31" defaultValue={recurringToEdit?.day_of_month || '1'} required className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 <div>
                   <label className="block text-xs font-medium mb-1 text-slate-600">Valor</label>
-                  <input type="number" name="amount" step="0.01" min="0.01" required className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  <input type="number" name="amount" step="0.01" min="0.01" required defaultValue={recurringToEdit?.amount || ''} className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 text-slate-600">Quem paga?</label>
-                  <select name="payer" className="w-full p-2 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <select name="payer" defaultValue={recurringToEdit?.payer || 'Alê'} className="w-full p-2 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
                     <option value="Alê">Alê</option>
                     <option value="Maria">Maria</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 text-slate-600">Categoria</label>
-                  <select name="category" defaultValue="Contas" className="w-full p-2 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <select name="category" defaultValue={recurringToEdit?.category || 'Contas'} className="w-full p-2 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
-              <button type="submit" disabled={isPending} className="w-full p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md transition disabled:opacity-50">
-                {isPending ? 'Salvando...' : 'Salvar Gasto Fixo'}
+              <button type="submit" disabled={isPending} className={`w-full p-3 text-white rounded-xl font-bold text-sm shadow-md transition disabled:opacity-50 ${recurringToEdit ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800'}`}>
+                {isPending ? 'Salvando...' : (recurringToEdit ? 'Salvar Alterações' : 'Salvar Gasto Fixo')}
               </button>
             </form>
           </div>
