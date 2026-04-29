@@ -15,6 +15,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Dividi - Gastos Compartilhados",
   description: "Controle financeiro e divisão de despesas simples.",
+  manifest: "/manifest.json",
+  themeColor: "#4f46e5",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Dividi",
+  },
 };
 
 export default function RootLayout({

@@ -37,6 +37,7 @@ export default async function DashboardPage() {
 
   // Buscar despesas iniciais
   let initialExpenses: any[] = []
+  let initialRecurring: any[] = []
   let householdData = null
   if (householdId) {
     const { data: exps } = await supabase
@@ -56,6 +57,15 @@ export default async function DashboardPage() {
       .single()
 
     householdData = hh
+
+    const { data: recExps } = await supabase
+      .from('recurring_expenses')
+      .select('*')
+      .eq('household_id', householdId)
+    
+    if (recExps) {
+      initialRecurring = recExps
+    }
   }
 
   return (
@@ -66,6 +76,7 @@ export default async function DashboardPage() {
       initialMonthlyBudget={householdData?.monthly_budget ?? 250.00}
       initialWeeklyBudget={householdData?.weekly_budget ?? 62.50}
       initialCurrency={householdData?.currency ?? 'BRL'}
+      initialRecurringExpenses={initialRecurring}
     />
   )
 }

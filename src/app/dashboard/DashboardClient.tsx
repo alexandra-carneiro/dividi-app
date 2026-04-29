@@ -1,10 +1,12 @@
-'use client'
-
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2 } from 'lucide-react'
+import { addExpense, updateExpense, deleteExpense } from '../actions/expenses'
+import { updateHouseholdSettings } from '../actions/settings'
+import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses } from '../actions/recurring'
+import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
+import Charts from './Charts'
 
 export default function DashboardClient({ 
   initialExpenses, 
@@ -12,16 +14,19 @@ export default function DashboardClient({
   userEmail,
   initialMonthlyBudget,
   initialWeeklyBudget,
-  initialCurrency
+  initialCurrency,
+  initialRecurringExpenses
 }: { 
   initialExpenses: any[], 
   householdId: string, 
   userEmail: string,
   initialMonthlyBudget: number,
   initialWeeklyBudget: number,
-  initialCurrency: string
+  initialCurrency: string,
+  initialRecurringExpenses: any[]
 }) {
   const [expenses, setExpenses] = useState(initialExpenses)
+  const [recurringExpenses, setRecurringExpenses] = useState(initialRecurringExpenses)
   const [monthlyBudget, setMonthlyBudget] = useState(initialMonthlyBudget)
   const [weeklyBudget, setWeeklyBudget] = useState(initialWeeklyBudget)
   const [currency, setCurrency] = useState(initialCurrency)
@@ -39,11 +44,37 @@ export default function DashboardClient({
   const [pendingImports, setPendingImports] = useState<any[]>([])
   const [detectedHeaders, setDetectedHeaders] = useState<string[]>([])
   const [isInviteOpen, setIsInviteOpen] = useState(false)
+  const [isRecurringOpen, setIsRecurringOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  
+  const CATEGORIES = ['Mercado', 'Contas', 'Lazer', 'Saúde', 'Transporte', 'Outros']
   
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
+
+  useEffect(() => {
+    // Sincronização em Tempo Real (Realtime Magic)
+    const channel = supabase.channel('realtime_expenses')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses', filter: `household_id=eq.${householdId}` }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setExpenses(prev => {
+            if (prev.find(e => e.id === payload.new.id)) return prev
+            return [...prev, payload.new]
+          })
+        } else if (payload.eventType === 'UPDATE') {
+          setExpenses(prev => prev.map(e => e.id === payload.new.id ? payload.new : e))
+        } else if (payload.eventType === 'DELETE') {
+          setExpenses(prev => prev.filter(e => e.id !== payload.old.id))
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [householdId, supabase])
 
   const monthExpenses = useMemo(() => {
     const year = currentDate.getFullYear()
@@ -85,36 +116,34 @@ export default function DashboardClient({
 
   const handleAddExpense = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const form = e.currentTarget
-    const formData = new FormData(form)
+    const formData = new FormData(e.currentTarget)
+    if (!formData.get('description')) {
+      formData.set('description', 'Mercado')
+    }
     
-    const expData = {
-      household_id: householdId,
-      date: formData.get('date') as string,
-      amount: parseFloat(formData.get('amount') as string),
-      payer: formData.get('payer') as string,
-      description: (formData.get('description') as string) || 'Sem descrição'
-    }
-
-    if (expenseToEdit) {
-      const { data, error } = await supabase.from('expenses').update(expData).eq('id', expenseToEdit.id).select().single()
-      if (!error && data) {
-        setExpenses(prev => prev.map(e => e.id === expenseToEdit.id ? data : e))
-        setIsFormOpen(false)
-        setExpenseToEdit(null)
+    startTransition(async () => {
+      if (expenseToEdit) {
+        const result = await updateExpense(expenseToEdit.id, formData)
+        if (result.success && result.data) {
+          setExpenses(prev => prev.map(exp => exp.id === expenseToEdit.id ? result.data : exp))
+          setIsFormOpen(false)
+          setExpenseToEdit(null)
+        } else {
+          alert('Erro ao atualizar gasto: ' + (result.error || 'Desconhecido'))
+        }
       } else {
-        alert('Erro ao atualizar gasto.')
+        const result = await addExpense(formData)
+        if (result.success && result.data) {
+          setExpenses(prev => [...prev, result.data])
+          setIsFormOpen(false)
+          // Using standard DOM method to reset form
+          const formElement = document.getElementById('expenseForm') as HTMLFormElement
+          if (formElement) formElement.reset()
+        } else {
+          alert('Erro ao salvar gasto: ' + (result.error || 'Desconhecido'))
+        }
       }
-    } else {
-      const { data, error } = await supabase.from('expenses').insert(expData).select().single()
-      if (!error && data) {
-        setExpenses(prev => [...prev, data])
-        setIsFormOpen(false)
-        form.reset()
-      } else {
-        alert('Erro ao salvar gasto.')
-      }
-    }
+    })
   }
 
   const openEditExpense = (exp: any) => {
@@ -124,10 +153,14 @@ export default function DashboardClient({
 
   const handleDelete = async (id: string) => {
     if (confirm('Excluir este gasto?')) {
-      const { error } = await supabase.from('expenses').delete().eq('id', id)
-      if (!error) {
-        setExpenses(prev => prev.filter(e => e.id !== id))
-      }
+      startTransition(async () => {
+        const result = await deleteExpense(id)
+        if (result.success) {
+          setExpenses(prev => prev.filter(e => e.id !== id))
+        } else {
+          alert('Erro ao excluir: ' + result.error)
+        }
+      })
     }
   }
 
@@ -379,24 +412,47 @@ export default function DashboardClient({
     }
   }
 
+  const exportToExcel = () => {
+    if (monthExpenses.length === 0) {
+      alert('Não há gastos neste mês para exportar.')
+      return
+    }
+
+    const dataToExport = monthExpenses.map(exp => ({
+      Data: exp.date.split('-').reverse().join('/'),
+      Descrição: exp.description,
+      Categoria: exp.category || 'Outros',
+      Pagador: exp.payer,
+      Valor: Number(exp.amount)
+    }))
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Gastos")
+    const monthName = currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).replace(' de ', '_')
+    XLSX.writeFile(wb, `Dividi_${monthName}.xlsx`)
+  }
+
   const handleUpdateLimits = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    // Add missing inputs manually since they might not be in a FormData if we use controlled state
+    formData.append('monthly_budget', localMonthly.toString())
+    formData.append('weekly_budget', localWeekly.toString())
+    formData.append('currency', localCurrency)
 
-    const { error } = await supabase.from('households').update({
-      monthly_budget: localMonthly,
-      weekly_budget: localWeekly,
-      currency: localCurrency
-    }).eq('id', householdId)
-
-    if (!error) {
-      setMonthlyBudget(localMonthly)
-      setWeeklyBudget(localWeekly)
-      setCurrency(localCurrency)
-      setIsSettingsOpen(false)
-      alert('Configurações atualizadas com sucesso!')
-    } else {
-      alert('Erro ao atualizar configurações.')
-    }
+    startTransition(async () => {
+      const result = await updateHouseholdSettings(householdId, formData)
+      if (result.success) {
+        setMonthlyBudget(localMonthly)
+        setWeeklyBudget(localWeekly)
+        setCurrency(localCurrency)
+        setIsSettingsOpen(false)
+        alert('Configurações atualizadas com sucesso!')
+      } else {
+        alert('Erro ao atualizar configurações: ' + result.error)
+      }
+    })
   }
 
   const openSettings = () => {
@@ -404,6 +460,49 @@ export default function DashboardClient({
     setLocalWeekly(weeklyBudget)
     setLocalCurrency(currency)
     setIsSettingsOpen(true)
+  }
+
+  const handleAddRecurring = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    startTransition(async () => {
+      const result = await addRecurringExpense(formData)
+      if (result.success && result.data) {
+        setRecurringExpenses(prev => [...prev, result.data])
+        const formElement = e.target as HTMLFormElement
+        formElement.reset()
+      } else {
+        alert('Erro ao adicionar gasto fixo: ' + result.error)
+      }
+    })
+  }
+
+  const handleDeleteRecurring = async (id: string) => {
+    if (confirm('Excluir este gasto fixo?')) {
+      startTransition(async () => {
+        const result = await deleteRecurringExpense(id)
+        if (result.success) {
+          setRecurringExpenses(prev => prev.filter(e => e.id !== id))
+        } else {
+          alert('Erro ao excluir: ' + result.error)
+        }
+      })
+    }
+  }
+
+  const handleApplyRecurring = async () => {
+    const monthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-01`
+    startTransition(async () => {
+      const result = await applyRecurringExpenses(householdId, monthStr)
+      if (result.success) {
+        alert(`${result.count} gastos fixos lançados neste mês! Atualize a página se os dados não aparecerem imediatamente (o realtime pode estar desativado).`)
+        setIsRecurringOpen(false)
+        // Forçar reload na tela para carregar do DB, ou depender do revalidatePath
+        window.location.reload()
+      } else {
+        alert('Erro ao lançar gastos fixos: ' + result.error)
+      }
+    })
   }
 
   return (
@@ -418,6 +517,9 @@ export default function DashboardClient({
               <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic">Dividi</h1>
             </div>
             <div className="flex gap-3">
+              <button onClick={() => setIsRecurringOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Gastos Fixos">
+                <Repeat size={20} />
+              </button>
               <button onClick={openSettings} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Configurações">
                 <Settings size={20} />
               </button>
@@ -434,8 +536,11 @@ export default function DashboardClient({
             <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-2 hover:bg-white/20 rounded-lg">
               <ChevronLeft size={20} />
             </button>
-            <h2 className="font-semibold text-lg">
+            <h2 className="font-semibold text-lg flex items-center gap-2">
               {currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
+              <button onClick={exportToExcel} className="p-1 hover:bg-white/20 rounded transition text-emerald-300" title="Exportar Mês para Excel">
+                <Download size={16} />
+              </button>
             </h2>
             <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-2 hover:bg-white/20 rounded-lg">
               <ChevronRight size={20} />
@@ -445,6 +550,9 @@ export default function DashboardClient({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-10">
+        
+        <Charts expenses={monthExpenses} currency={currency} />
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <section className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-xl flex flex-col justify-center">
             <div className="flex flex-col sm:flex-row justify-between border-b border-slate-100 pb-4 mb-4 sm:items-center gap-4">
@@ -540,6 +648,84 @@ export default function DashboardClient({
           </form>
         )}
 
+        {isRecurringOpen && (
+          <div className="bg-white p-6 rounded-2xl shadow-xl mb-6 animate-in slide-in-from-top-4 border border-slate-200">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-xl text-slate-800">Gastos Fixos Recorrentes</h3>
+              <button onClick={() => setIsRecurringOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            <p className="text-sm text-slate-500 mb-4">Defina contas fixas (ex: Aluguel, Internet) e lance todas de uma vez no mês atual.</p>
+            
+            <div className="mb-6">
+              {recurringExpenses.length === 0 ? (
+                <p className="text-sm text-slate-400 italic">Nenhum gasto fixo cadastrado.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {recurringExpenses.map(req => (
+                    <li key={req.id} className="py-3 flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-slate-800 flex items-center gap-2">
+                          {req.description} 
+                          <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">{req.category}</span>
+                        </p>
+                        <p className="text-xs text-slate-500">Pagador: {req.payer}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold">{formatMoney(Number(req.amount))}</span>
+                        <button onClick={() => handleDeleteRecurring(req.id)} className="text-red-400 hover:text-red-600 p-1">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {recurringExpenses.length > 0 && (
+                <button 
+                  onClick={handleApplyRecurring} 
+                  disabled={isPending}
+                  className="w-full mt-4 p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Repeat size={18} /> {isPending ? 'Lançando...' : 'Lançar todos neste mês'}
+                </button>
+              )}
+            </div>
+
+            <form onSubmit={handleAddRecurring} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <h4 className="font-semibold text-sm mb-3">Adicionar Novo Gasto Fixo</h4>
+              <input type="hidden" name="household_id" value={householdId} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Descrição</label>
+                  <input type="text" name="description" required className="w-full p-2 text-sm border rounded-lg" placeholder="Ex: Aluguel" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Valor</label>
+                  <input type="number" name="amount" step="0.01" min="0.01" required className="w-full p-2 text-sm border rounded-lg" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Quem paga?</label>
+                  <select name="payer" className="w-full p-2 text-sm border rounded-lg bg-white">
+                    <option value="Alê">Alê</option>
+                    <option value="Maria">Maria</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Categoria</label>
+                  <select name="category" defaultValue="Contas" className="w-full p-2 text-sm border rounded-lg bg-white">
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+              <button type="submit" disabled={isPending} className="w-full p-2 bg-indigo-600 text-white rounded-lg font-medium text-sm disabled:opacity-50">
+                Adicionar Fixo
+              </button>
+            </form>
+          </div>
+        )}
+
         {isImportOpen && pendingImports.length === 0 && (
           <div className="bg-white p-5 rounded-2xl shadow-lg mb-6 animate-in slide-in-from-top-4">
             <h3 className="font-semibold mb-2">Importar Planilha (Excel ou CSV)</h3>
@@ -611,8 +797,9 @@ export default function DashboardClient({
         )}
 
         {isFormOpen && (
-          <form onSubmit={handleAddExpense} className="bg-white p-5 rounded-2xl shadow-lg mb-6 animate-in slide-in-from-top-4">
+          <form id="expenseForm" onSubmit={handleAddExpense} className="bg-white p-5 rounded-2xl shadow-lg mb-6 animate-in slide-in-from-top-4">
             <h3 className="font-semibold mb-4">{expenseToEdit ? 'Editar Gasto' : 'Novo Gasto'}</h3>
+            <input type="hidden" name="household_id" value={householdId} />
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Data</label>
@@ -637,9 +824,17 @@ export default function DashboardClient({
                 <label className="block text-sm font-medium mb-1">Descrição</label>
                 <input type="text" name="description" defaultValue={expenseToEdit?.description || ''} className="w-full p-2 border rounded-lg" />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Categoria</label>
+                <select name="category" defaultValue={expenseToEdit?.category || 'Outros'} className="w-full p-2 border rounded-lg bg-white">
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="flex-1 p-2 bg-slate-100 rounded-lg font-medium">Cancelar</button>
-                <button type="submit" className="flex-1 p-2 bg-indigo-600 text-white rounded-lg font-medium">Salvar</button>
+                <button type="submit" disabled={isPending} className="flex-1 p-2 bg-indigo-600 text-white rounded-lg font-medium disabled:opacity-50">
+                  {isPending ? 'Salvando...' : 'Salvar'}
+                </button>
               </div>
             </div>
           </form>
@@ -670,7 +865,10 @@ export default function DashboardClient({
                             {exp.payer.charAt(0)}
                           </div>
                           <div>
-                            <p className="font-medium text-sm text-slate-800">{exp.description}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm text-slate-800">{exp.description}</p>
+                              <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">{exp.category || 'Outros'}</span>
+                            </div>
                             <p className="text-xs text-slate-400">{exp.date.split('-').reverse().slice(0,2).join('/')}</p>
                           </div>
                         </div>

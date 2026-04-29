@@ -28,15 +28,29 @@ CREATE TABLE public.expenses (
     amount numeric(10,2) NOT NULL,
     payer text NOT NULL,
     description text,
+    category text DEFAULT 'Outros' NOT NULL,
     created_by uuid REFERENCES auth.users(id),
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+CREATE TABLE public.recurring_expenses (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    household_id uuid REFERENCES public.households(id) ON DELETE CASCADE,
+    amount numeric(10,2) NOT NULL,
+    payer text NOT NULL,
+    description text NOT NULL,
+    category text DEFAULT 'Outros' NOT NULL,
+    created_by uuid REFERENCES auth.users(id),
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 
 -- 2. Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.households ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.household_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.recurring_expenses ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS Policies
 -- Profiles: everyone can see profiles to allow invitation lookup
@@ -85,6 +99,27 @@ CREATE POLICY "Users can delete expenses" ON public.expenses
     );
 
 CREATE POLICY "Users can update expenses" ON public.expenses
+    FOR UPDATE USING (
+        household_id IN (SELECT household_id FROM public.household_members WHERE user_id = auth.uid())
+    );
+
+-- Recurring Expenses: same as expenses
+CREATE POLICY "Users can view recurring_expenses of their households" ON public.recurring_expenses
+    FOR SELECT USING (
+        household_id IN (SELECT household_id FROM public.household_members WHERE user_id = auth.uid())
+    );
+
+CREATE POLICY "Users can insert recurring_expenses" ON public.recurring_expenses
+    FOR INSERT WITH CHECK (
+        household_id IN (SELECT household_id FROM public.household_members WHERE user_id = auth.uid())
+    );
+
+CREATE POLICY "Users can delete recurring_expenses" ON public.recurring_expenses
+    FOR DELETE USING (
+        household_id IN (SELECT household_id FROM public.household_members WHERE user_id = auth.uid())
+    );
+
+CREATE POLICY "Users can update recurring_expenses" ON public.recurring_expenses
     FOR UPDATE USING (
         household_id IN (SELECT household_id FROM public.household_members WHERE user_id = auth.uid())
     );
