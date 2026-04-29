@@ -7,7 +7,7 @@ import { updateHouseholdSettings } from '../actions/settings'
 import { inviteUser } from '../actions/invite'
 import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses, updateRecurringExpense } from '../actions/recurring'
 import { updateCategoryBudget } from '../actions/budgets'
-import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp } from 'lucide-react'
+import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp, Receipt } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import Charts from './Charts'
@@ -770,8 +770,8 @@ export default function DashboardClient({
                 onClick={() => setRecurringTab('launch')}
                 className={`flex-1 py-3.5 rounded-[1rem] font-black text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${recurringTab === 'launch' ? 'bg-white text-indigo-600 shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
               >
-                <Repeat size={16} />
-                Lançar Pagamentos
+                <Receipt size={16} />
+                Pagar / Lançar
               </button>
               <button 
                 onClick={() => setRecurringTab('manage')}
