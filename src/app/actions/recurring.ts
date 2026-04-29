@@ -9,7 +9,8 @@ const RecurringSchema = z.object({
   amount: z.number().positive(),
   payer: z.string().min(1),
   description: z.string().min(1),
-  category: z.string().min(1)
+  category: z.string().min(1),
+  day_of_month: z.number().min(1).max(31)
 })
 
 export async function addRecurringExpense(formData: FormData) {
@@ -23,7 +24,8 @@ export async function addRecurringExpense(formData: FormData) {
     amount: parseFloat(formData.get('amount') as string),
     payer: formData.get('payer'),
     description: formData.get('description'),
-    category: formData.get('category') || 'Contas'
+    category: formData.get('category') || 'Contas',
+    day_of_month: parseInt(formData.get('day_of_month') as string || '1')
   }
 
   const validatedData = RecurringSchema.safeParse(rawData)
@@ -55,8 +57,8 @@ export async function getRecurringExpenses(householdId: string) {
   return { data }
 }
 
-export async function applyRecurringExpenses(householdId: string, monthDate: string) {
-  // monthDate formato YYYY-MM-01
+export async function applyRecurringExpenses(householdId: string, baseDate: string) {
+  // baseDate formato YYYY-MM-DD (usaremos apenas o ano e mês)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autorizado' }
@@ -68,15 +70,24 @@ export async function applyRecurringExpenses(householdId: string, monthDate: str
 
   if (!recurring || recurring.length === 0) return { error: 'Nenhum gasto recorrente encontrado' }
 
-  const expensesToInsert = recurring.map(r => ({
-    household_id: householdId,
-    date: monthDate,
-    amount: r.amount,
-    payer: r.payer,
-    description: r.description,
-    category: r.category,
-    created_by: user.id
-  }))
+  const [year, month] = baseDate.split('-')
+
+  const expensesToInsert = recurring.map(r => {
+    // Garantir que o dia não ultrapasse o último dia do mês (ex: dia 31 em Fevereiro)
+    const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).getDate()
+    const day = Math.min(r.day_of_month, lastDayOfMonth)
+    const formattedDate = `${year}-${month}-${String(day).padStart(2, '0')}`
+
+    return {
+      household_id: householdId,
+      date: formattedDate,
+      amount: r.amount,
+      payer: r.payer,
+      description: r.description,
+      category: r.category,
+      created_by: user.id
+    }
+  })
 
   const { error } = await supabase.from('expenses').insert(expensesToInsert)
   

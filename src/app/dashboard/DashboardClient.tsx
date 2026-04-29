@@ -692,7 +692,11 @@ export default function DashboardClient({
                           {req.description} 
                           <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">{req.category}</span>
                         </p>
-                        <p className="text-xs text-slate-500">Pagador: {req.payer}</p>
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <span>Pagador: {req.payer}</span>
+                          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                          <span className="font-bold text-indigo-600 underline decoration-indigo-200 underline-offset-2">Todo dia {req.day_of_month}</span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-bold">{formatMoney(Number(req.amount))}</span>
@@ -726,35 +730,39 @@ export default function DashboardClient({
             </div>
 
             <form onSubmit={handleAddRecurring} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <h4 className="font-semibold text-sm mb-3">Adicionar Novo Gasto Fixo</h4>
+              <h4 className="font-semibold text-sm mb-3 text-indigo-800 uppercase tracking-wider">Adicionar Novo Gasto Fixo</h4>
               <input type="hidden" name="household_id" value={householdId} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label className="block text-xs font-medium mb-1">Descrição</label>
-                  <input type="text" name="description" required className="w-full p-2 text-sm border rounded-lg" placeholder="Ex: Aluguel" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium mb-1 text-slate-600">Descrição</label>
+                  <input type="text" name="description" required className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Aluguel" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Valor</label>
-                  <input type="number" name="amount" step="0.01" min="0.01" required className="w-full p-2 text-sm border rounded-lg" />
+                  <label className="block text-xs font-medium mb-1 text-slate-600">Dia Venc.</label>
+                  <input type="number" name="day_of_month" min="1" max="31" defaultValue="1" required className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 <div>
-                  <label className="block text-xs font-medium mb-1">Quem paga?</label>
-                  <select name="payer" className="w-full p-2 text-sm border rounded-lg bg-white">
+                  <label className="block text-xs font-medium mb-1 text-slate-600">Valor</label>
+                  <input type="number" name="amount" step="0.01" min="0.01" required className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-slate-600">Quem paga?</label>
+                  <select name="payer" className="w-full p-2 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
                     <option value="Alê">Alê</option>
                     <option value="Maria">Maria</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1">Categoria</label>
-                  <select name="category" defaultValue="Contas" className="w-full p-2 text-sm border rounded-lg bg-white">
+                  <label className="block text-xs font-medium mb-1 text-slate-600">Categoria</label>
+                  <select name="category" defaultValue="Contas" className="w-full p-2 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
-              <button type="submit" disabled={isPending} className="w-full p-2 bg-indigo-600 text-white rounded-lg font-medium text-sm disabled:opacity-50">
-                Adicionar Fixo
+              <button type="submit" disabled={isPending} className="w-full p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md transition disabled:opacity-50">
+                {isPending ? 'Salvando...' : 'Salvar Gasto Fixo'}
               </button>
             </form>
           </div>
