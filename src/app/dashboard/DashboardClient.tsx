@@ -904,27 +904,29 @@ export default function DashboardClient({
                   </div>
                   <div className="space-y-3">
                     {week.expenses.map((exp: any) => (
-                      <div key={exp.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${exp.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
+                      <div key={exp.id} className="flex items-center justify-between group p-1 hover:bg-slate-50 rounded-lg transition-colors">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${exp.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
                             {exp.payer.charAt(0)}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-sm text-slate-800">{exp.description}</p>
-                              <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">{exp.category || 'Outros'}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-sm text-slate-800 truncate">{exp.description || 'Gasto'}</p>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-400 uppercase rounded-md tracking-wider">{exp.category || 'Outros'}</span>
                             </div>
-                            <p className="text-xs text-slate-400">{exp.date.split('-').reverse().slice(0,2).join('/')}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{exp.date.split('-').reverse().slice(0,2).join('/')}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">{formatMoney(Number(exp.amount))}</span>
-                          <button onClick={() => openEditExpense(exp)} className="text-slate-400 hover:text-slate-600 p-1">
-                            <Edit2 size={16} />
-                          </button>
-                          <button onClick={() => handleDelete(exp.id)} className="text-red-400 hover:text-red-600 p-1">
-                            <Trash2 size={16} />
-                          </button>
+                        <div className="flex items-center gap-2 ml-3">
+                          <span className="font-bold text-sm text-slate-900">{formatMoney(Number(exp.amount))}</span>
+                          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => openEditExpense(exp)} className="text-slate-300 hover:text-indigo-600 p-1.5 transition-colors" title="Editar">
+                              <Edit2 size={14} />
+                            </button>
+                            <button onClick={() => handleDelete(exp.id)} className="text-slate-300 hover:text-red-600 p-1.5 transition-colors" title="Excluir">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
