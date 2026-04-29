@@ -558,38 +558,37 @@ export default function DashboardClient({
               <ChevronRight size={20} />
             </button>
           </div>
+
+          {/* Filtros de Categoria em Destaque */}
+          <div className="mt-8 flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2">
+            <button
+              onClick={() => setCategoryFilter('Todas')}
+              className={`px-6 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shadow-md border uppercase tracking-widest ${
+                categoryFilter === 'Todas' 
+                  ? 'bg-white text-indigo-600 border-white' 
+                  : 'bg-indigo-400/30 text-indigo-100 border-indigo-400/20 hover:bg-white/20'
+              }`}
+            >
+              Tudo
+            </button>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`px-6 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shadow-md border uppercase tracking-widest ${
+                  categoryFilter === cat 
+                    ? 'bg-white text-indigo-600 border-white' 
+                    : 'bg-indigo-400/30 text-indigo-100 border-indigo-400/20 hover:bg-white/20'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-10">
-        
-        {/* Filtros de Categoria */}
-        <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-          <button
-            onClick={() => setCategoryFilter('Todas')}
-            className={`px-5 py-2 rounded-2xl text-xs font-black transition-all whitespace-nowrap shadow-sm border uppercase tracking-widest ${
-              categoryFilter === 'Todas' 
-                ? 'bg-slate-900 text-white border-slate-900' 
-                : 'bg-white text-slate-400 border-slate-200 hover:border-indigo-300'
-            }`}
-          >
-            Tudo
-          </button>
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-5 py-2 rounded-2xl text-xs font-black transition-all whitespace-nowrap shadow-sm border uppercase tracking-widest ${
-                categoryFilter === cat 
-                  ? 'bg-indigo-600 text-white border-indigo-600' 
-                  : 'bg-white text-slate-400 border-slate-200 hover:border-indigo-300'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
         <Charts expenses={filteredExpenses} currency={currency} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
