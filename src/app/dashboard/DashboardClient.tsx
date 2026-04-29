@@ -667,7 +667,7 @@ export default function DashboardClient({
 
         {isSettingsOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsSettingsOpen(false)}>
-            <form onSubmit={handleUpdateLimits} onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <form onSubmit={handleUpdateLimits} onClick={(e) => e.stopPropagation()} className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
               <div className="relative mb-6">
                 <h3 className="font-bold text-2xl text-slate-800 pr-10">Configurações do App</h3>
                 <button type="button" onClick={() => setIsSettingsOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
@@ -931,7 +931,7 @@ export default function DashboardClient({
 
         {isInviteOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsInviteOpen(false)}>
-            <form onSubmit={handleInvite} onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 border border-slate-200">
+            <form onSubmit={handleInvite} onClick={(e) => e.stopPropagation()} className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-xl animate-in zoom-in-95 duration-200 border border-slate-200">
               <div className="relative mb-6">
                 <h3 className="font-bold text-2xl text-slate-800 pr-10">Convidar para a Casa</h3>
                 <button type="button" onClick={() => setIsInviteOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
@@ -955,7 +955,7 @@ export default function DashboardClient({
 
         {isFormOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }}>
-            <form id="expenseForm" onSubmit={handleAddExpense} onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <form id="expenseForm" onSubmit={handleAddExpense} onClick={(e) => e.stopPropagation()} className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
               <div className="relative mb-6">
                 <h3 className="font-bold text-2xl text-slate-800 pr-10">{expenseToEdit ? 'Editar Gasto' : 'Novo Gasto'}</h3>
                 <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
