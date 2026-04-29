@@ -37,6 +37,7 @@ export default function DashboardClient({
   const [weeklyBudget, setWeeklyBudget] = useState(initialWeeklyBudget)
   const [currency, setCurrency] = useState(initialCurrency)
   const [categoryBudgets, setCategoryBudgets] = useState<any[]>(initialCategoryBudgets)
+  const [recurringTab, setRecurringTab] = useState<'launch' | 'manage'>('launch')
   
   // Estados para o formulário de configurações
   const [localMonthly, setLocalMonthly] = useState(initialMonthlyBudget)
@@ -540,6 +541,7 @@ export default function DashboardClient({
       const result = await applyRecurringExpenses(householdId, dateToUse, expenseId)
       if (result.success) {
         alert(expenseId ? 'Gasto lançado com sucesso!' : `${result.count} gastos lançados com sucesso!`)
+        if (!expenseId) setIsRecurringOpen(false) // Fecha o modal se lançar tudo
       } else {
         alert('Erro ao lançar: ' + result.error)
       }
@@ -752,144 +754,177 @@ export default function DashboardClient({
       )}
 
       {isRecurringOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
-            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="relative mb-6">
-                <h3 className="font-bold text-2xl text-slate-800 pr-10">Lançamento de Gastos Fixos</h3>
-                <p className="text-sm text-slate-500">Selecione a data de pagamento e lance cada conta no seu Dashboard.</p>
-                <button type="button" onClick={() => setIsRecurringOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="space-y-3 mb-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {recurringExpenses.length === 0 ? (
-                  <p className="text-center text-slate-400 py-10 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 italic">Nenhum gasto fixo cadastrado ainda.</p>
-                ) : (
-                  recurringExpenses.map(req => (
-                    <div key={req.id} className="group bg-white p-5 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all flex flex-col lg:flex-row lg:items-center gap-6">
-                      
-                      {/* Descrição e Info */}
-                      <div className="flex-1 min-w-[200px]">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-black text-slate-800 text-lg leading-tight">{req.description}</p>
-                          <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-black rounded-full uppercase tracking-widest">{req.category}</span>
-                        </div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pagador: {req.payer}</p>
-                      </div>
-
-                      {/* Controles de Lançamento */}
-                      <div className="flex flex-wrap items-end lg:items-center gap-6">
-                        
-                        <div className="flex flex-col">
-                          <p className="text-[10px] text-slate-400 font-black uppercase mb-1 text-center">Valor</p>
-                          <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 min-w-[120px] text-center">
-                            <p className="font-black text-slate-900">{formatMoney(Number(req.amount))}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col">
-                          <p className="text-[10px] text-slate-400 font-black uppercase mb-1 text-center">Data Pagamento</p>
-                          <input 
-                            type="date" 
-                            id={`date-${req.id}`}
-                            defaultValue={new Date().toISOString().split('T')[0]}
-                            className="p-2.5 text-sm border-2 border-slate-100 rounded-xl bg-white font-black outline-none focus:border-indigo-500 transition-all shadow-sm"
-                          />
-                        </div>
-
-                        <button 
-                          onClick={() => {
-                            const dateVal = (document.getElementById(`date-${req.id}`) as HTMLInputElement).value
-                            handleApplyRecurring(req.id, dateVal)
-                          }} 
-                          className="bg-emerald-500 text-white hover:bg-emerald-600 px-6 py-3 rounded-2xl transition-all shadow-md flex items-center gap-2 group/btn active:scale-95 mt-4 lg:mt-4"
-                        >
-                          <Repeat size={18} className="group-hover/btn:rotate-180 transition-transform duration-500" />
-                          <span className="text-xs font-black uppercase tracking-widest">Lançar</span>
-                        </button>
-
-                        {/* Ações de Edição */}
-                        <div className="flex items-center gap-1 border-l pl-4">
-                          <button onClick={() => setRecurringToEdit(req)} className="p-2.5 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Editar">
-                            <Edit2 size={18} />
-                          </button>
-                          <button onClick={() => handleDeleteRecurring(req.id)} className="p-2.5 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Excluir">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {recurringExpenses.length > 0 && (
-                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
-                  <div className="flex-1">
-                    <h4 className="font-black text-emerald-900 uppercase text-sm tracking-widest">Lançamento em Lote</h4>
-                    <p className="text-xs text-emerald-600 font-medium">Lançar TODOS os gastos acima com a mesma data de uma só vez.</p>
-                  </div>
-                  <div className="flex items-center gap-3 w-full md:w-auto">
-                    <input 
-                      type="date" 
-                      value={recurringDate}
-                      onChange={(e) => setRecurringDate(e.target.value)}
-                      className="flex-1 md:w-40 p-3 text-sm border-2 border-emerald-200 rounded-xl bg-white font-black outline-none focus:border-emerald-500"
-                    />
-                    <button 
-                      onClick={() => handleApplyRecurring()} 
-                      disabled={isPending}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 whitespace-nowrap"
-                    >
-                      <Repeat size={20} className={isPending ? "animate-spin" : ""} /> 
-                      LANÇAR TUDO
-                    </button>
-                  </div>
-                </div>
-              )}
-
-            <form onSubmit={handleAddRecurring} className={`p-4 rounded-xl border transition-all ${recurringToEdit ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-semibold text-sm text-indigo-800 uppercase tracking-wider">
-                  {recurringToEdit ? 'Editando Gasto Fixo' : 'Adicionar Novo Gasto Fixo'}
-                </h4>
-                {recurringToEdit && (
-                  <button type="button" onClick={() => setRecurringToEdit(null)} className="text-[10px] font-bold text-indigo-600 hover:underline">
-                    CANCELAR EDIÇÃO
-                  </button>
-                )}
-              </div>
-              <input type="hidden" name="household_id" value={householdId} />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                <div className="sm:col-span-3">
-                  <label className="block text-xs font-medium mb-1 text-slate-600">Descrição do Gasto Fixo (Ex: Aluguel, Internet)</label>
-                  <input type="text" name="description" required defaultValue={recurringToEdit?.description || ''} className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Aluguel" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <div>
-                  <label className="block text-xs font-medium mb-1 text-slate-600">Valor</label>
-                  <input type="number" name="amount" step="0.01" min="0.01" required defaultValue={recurringToEdit?.amount || ''} className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1 text-slate-600">Quem paga?</label>
-                  <select name="payer" defaultValue={recurringToEdit?.payer || 'Alê'} className="w-full p-2 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <option value="Alê">Alê</option>
-                    <option value="Maria">Maria</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1 text-slate-600">Categoria</label>
-                  <select name="category" defaultValue={recurringToEdit?.category || 'Contas'} className="w-full p-2 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-              <button type="submit" disabled={isPending} className={`w-full p-3 text-white rounded-xl font-bold text-sm shadow-md transition disabled:opacity-50 ${recurringToEdit ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-700 hover:bg-slate-800'}`}>
-                {isPending ? 'Salvando...' : (recurringToEdit ? 'Salvar Alterações' : 'Salvar Gasto Fixo')}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
+          <div className="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="relative mb-6">
+              <h3 className="font-bold text-3xl text-slate-800 pr-10">Gastos Fixos</h3>
+              <p className="text-slate-500 font-medium">Lance seus pagamentos ou gerencie seus modelos.</p>
+              <button type="button" onClick={() => setIsRecurringOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar">
+                <X size={24} />
               </button>
-            </form>
+            </div>
+
+            {/* Seletor de Abas */}
+            <div className="flex gap-2 bg-slate-100 p-1.5 rounded-[1.25rem] mb-8">
+              <button 
+                onClick={() => setRecurringTab('launch')}
+                className={`flex-1 py-3.5 rounded-[1rem] font-black text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${recurringTab === 'launch' ? 'bg-white text-indigo-600 shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                <Repeat size={16} />
+                Lançar Pagamentos
+              </button>
+              <button 
+                onClick={() => setRecurringTab('manage')}
+                className={`flex-1 py-3.5 rounded-[1rem] font-black text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${recurringTab === 'manage' ? 'bg-white text-indigo-600 shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                <Settings size={16} />
+                Gerenciar Modelos
+              </button>
+            </div>
+
+            {recurringTab === 'launch' ? (
+              <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                <div className="space-y-3 mb-10">
+                  {recurringExpenses.length === 0 ? (
+                    <div className="text-center py-20 px-6 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-100">
+                      <p className="text-slate-400 font-black text-lg mb-4 italic">Nenhum gasto fixo cadastrado.</p>
+                      <button onClick={() => setRecurringTab('manage')} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md">Cadastrar Primeiro Gasto</button>
+                    </div>
+                  ) : (
+                    recurringExpenses.map(req => (
+                      <div key={req.id} className="group bg-white p-6 rounded-[1.5rem] border border-slate-100 hover:border-indigo-200 hover:shadow-xl transition-all flex flex-col lg:flex-row lg:items-center gap-6">
+                        <div className="flex-1 min-w-[220px]">
+                          <div className="flex items-center gap-3 mb-1.5">
+                            <p className="font-black text-slate-800 text-xl leading-tight">{req.description}</p>
+                            <span className="px-3 py-1 bg-indigo-50 text-indigo-500 text-[10px] font-black rounded-full uppercase tracking-widest">{req.category}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Pagador: {req.payer}</p>
+                        </div>
+
+                        <div className="flex flex-wrap items-end lg:items-center gap-8">
+                          <div className="flex flex-col items-center">
+                            <p className="text-[10px] text-slate-400 font-black uppercase mb-2 tracking-widest">Valor</p>
+                            <div className="bg-slate-50 px-5 py-2.5 rounded-xl border border-slate-100 min-w-[130px] text-center">
+                              <p className="font-black text-slate-900 text-lg">{formatMoney(Number(req.amount))}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col">
+                            <p className="text-[10px] text-slate-400 font-black uppercase mb-2 tracking-widest text-center">Data Pagamento</p>
+                            <input 
+                              type="date" 
+                              id={`date-${req.id}`}
+                              defaultValue={new Date().toISOString().split('T')[0]}
+                              className="p-3 text-sm border-2 border-slate-100 rounded-xl bg-white font-black outline-none focus:border-indigo-500 transition-all shadow-sm"
+                            />
+                          </div>
+
+                          <button 
+                            onClick={() => {
+                              const dateVal = (document.getElementById(`date-${req.id}`) as HTMLInputElement).value
+                              handleApplyRecurring(req.id, dateVal)
+                            }} 
+                            className="bg-emerald-500 text-white hover:bg-emerald-600 px-8 py-3.5 rounded-2xl transition-all shadow-lg flex items-center gap-3 group/btn active:scale-95"
+                          >
+                            <Repeat size={20} className="group-hover/btn:rotate-180 transition-transform duration-500" />
+                            <span className="text-xs font-black uppercase tracking-widest">Lançar</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {recurringExpenses.length > 0 && (
+                  <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                    <div className="relative z-10 text-center md:text-left">
+                      <h4 className="font-black text-white uppercase text-lg tracking-widest mb-1">Lançamento em Lote</h4>
+                      <p className="text-indigo-100/80 text-sm font-medium">Lançar todos os gastos acima com a mesma data.</p>
+                    </div>
+                    <div className="flex items-center gap-4 w-full md:w-auto relative z-10">
+                      <input 
+                        type="date" 
+                        value={recurringDate}
+                        onChange={(e) => setRecurringDate(e.target.value)}
+                        className="flex-1 md:w-44 p-4 text-sm border-none rounded-2xl bg-white/10 text-white font-black outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-md"
+                      />
+                      <button 
+                        onClick={() => handleApplyRecurring()} 
+                        disabled={isPending}
+                        className="bg-white text-indigo-600 px-10 py-4 rounded-2xl font-black shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 whitespace-nowrap"
+                      >
+                        <Repeat size={22} className={isPending ? "animate-spin" : ""} /> 
+                        LANÇAR TUDO
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-10">
+                <form onSubmit={handleAddRecurring} className={`p-8 rounded-[2rem] border-2 transition-all ${recurringToEdit ? 'bg-indigo-50 border-indigo-200 ring-4 ring-indigo-100' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex justify-between items-center mb-8">
+                    <div>
+                      <h4 className="font-black text-indigo-900 uppercase text-sm tracking-[0.2em]">{recurringToEdit ? 'Editando Modelo' : 'Novo Gasto Fixo'}</h4>
+                      <p className="text-xs text-slate-500 mt-1 font-bold">Defina os valores base que serão usados nos lançamentos.</p>
+                    </div>
+                    {recurringToEdit && (
+                      <button type="button" onClick={() => setRecurringToEdit(null)} className="bg-white px-4 py-2 rounded-lg text-[10px] font-black text-indigo-500 hover:bg-red-50 hover:text-red-500 shadow-sm transition-all uppercase tracking-widest border border-indigo-100">Cancelar Edição</button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-6 mb-8">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.15em] ml-2">Descrição do Gasto</label>
+                      <input type="text" name="description" required defaultValue={recurringToEdit?.description || ''} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm" placeholder="Ex: Aluguel" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.15em] ml-2">Valor Base</label>
+                      <input type="number" step="0.01" name="amount" required defaultValue={recurringToEdit?.amount || ''} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm" placeholder="0,00" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.15em] ml-2">Quem Paga?</label>
+                      <select name="payer" defaultValue={recurringToEdit?.payer || 'Alê'} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm">
+                        <option value="Alê">Alê</option>
+                        <option value="Maria">Maria</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.15em] ml-2">Categoria</label>
+                      <select name="category" defaultValue={recurringToEdit?.category || 'Contas'} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm">
+                        {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <button type="submit" className="w-full p-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] font-black shadow-xl transition-all active:scale-[0.98] uppercase tracking-[0.2em] text-sm">
+                    {recurringToEdit ? 'Atualizar Modelo' : 'Cadastrar Gasto Fixo'}
+                  </button>
+                </form>
+
+                <div className="border-t-2 border-slate-100 pt-10">
+                  <h4 className="font-black text-slate-400 uppercase text-[10px] tracking-[0.3em] mb-8 text-center">Modelos de Gastos Salvos</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {recurringExpenses.map(req => (
+                      <div key={req.id} className="p-5 bg-white rounded-2xl border border-slate-100 flex items-center justify-between group hover:border-indigo-200 hover:shadow-lg transition-all">
+                        <div>
+                          <p className="font-black text-slate-800 text-lg">{req.description}</p>
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{formatMoney(Number(req.amount))} • {req.payer}</p>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setRecurringToEdit(req)} className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"><Edit2 size={18} /></button>
+                          <button onClick={() => handleDeleteRecurring(req.id)} className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 size={18} /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
