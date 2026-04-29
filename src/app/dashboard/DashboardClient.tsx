@@ -689,32 +689,22 @@ export default function DashboardClient({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Orçamento Mensal</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0" 
-                  value={localMonthly}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 0
-                    setLocalMonthly(val)
-                    setLocalWeekly(val / 4)
-                  }}
-                  required 
-                  className="w-full p-3 border border-slate-300 rounded-xl text-slate-900 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Orçamento Semanal (R$)</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="0" 
-                  value={localWeekly}
-                  onChange={(e) => setLocalWeekly(parseFloat(e.target.value) || 0)}
-                  required 
-                  className="w-full p-3 border border-slate-300 rounded-xl text-slate-900 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" 
-                />
+                <label className="block text-sm font-bold text-slate-700 mb-2">Orçamento Mensal (Geral)</label>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    min="0" 
+                    value={localMonthly}
+                    onChange={(e) => setLocalMonthly(parseFloat(e.target.value))}
+                    className="flex-1 p-3 border-2 border-slate-200 rounded-xl text-slate-900 font-black text-xl focus:border-indigo-500 outline-none transition-all" 
+                  />
+                  <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
+                    <p className="text-[10px] font-bold text-indigo-400 uppercase leading-none mb-1">Por Semana</p>
+                    <p className="font-black text-indigo-600 leading-none">{formatMoney(localMonthly / totalWeeksInMonth)}</p>
+                  </div>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2 italic">* Valor semanal calculado automaticamente com base nas {totalWeeksInMonth} semanas deste mês.</p>
               </div>
 
             <div className="mt-10 border-t pt-8">
