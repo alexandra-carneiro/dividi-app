@@ -924,12 +924,12 @@ export default function DashboardClient({
                         {/* Coluna 3: Valor e Ações */}
                         <div className="flex items-center gap-2 text-right">
                           <span className="font-bold text-sm text-slate-900 whitespace-nowrap">{formatMoney(Number(exp.amount))}</span>
-                          <div className="flex items-center gap-0.5 border-l pl-2 border-slate-100">
-                            <button onClick={() => openEditExpense(exp)} className="text-slate-400 hover:text-indigo-600 p-1.5 transition-colors" title="Editar">
-                              <Edit2 size={14} />
+                          <div className="flex items-center gap-1 border-l pl-2 border-slate-100">
+                            <button onClick={() => openEditExpense(exp)} className="text-indigo-500 hover:text-indigo-700 p-2 transition-colors" title="Editar">
+                              <Edit2 size={16} />
                             </button>
-                            <button onClick={() => handleDelete(exp.id)} className="text-slate-400 hover:text-red-600 p-1.5 transition-colors" title="Excluir">
-                              <Trash2 size={14} />
+                            <button onClick={() => handleDelete(exp.id)} className="text-red-500 hover:text-red-700 p-2 transition-colors" title="Excluir">
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </div>
