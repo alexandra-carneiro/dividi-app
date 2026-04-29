@@ -1,4 +1,5 @@
 'use client'
+// Dividi App - Dashboard Client - v1.1.0 (Tabbed Settings & Incomes)
 
 import { useState, useMemo, useTransition, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
