@@ -368,7 +368,7 @@ export default function DashboardClient({
     })
     
     if(!error) {
-       alert('Sucesso! Agora a pessoa já tem acesso a esta conta.')
+       alert('Sucesso! Agora a pessoa já tem acesso aos dados e gastos compartilhados.')
        setIsInviteOpen(false)
     } else {
        if (error.code === '23505') {
