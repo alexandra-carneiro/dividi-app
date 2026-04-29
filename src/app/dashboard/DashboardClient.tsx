@@ -767,28 +767,34 @@ export default function DashboardClient({
                   <p className="text-center text-slate-400 py-10 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 italic">Nenhum gasto fixo cadastrado ainda.</p>
                 ) : (
                   recurringExpenses.map(req => (
-                    <div key={req.id} className="group bg-white p-4 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex-1">
+                    <div key={req.id} className="group bg-white p-5 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all flex flex-col lg:flex-row lg:items-center gap-6">
+                      
+                      {/* Descrição e Info */}
+                      <div className="flex-1 min-w-[200px]">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-black text-slate-800">{req.description}</p>
-                          <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-tight">{req.category}</span>
+                          <p className="font-black text-slate-800 text-lg leading-tight">{req.description}</p>
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-black rounded-full uppercase tracking-widest">{req.category}</span>
                         </div>
-                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Pagador: {req.payer}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pagador: {req.payer}</p>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div className="text-right mr-2">
-                          <p className="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1">Valor</p>
-                          <p className="font-black text-slate-900 text-lg">{formatMoney(Number(req.amount))}</p>
+                      {/* Controles de Lançamento */}
+                      <div className="flex flex-wrap items-end lg:items-center gap-6">
+                        
+                        <div className="flex flex-col">
+                          <p className="text-[10px] text-slate-400 font-black uppercase mb-1 text-center">Valor</p>
+                          <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 min-w-[120px] text-center">
+                            <p className="font-black text-slate-900">{formatMoney(Number(req.amount))}</p>
+                          </div>
                         </div>
                         
                         <div className="flex flex-col">
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Data Pagamento</p>
+                          <p className="text-[10px] text-slate-400 font-black uppercase mb-1 text-center">Data Pagamento</p>
                           <input 
                             type="date" 
                             id={`date-${req.id}`}
                             defaultValue={new Date().toISOString().split('T')[0]}
-                            className="p-2 text-sm border-2 border-slate-100 rounded-xl bg-slate-50 font-bold outline-none focus:border-indigo-500 transition-all"
+                            className="p-2.5 text-sm border-2 border-slate-100 rounded-xl bg-white font-black outline-none focus:border-indigo-500 transition-all shadow-sm"
                           />
                         </div>
 
@@ -797,17 +803,18 @@ export default function DashboardClient({
                             const dateVal = (document.getElementById(`date-${req.id}`) as HTMLInputElement).value
                             handleApplyRecurring(req.id, dateVal)
                           }} 
-                          className="bg-emerald-500 text-white hover:bg-emerald-600 px-4 py-3 rounded-xl transition-all shadow-lg flex items-center gap-2 group/btn active:scale-95"
+                          className="bg-emerald-500 text-white hover:bg-emerald-600 px-6 py-3 rounded-2xl transition-all shadow-md flex items-center gap-2 group/btn active:scale-95 mt-4 lg:mt-4"
                         >
-                          <Repeat size={16} className="group-hover/btn:rotate-180 transition-transform duration-500" />
+                          <Repeat size={18} className="group-hover/btn:rotate-180 transition-transform duration-500" />
                           <span className="text-xs font-black uppercase tracking-widest">Lançar</span>
                         </button>
 
-                        <div className="flex items-center gap-1 border-l pl-3 ml-1">
-                          <button onClick={() => setRecurringToEdit(req)} className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Editar">
+                        {/* Ações de Edição */}
+                        <div className="flex items-center gap-1 border-l pl-4">
+                          <button onClick={() => setRecurringToEdit(req)} className="p-2.5 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="Editar">
                             <Edit2 size={18} />
                           </button>
-                          <button onClick={() => handleDeleteRecurring(req.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Excluir">
+                          <button onClick={() => handleDeleteRecurring(req.id)} className="p-2.5 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Excluir">
                             <Trash2 size={18} />
                           </button>
                         </div>
