@@ -38,6 +38,7 @@ export default async function DashboardPage() {
   // Buscar despesas iniciais (Apenas do mês atual para carregar rápido)
   let initialExpenses: any[] = []
   let initialRecurring: any[] = []
+  let initialCategoryBudgets: any[] = []
   let householdData = null
 
   if (householdId) {
@@ -45,7 +46,7 @@ export default async function DashboardPage() {
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
 
-    const [expsRes, hhRes, recRes] = await Promise.all([
+    const [expsRes, hhRes, recRes, budgetsRes] = await Promise.all([
       supabase
         .from('expenses')
         .select('*')
@@ -61,12 +62,17 @@ export default async function DashboardPage() {
       supabase
         .from('recurring_expenses')
         .select('*')
+        .eq('household_id', householdId),
+      supabase
+        .from('category_budgets')
+        .select('*')
         .eq('household_id', householdId)
     ])
 
     if (expsRes.data) initialExpenses = expsRes.data
     if (hhRes.data) householdData = hhRes.data
     if (recRes.data) initialRecurring = recRes.data
+    if (budgetsRes.data) initialCategoryBudgets = budgetsRes.data
   }
 
   return (
@@ -78,6 +84,7 @@ export default async function DashboardPage() {
       initialWeeklyBudget={householdData?.weekly_budget ?? 62.50}
       initialCurrency={householdData?.currency ?? 'BRL'}
       initialRecurringExpenses={initialRecurring}
+      initialCategoryBudgets={initialCategoryBudgets || []}
     />
   )
 }

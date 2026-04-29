@@ -5,7 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#a28CFE', '#ff6b6b']
 
-export default function Charts({ expenses, currency }: { expenses: any[], currency: string }) {
+export default function Charts({ expenses, currency, budget }: { expenses: any[], currency: string, budget?: number }) {
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {}
     expenses.forEach(e => {

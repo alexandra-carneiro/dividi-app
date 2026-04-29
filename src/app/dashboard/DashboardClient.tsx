@@ -6,6 +6,7 @@ import { addExpense, updateExpense, deleteExpense } from '../actions/expenses'
 import { updateHouseholdSettings } from '../actions/settings'
 import { inviteUser } from '../actions/invite'
 import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses, updateRecurringExpense } from '../actions/recurring'
+import { updateCategoryBudget } from '../actions/budgets'
 import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
@@ -18,7 +19,8 @@ export default function DashboardClient({
   initialMonthlyBudget,
   initialWeeklyBudget,
   initialCurrency,
-  initialRecurringExpenses
+  initialRecurringExpenses,
+  initialCategoryBudgets
 }: { 
   initialExpenses: any[], 
   householdId: string, 
@@ -26,13 +28,15 @@ export default function DashboardClient({
   initialMonthlyBudget: number,
   initialWeeklyBudget: number,
   initialCurrency: string,
-  initialRecurringExpenses: any[]
+  initialRecurringExpenses: any[],
+  initialCategoryBudgets: any[]
 }) {
   const [expenses, setExpenses] = useState(initialExpenses)
   const [recurringExpenses, setRecurringExpenses] = useState(initialRecurringExpenses)
   const [monthlyBudget, setMonthlyBudget] = useState(initialMonthlyBudget)
   const [weeklyBudget, setWeeklyBudget] = useState(initialWeeklyBudget)
   const [currency, setCurrency] = useState(initialCurrency)
+  const [categoryBudgets, setCategoryBudgets] = useState<any[]>(initialCategoryBudgets)
   
   // Estados para o formulário de configurações
   const [localMonthly, setLocalMonthly] = useState(initialMonthlyBudget)
@@ -109,8 +113,32 @@ export default function DashboardClient({
     const total = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
     const ale = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
     const maria = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
-    return { total, ale, maria, remaining: monthlyBudget - total }
-  }, [filteredExpenses, monthlyBudget])
+    
+    let currentLimit = monthlyBudget
+    let currentWeeklyLimit = weeklyBudget
+
+    if (categoryFilter !== 'Todas') {
+      const catBudget = categoryBudgets.find(b => b.category === categoryFilter)
+      if (catBudget) {
+        currentLimit = Number(catBudget.monthly_limit)
+        currentWeeklyLimit = currentLimit / 4
+      } else {
+        // Se não tem limite definido para a categoria, podemos ou zerar ou manter o global.
+        // Vou manter o global como fallback mas sinalizar.
+        currentLimit = 0 
+        currentWeeklyLimit = 0
+      }
+    }
+
+    return { 
+      total, 
+      ale, 
+      maria, 
+      remaining: currentLimit > 0 ? currentLimit - total : 0,
+      limit: currentLimit,
+      weeklyLimit: currentWeeklyLimit
+    }
+  }, [filteredExpenses, monthlyBudget, categoryFilter, categoryBudgets, weeklyBudget])
 
   const weeks = useMemo(() => {
     const w: Record<number, any> = {}
@@ -589,7 +617,7 @@ export default function DashboardClient({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-10">
-        <Charts expenses={filteredExpenses} currency={currency} />
+        <Charts expenses={filteredExpenses} budget={totals.limit > 0 ? totals.limit : monthlyBudget} currency={currency} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <section className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-xl flex flex-col justify-center">
@@ -684,10 +712,51 @@ export default function DashboardClient({
                   className="w-full p-3 border border-slate-300 rounded-xl text-slate-900 font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" 
                 />
               </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setIsSettingsOpen(false)} className="flex-1 p-3 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl font-bold transition">Cancelar</button>
-                <button type="submit" className="flex-1 p-3 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md rounded-xl font-bold transition">Salvar</button>
+
+            <div className="mt-10 border-t pt-8">
+              <h4 className="font-black text-indigo-900 text-sm uppercase tracking-widest mb-4">Orçamentos por Categoria</h4>
+              <p className="text-[11px] text-slate-500 mb-6 uppercase font-bold">Defina limites mensais específicos para cada tipo de gasto.</p>
+              
+              <div className="space-y-4">
+                {CATEGORIES.map(cat => {
+                  const budget = categoryBudgets.find(b => b.category === cat)
+                  return (
+                    <div key={cat} className="flex items-center justify-between gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                      <span className="font-bold text-slate-700 text-sm">{cat}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 font-bold text-xs">{currency === 'EUR' ? '€' : 'R$'}</span>
+                        <input 
+                          type="number" 
+                          step="1"
+                          placeholder="Sem limite"
+                          defaultValue={budget?.monthly_limit || ''}
+                          onBlur={(e) => {
+                            const val = parseFloat(e.target.value)
+                            if (!isNaN(val)) {
+                              updateCategoryBudget(householdId, cat, val).then(res => {
+                                if (res.success) {
+                                  setCategoryBudgets(prev => {
+                                    const existing = prev.find(b => b.category === cat)
+                                    if (existing) return prev.map(b => b.category === cat ? { ...b, monthly_limit: val } : b)
+                                    return [...prev, { category: cat, monthly_limit: val }]
+                                  })
+                                }
+                              })
+                            }
+                          }}
+                          className="w-24 p-2 border-2 border-slate-200 rounded-xl text-right font-black text-slate-900 focus:border-indigo-500 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <button type="button" onClick={() => setIsSettingsOpen(false)} className="flex-1 p-3 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl font-bold transition">Cancelar</button>
+              <button type="submit" className="flex-1 p-3 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md rounded-xl font-bold transition">Salvar</button>
+            </div>
             </div>
           </form>
         </div>
@@ -946,7 +1015,8 @@ export default function DashboardClient({
             <p className="text-center text-slate-500 py-8 md:col-span-2">Nenhum gasto neste mês.</p>
           ) : (
             weeks.map(week => {
-              const remaining = weeklyBudget - week.total
+              const weekLimit = totals.weeklyLimit > 0 ? totals.weeklyLimit : weeklyBudget
+              const remaining = weekLimit - week.total
               return (
                 <div key={week.number} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
                   <div className="flex justify-between border-b pb-3 mb-3">
