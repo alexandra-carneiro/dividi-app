@@ -396,6 +396,22 @@ export default function DashboardClient({
     window.location.href = '/login'
   }
 
+  const handleInvite = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get('email') as string
+    
+    startTransition(async () => {
+      const result = await inviteUser(householdId, email)
+      if (result.success) {
+        alert('Sucesso! Agora a pessoa já tem acesso aos dados e gastos compartilhados.')
+        setIsInviteOpen(false)
+      } else {
+        alert(result.error)
+      }
+    })
+  }
+
   const exportToExcel = () => {
     if (monthExpenses.length === 0) {
       alert('Não há gastos neste mês para exportar.')
