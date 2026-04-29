@@ -904,33 +904,36 @@ export default function DashboardClient({
                   </div>
                   <div className="space-y-3">
                     {week.expenses.map((exp: any) => (
-                      <div key={exp.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-colors border-b border-slate-50 last:border-0">
-                        {/* Coluna 1: Avatar */}
-                        <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${exp.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                          {exp.payer.charAt(0)}
-                        </div>
-
-                        {/* Coluna 2: Info (Descrição e Categoria) */}
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <p className="font-bold text-sm text-slate-800 truncate leading-tight">{exp.description || 'Gasto'}</p>
+                      <div key={exp.id} className="p-3 hover:bg-slate-50 rounded-2xl transition-colors border-b border-slate-50 last:border-0">
+                        <div className="flex gap-3">
+                          {/* Avatar */}
+                          <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${exp.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
+                            {exp.payer.charAt(0)}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 uppercase rounded-md tracking-wider">{exp.category || 'Outros'}</span>
-                            <span className="text-[10px] text-slate-400 font-medium">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>
-                          </div>
-                        </div>
 
-                        {/* Coluna 3: Valor e Ações */}
-                        <div className="flex items-center gap-2 text-right">
-                          <span className="font-bold text-sm text-slate-900 whitespace-nowrap">{formatMoney(Number(exp.amount))}</span>
-                          <div className="flex items-center gap-1 border-l pl-2 border-slate-100">
-                            <button onClick={() => openEditExpense(exp)} className="text-indigo-500 hover:text-indigo-700 p-2 transition-colors" title="Editar">
-                              <Edit2 size={16} />
-                            </button>
-                            <button onClick={() => handleDelete(exp.id)} className="text-red-500 hover:text-red-700 p-2 transition-colors" title="Excluir">
-                              <Trash2 size={16} />
-                            </button>
+                          {/* Conteúdo */}
+                          <div className="flex-1 min-w-0">
+                            {/* Linha 1: Nome e Valor */}
+                            <div className="flex justify-between items-start gap-2 mb-1">
+                              <p className="font-bold text-sm text-slate-800 truncate leading-none">{exp.description || 'Gasto'}</p>
+                              <span className="font-black text-sm text-slate-900 whitespace-nowrap leading-none">{formatMoney(Number(exp.amount))}</span>
+                            </div>
+
+                            {/* Linha 2: Categoria, Data e Ações */}
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-500 uppercase rounded-md tracking-wider leading-none">{exp.category || 'Outros'}</span>
+                                <span className="text-[10px] text-slate-400 font-bold leading-none">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => openEditExpense(exp)} className="text-indigo-500 hover:text-indigo-700 p-1 transition-colors" title="Editar">
+                                  <Edit2 size={16} />
+                                </button>
+                                <button onClick={() => handleDelete(exp.id)} className="text-red-500 hover:text-red-700 p-1 transition-colors" title="Excluir">
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
