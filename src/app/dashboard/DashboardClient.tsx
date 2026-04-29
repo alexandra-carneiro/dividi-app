@@ -778,7 +778,7 @@ export default function DashboardClient({
                 className={`flex-1 py-3.5 rounded-[1rem] font-black text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${recurringTab === 'manage' ? 'bg-white text-indigo-600 shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <Settings size={16} />
-                Gerenciar Modelos
+                Configurar Contas
               </button>
             </div>
 
@@ -902,12 +902,12 @@ export default function DashboardClient({
                   </div>
 
                   <button type="submit" className="w-full p-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] font-black shadow-xl transition-all active:scale-[0.98] uppercase tracking-[0.2em] text-sm">
-                    {recurringToEdit ? 'Atualizar Modelo' : 'Cadastrar Gasto Fixo'}
+                    {recurringToEdit ? 'Atualizar Conta' : 'Salvar Conta Fixa'}
                   </button>
                 </form>
 
                 <div className="border-t-2 border-slate-100 pt-10">
-                  <h4 className="font-black text-slate-400 uppercase text-[10px] tracking-[0.3em] mb-8 text-center">Modelos de Gastos Salvos</h4>
+                  <h4 className="font-black text-slate-400 uppercase text-[10px] tracking-[0.3em] mb-8 text-center">Minhas Contas Fixas</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {recurringExpenses.map(req => (
                       <div key={req.id} className="p-5 bg-white rounded-2xl border border-slate-100 flex items-center justify-between group hover:border-indigo-200 hover:shadow-lg transition-all">
