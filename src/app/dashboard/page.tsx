@@ -39,6 +39,7 @@ export default async function DashboardPage() {
   let initialExpenses: any[] = []
   let initialRecurring: any[] = []
   let initialCategoryBudgets: any[] = []
+  let initialIncomes: any[] = []
   let householdData = null
 
   if (householdId) {
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
 
-    const [expsRes, hhRes, recRes, budgetsRes] = await Promise.all([
+    const [expsRes, hhRes, recRes, budgetsRes, incomesRes] = await Promise.all([
       supabase
         .from('expenses')
         .select('*')

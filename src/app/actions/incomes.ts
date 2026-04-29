@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
 export async function addIncome(formData: FormData) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -47,7 +47,7 @@ export async function addIncome(formData: FormData) {
 }
 
 export async function deleteIncome(id: string) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -72,7 +72,7 @@ export async function deleteIncome(id: string) {
 }
 
 export async function updateIncome(id: string, formData: FormData) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

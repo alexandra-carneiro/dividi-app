@@ -13,7 +13,12 @@ import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edi
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import Charts from './Charts'
-
+export default function DashboardClient({ 
+  initialExpenses, 
+  householdId, 
+  userEmail,
+  initialMonthlyBudget,
+  initialWeeklyBudget,
   initialCurrency,
   initialRecurringExpenses,
   initialCategoryBudgets,
@@ -135,6 +140,7 @@ import Charts from './Charts'
   }, [monthExpenses, categoryFilter])
 
   const totals = useMemo(() => {
+    const monthStr = currentDate.toISOString().slice(0, 7)
     const total = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
     const ale = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
     const maria = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
@@ -901,14 +907,58 @@ import Charts from './Charts'
                           placeholder="email@exemplo.com" 
                           className="flex-1 p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none shadow-sm"
                         />
-            <div className="mt-8 flex gap-3">
-              <button type="button" onClick={() => setIsSettingsOpen(false)} className="flex-1 p-3 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl font-bold transition">Cancelar</button>
-              <button type="submit" className="flex-1 p-3 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md rounded-xl font-bold transition">Salvar</button>
+                        <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all">
+                          Convidar
+                        </button>
+                      </div>
+                    </form>
+
+                    <div>
+                      <h5 className="font-black text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-6 ml-1">Membros Atuais</h5>
+                      <div className="space-y-3">
+                         <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-black text-slate-500">{userEmail.charAt(0).toUpperCase()}</div>
+                              <div>
+                                <p className="font-black text-slate-800 text-sm">{userEmail}</p>
+                                <p className="text-[10px] font-black text-indigo-500 uppercase">Você (Admin)</p>
+                              </div>
+                            </div>
+                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {settingsTab === 'account' && (
+                  <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                    <header className="mb-10">
+                      <h4 className="font-black text-slate-800 text-2xl mb-2">Minha Conta</h4>
+                      <p className="text-slate-500 font-medium">Informações do seu perfil pessoal.</p>
+                    </header>
+
+                    <div className="bg-slate-50 p-8 rounded-[2rem] border-2 border-slate-100">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-4xl shadow-2xl mb-6 ring-8 ring-white">
+                          {userEmail.charAt(0).toUpperCase()}
+                        </div>
+                        <h5 className="font-black text-slate-800 text-xl mb-1">{userEmail.split('@')[0]}</h5>
+                        <p className="text-slate-400 font-bold text-sm mb-8">{userEmail}</p>
+                        
+                        <div className="w-full pt-8 border-t border-slate-200 text-left">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Segurança</p>
+                          <button className="w-full p-4 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-all text-left flex justify-between items-center">
+                             Alterar Senha
+                             <Settings size={16} className="text-slate-300" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            </div>
-          </form>
-        </div>
-      )}
+          </div>
+        )}
 
       {isRecurringOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
