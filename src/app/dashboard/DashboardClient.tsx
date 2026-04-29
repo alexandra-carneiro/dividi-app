@@ -749,7 +749,9 @@ export default function DashboardClient({
             </div>
           </form>
         </div>
-{isRecurringOpen && (
+      )}
+
+      {isRecurringOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
             <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="relative mb-6">
