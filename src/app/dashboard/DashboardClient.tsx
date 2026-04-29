@@ -534,9 +534,10 @@ export default function DashboardClient({
     }
   }
 
-  const handleApplyRecurring = async (expenseId?: string) => {
+  const handleApplyRecurring = async (expenseId?: string, specificDate?: string) => {
     startTransition(async () => {
-      const result = await applyRecurringExpenses(householdId, recurringDate, expenseId)
+      const dateToUse = specificDate || recurringDate
+      const result = await applyRecurringExpenses(householdId, dateToUse, expenseId)
       if (result.success) {
         alert(expenseId ? 'Gasto lançado com sucesso!' : `${result.count} gastos lançados com sucesso!`)
       } else {
@@ -748,79 +749,96 @@ export default function DashboardClient({
             </div>
           </form>
         </div>
-      )}
-
-        {isRecurringOpen && (
+{isRecurringOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
             <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="relative mb-4">
-              <h3 className="font-bold text-2xl text-slate-800 pr-10">Gastos Fixos Recorrentes</h3>
-              <button onClick={() => setIsRecurringOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
-                <X size={24} />
-              </button>
-            </div>
-            <p className="text-sm text-slate-500 mb-4">Defina contas fixas (ex: Aluguel, Internet) e lance todas de uma vez no mês atual.</p>
-            
-            <div className="mb-6">
-              {recurringExpenses.length === 0 ? (
-                <p className="text-sm text-slate-400 italic">Nenhum gasto fixo cadastrado.</p>
-              ) : (
-                <ul className="divide-y divide-slate-100">
-                  {recurringExpenses.map(req => (
-                    <li key={req.id} className="py-3 flex justify-between items-center">
-                      <div>
-                        <p className="font-medium text-slate-800 flex items-center gap-2">
-                          {req.description} 
-                          <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">{req.category}</span>
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                          <span>Pagador: {req.payer}</span>
+              <div className="relative mb-6">
+                <h3 className="font-bold text-2xl text-slate-800 pr-10">Lançamento de Gastos Fixos</h3>
+                <p className="text-sm text-slate-500">Selecione a data de pagamento e lance cada conta no seu Dashboard.</p>
+                <button type="button" onClick={() => setIsRecurringOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-3 mb-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {recurringExpenses.length === 0 ? (
+                  <p className="text-center text-slate-400 py-10 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 italic">Nenhum gasto fixo cadastrado ainda.</p>
+                ) : (
+                  recurringExpenses.map(req => (
+                    <div key={req.id} className="group bg-white p-4 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-black text-slate-800">{req.description}</p>
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-tight">{req.category}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">Pagador: {req.payer}</p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="text-right mr-2">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1">Valor</p>
+                          <p className="font-black text-slate-900 text-lg">{formatMoney(Number(req.amount))}</p>
+                        </div>
+                        
+                        <div className="flex flex-col">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Data Pagamento</p>
+                          <input 
+                            type="date" 
+                            id={`date-${req.id}`}
+                            defaultValue={new Date().toISOString().split('T')[0]}
+                            className="p-2 text-sm border-2 border-slate-100 rounded-xl bg-slate-50 font-bold outline-none focus:border-indigo-500 transition-all"
+                          />
+                        </div>
+
+                        <button 
+                          onClick={() => {
+                            const dateVal = (document.getElementById(`date-${req.id}`) as HTMLInputElement).value
+                            handleApplyRecurring(req.id, dateVal)
+                          }} 
+                          className="bg-emerald-500 text-white hover:bg-emerald-600 px-4 py-3 rounded-xl transition-all shadow-lg flex items-center gap-2 group/btn active:scale-95"
+                        >
+                          <Repeat size={16} className="group-hover/btn:rotate-180 transition-transform duration-500" />
+                          <span className="text-xs font-black uppercase tracking-widest">Lançar</span>
+                        </button>
+
+                        <div className="flex items-center gap-1 border-l pl-3 ml-1">
+                          <button onClick={() => setRecurringToEdit(req)} className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Editar">
+                            <Edit2 size={18} />
+                          </button>
+                          <button onClick={() => handleDeleteRecurring(req.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Excluir">
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold">{formatMoney(Number(req.amount))}</span>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleApplyRecurring(req.id)} 
-                            className="bg-emerald-500 text-white hover:bg-emerald-600 p-2 rounded-lg transition-all shadow-sm flex items-center gap-1 group"
-                            title="Lançar este gasto agora"
-                          >
-                            <Repeat size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-                            <span className="text-[10px] font-black uppercase">Lançar</span>
-                          </button>
-                          <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
-                          <button onClick={() => setRecurringToEdit(req)} className="text-slate-400 hover:text-indigo-600 p-1 transition-colors" title="Editar">
-                            <Edit2 size={16} />
-                          </button>
-                          <button onClick={() => handleDeleteRecurring(req.id)} className="text-slate-400 hover:text-red-600 p-1 transition-colors" title="Excluir">
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 mt-4">
-                  <label className="block text-xs font-bold text-emerald-800 mb-2 uppercase tracking-wider">Data de Registro</label>
-                  <div className="flex gap-2">
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {recurringExpenses.length > 0 && (
+                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+                  <div className="flex-1">
+                    <h4 className="font-black text-emerald-900 uppercase text-sm tracking-widest">Lançamento em Lote</h4>
+                    <p className="text-xs text-emerald-600 font-medium">Lançar TODOS os gastos acima com a mesma data de uma só vez.</p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
                     <input 
                       type="date" 
                       value={recurringDate}
                       onChange={(e) => setRecurringDate(e.target.value)}
-                      className="p-2 text-sm border rounded-lg bg-white font-medium outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="flex-1 md:w-40 p-3 text-sm border-2 border-emerald-200 rounded-xl bg-white font-black outline-none focus:border-emerald-500"
                     />
-                     <button 
-                       onClick={() => handleApplyRecurring()} 
-                       disabled={isPending}
-                      className="flex-1 p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    <button 
+                      onClick={() => handleApplyRecurring()} 
+                      disabled={isPending}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 whitespace-nowrap"
                     >
-                      <Repeat size={18} className={isPending ? "animate-spin" : ""} /> 
-                      {isPending ? 'Lançando...' : 'Lançar Tudo'}
+                      <Repeat size={20} className={isPending ? "animate-spin" : ""} /> 
+                      LANÇAR TUDO
                     </button>
                   </div>
                 </div>
-            </div>
+              )}
 
             <form onSubmit={handleAddRecurring} className={`p-4 rounded-xl border transition-all ${recurringToEdit ? 'bg-indigo-50 border-indigo-200' : 'bg-slate-50 border-slate-200'}`}>
               <div className="flex justify-between items-center mb-3">
