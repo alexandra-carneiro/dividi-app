@@ -761,14 +761,17 @@ export default function DashboardClient({
               </div>
             </button>
             <div className="flex gap-3">
-              <button onClick={() => setIsRecurringOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Gastos Fixos">
-                <Repeat size={20} />
+              <button onClick={() => setIsRecurringOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Pagar Contas (Gastos Fixos)">
+                <Receipt size={20} />
+              </button>
+              <button onClick={() => setIsImportOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Importar Planilha">
+                <Download size={20} />
+              </button>
+              <button onClick={() => setIsInviteOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Convidar Membro">
+                <Users size={20} />
               </button>
               <button onClick={openSettings} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Configurações">
                 <Settings size={20} />
-              </button>
-              <button onClick={() => setIsInviteOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Compartilhar">
-                <Users size={20} />
               </button>
               <button onClick={handleSignOut} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Sair">
                 <LogOut size={20} />
@@ -929,52 +932,7 @@ export default function DashboardClient({
           </div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-10">
-          <section className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-xl flex flex-col justify-center border border-slate-100">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">
-                  {categoryFilter === 'Todas' ? 'Gasto Total do Mês' : `Gasto em ${categoryFilter}`}
-                </p>
-                <p className="text-4xl font-black text-slate-900">{formatMoney(totals.filteredTotal)}</p>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">{totals.remaining < 0 ? 'Passou do Orçamento' : 'Resta no Mês'}</p>
-                <p className={`text-4xl font-black ${totals.remaining < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                  {formatMoney(Math.abs(totals.remaining))}
-                </p>
-              </div>
-            </div>
-            
 
-          </section>
-
-          <section className="flex flex-col gap-4 justify-center">
-            <div className="flex flex-wrap gap-2 md:gap-3">
-            <button onClick={() => setIsIncomeFormOpen(true)} className="flex items-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 px-4 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-widest border border-emerald-500/30 group">
-              <TrendingUp size={18} className="text-emerald-400 group-hover:scale-110 transition-transform" />
-              Lançar Receita
-            </button>
-            <button onClick={() => setIsFormOpen(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-900/20 group">
-              <Upload size={18} className="group-hover:translate-y-[-2px] transition-transform" />
-              Lançar Gasto
-            </button>
-            <button onClick={() => setIsRecurringOpen(true)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-widest border border-white/20 group">
-              <Receipt size={18} className="group-hover:scale-110 transition-transform" />
-              Pagar Contas
-            </button>
-            
-            <div className="w-[1px] h-8 bg-white/10 mx-1 hidden md:block"></div>
-
-            <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20" title="Configurações">
-              <Settings size={20} />
-            </button>
-            <button onClick={() => setIsImportOpen(true)} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20" title="Importar Planilha">
-              <Download size={20} />
-            </button>
-          </div>
-          </section>
-        </div>
 
         {isSettingsOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsSettingsOpen(false)}>
