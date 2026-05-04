@@ -9,7 +9,7 @@ import { inviteUser } from '../actions/invite'
 import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses, updateRecurringExpense } from '../actions/recurring'
 import { updateCategoryBudget } from '../actions/budgets'
 import { addIncome, deleteIncome, updateIncome } from '../actions/incomes'
-import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp, Receipt, Plus, Info } from 'lucide-react'
+import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp, Receipt, Plus, Info, Search, CheckCircle } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import Charts from './Charts'
@@ -97,7 +97,21 @@ export default function DashboardClient({
   const [settingsTab, setSettingsTab] = useState<'budget' | 'family' | 'account'>('budget')
   const [payerFilter, setPayerFilter] = useState<'Todos' | 'Alê' | 'Maria'>('Todos')
   const [activeTab, setActiveTab] = useState<'expenses' | 'incomes'>('expenses')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type })
+  }
 
   const closeAllModals = () => {
     setIsFormOpen(false)
@@ -233,8 +247,15 @@ export default function DashboardClient({
     if (payerFilter !== 'Todos') {
       filtered = filtered.filter(exp => exp.payer === payerFilter)
     }
+    if (searchTerm) {
+      const lowSearch = searchTerm.toLowerCase()
+      filtered = filtered.filter(exp => 
+        (exp.description?.toLowerCase().includes(lowSearch)) || 
+        (exp.category?.toLowerCase().includes(lowSearch))
+      )
+    }
     return filtered
-  }, [monthExpenses, categoryFilter, payerFilter])
+  }, [monthExpenses, categoryFilter, payerFilter, searchTerm])
 
   const filteredIncomes = useMemo(() => {
     const year = currentDate.getFullYear()
@@ -244,9 +265,21 @@ export default function DashboardClient({
       return d.getFullYear() === year && d.getMonth() === month
     })
     
-    if (payerFilter === 'Todos') return monthIncomes
-    return monthIncomes.filter(inc => inc.payer === payerFilter)
-  }, [incomes, currentDate, payerFilter])
+    let filtered = monthIncomes
+    if (payerFilter !== 'Todos') {
+      filtered = filtered.filter(inc => inc.payer === payerFilter)
+    }
+    
+    if (searchTerm) {
+      const lowSearch = searchTerm.toLowerCase()
+      filtered = filtered.filter(inc => 
+        (inc.description?.toLowerCase().includes(lowSearch)) || 
+        (inc.category?.toLowerCase().includes(lowSearch))
+      )
+    }
+    
+    return filtered
+  }, [incomes, currentDate, payerFilter, searchTerm])
 
   const totals = useMemo(() => {
     const year = currentDate.getFullYear()
@@ -340,13 +373,15 @@ export default function DashboardClient({
       if (result.success && result.data) {
         if (incomeToEdit) {
           setIncomes(prev => prev.map(inc => inc.id === incomeToEdit.id ? result.data : inc))
+          showToast('Receita atualizada!', 'success')
         } else {
           setIncomes(prev => [...prev, result.data])
+          showToast('Receita registrada!', 'success')
         }
         setIsIncomeFormOpen(false)
         setIncomeToEdit(null)
       } else if (result.error) {
-        alert('Erro: ' + result.error)
+        showToast('Erro: ' + result.error, 'error')
       }
     })
   }
@@ -362,8 +397,9 @@ export default function DashboardClient({
       const result = await deleteIncome(id)
       if (result.success) {
         setIncomes(prev => prev.filter(i => i.id !== id))
+        showToast('Receita excluída.', 'info')
       } else {
-        alert('Erro ao excluir: ' + result.error)
+        showToast('Erro ao excluir: ' + result.error, 'error')
       }
     })
   }
@@ -382,19 +418,20 @@ export default function DashboardClient({
           setExpenses(prev => prev.map(exp => exp.id === expenseToEdit.id ? result.data : exp))
           setIsFormOpen(false)
           setExpenseToEdit(null)
+          showToast('Gasto atualizado com sucesso!', 'success')
         } else {
-          alert('Erro ao atualizar gasto: ' + (result.error || 'Desconhecido'))
+          showToast('Erro ao atualizar: ' + (result.error || 'Desconhecido'), 'error')
         }
       } else {
         const result = await addExpense(formData)
         if (result.success && result.data) {
           setExpenses(prev => [...prev, result.data])
           setIsFormOpen(false)
-          // Using standard DOM method to reset form
+          showToast('Gasto registrado!', 'success')
           const formElement = document.getElementById('expenseForm') as HTMLFormElement
           if (formElement) formElement.reset()
         } else {
-          alert('Erro ao salvar gasto: ' + (result.error || 'Desconhecido'))
+          showToast('Erro ao salvar: ' + (result.error || 'Desconhecido'), 'error')
         }
       }
     })
@@ -411,8 +448,9 @@ export default function DashboardClient({
         const result = await deleteExpense(id)
         if (result.success) {
           setExpenses(prev => prev.filter(e => e.id !== id))
+          showToast('Gasto excluído.', 'info')
         } else {
-          alert('Erro ao excluir: ' + result.error)
+          showToast('Erro ao excluir: ' + result.error, 'error')
         }
       })
     }
@@ -739,57 +777,86 @@ export default function DashboardClient({
       const dateToUse = specificDate || recurringDate
       const result = await applyRecurringExpenses(householdId, dateToUse, expenseId)
       if (result.success) {
-        alert(expenseId ? 'Gasto lançado com sucesso!' : `${result.count} gastos lançados com sucesso!`)
-        if (!expenseId) setIsRecurringOpen(false) // Fecha o modal se lançar tudo
+        showToast(expenseId ? 'Gasto fixo lançado!' : `${result.count} gastos fixos lançados!`, 'success')
+        if (!expenseId) setIsRecurringOpen(false)
       } else {
-        alert('Erro ao lançar: ' + result.error)
+        showToast('Erro ao lançar: ' + result.error, 'error')
       }
     })
   }
 
   return (
     <div className="w-full min-h-screen bg-slate-50 pb-12 font-sans text-slate-800">
-      <header className="bg-gradient-to-br from-indigo-600 to-indigo-500 text-white p-6 md:py-8 shadow-lg">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <button onClick={closeAllModals} className="flex items-center gap-4 group text-left focus:outline-none cursor-pointer">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center p-1 shadow-lg transform -rotate-3 group-hover:rotate-0 group-active:scale-95 transition duration-300">
-                <img src="/logo.png" alt="Dividi Logo" className="w-full h-full object-contain rounded-xl" />
+      {/* NOTIFICAÇÃO TOAST */}
+      {toast && (
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300`}>
+          <div className={`flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border border-white/20 text-white font-black text-sm ${toast.type === 'success' ? 'bg-emerald-500/90' : toast.type === 'error' ? 'bg-red-500/90' : 'bg-indigo-500/90'}`}>
+            <CheckCircle size={18} />
+            {toast.message}
+          </div>
+        </div>
+      )}
+
+      <header className="bg-gradient-to-br from-indigo-600 via-indigo-500 to-indigo-400 text-white p-6 md:py-10 shadow-2xl relative overflow-hidden">
+        {/* Efeito de luz no fundo */}
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-300/20 rounded-full blur-3xl"></div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-10">
+            <button onClick={closeAllModals} className="flex items-center gap-5 group text-left focus:outline-none cursor-pointer">
+              <div className="w-14 h-14 bg-white rounded-[1.25rem] flex items-center justify-center p-1.5 shadow-2xl transform -rotate-6 group-hover:rotate-0 group-active:scale-90 transition duration-500 ease-out">
+                <img src="/logo.png" alt="Dividi Logo" className="w-full h-full object-contain rounded-lg" />
               </div>
-              <div className="group-hover:translate-x-1 transition-transform">
-                <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic text-white drop-shadow-md leading-none">Dividi</h1>
-                <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest mt-0.5">Gestão Compartilhada</p>
+              <div className="group-hover:translate-x-1 transition-transform duration-500">
+                <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic text-white drop-shadow-lg leading-none">Dividi</h1>
+                <p className="text-[11px] font-black text-indigo-100 uppercase tracking-[0.3em] mt-1 opacity-80">Gestão Compartilhada</p>
               </div>
             </button>
-            <div className="flex gap-3">
-              <button onClick={() => setIsRecurringOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Contas Fixas">
-                <Receipt size={20} />
-              </button>
-              <button onClick={() => setIsImportOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Importar Planilha">
-                <Download size={20} />
-              </button>
 
-              <button onClick={openSettings} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Configurações">
-                <Settings size={20} />
+            {/* Barra de Busca Moderna */}
+            <div className="flex-1 max-w-md w-full relative group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-indigo-200 group-focus-within:text-white transition-colors">
+                <Search size={18} />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Buscar gastos ou receitas..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-white/10 border border-white/20 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold placeholder:text-indigo-200/60 focus:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/10 transition-all shadow-inner"
+              />
+            </div>
+
+            <div className="flex gap-4">
+              <button onClick={() => setIsRecurringOpen(true)} className="w-12 h-12 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-all hover:scale-110 active:scale-90 shadow-lg border border-white/10" title="Contas Fixas">
+                <Receipt size={22} />
               </button>
-              <button onClick={handleSignOut} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Sair">
-                <LogOut size={20} />
+              <button onClick={() => setIsImportOpen(true)} className="w-12 h-12 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-all hover:scale-110 active:scale-90 shadow-lg border border-white/10" title="Importar Planilha">
+                <Download size={22} />
+              </button>
+              <button onClick={openSettings} className="w-12 h-12 flex items-center justify-center bg-white/20 rounded-2xl hover:bg-white/30 transition-all hover:scale-110 active:scale-90 shadow-lg border border-white/20" title="Configurações">
+                <Settings size={22} />
+              </button>
+              <div className="w-px h-10 bg-white/10 self-center mx-1"></div>
+              <button onClick={handleSignOut} className="w-12 h-12 flex items-center justify-center bg-red-500/20 rounded-2xl hover:bg-red-500/40 transition-all hover:scale-110 active:scale-90 shadow-lg border border-red-500/20 text-red-100" title="Sair">
+                <LogOut size={22} />
               </button>
             </div>
           </div>
           
-          <div className="flex justify-between items-center bg-white/10 rounded-xl p-2 backdrop-blur-sm max-w-sm mx-auto md:mx-0">
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-2 hover:bg-white/20 rounded-lg">
-              <ChevronLeft size={20} />
+          <div className="flex justify-between items-center bg-black/10 rounded-2xl p-2 backdrop-blur-md max-w-sm mx-auto md:mx-0 border border-white/5">
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-2.5 hover:bg-white/10 rounded-xl transition-colors">
+              <ChevronLeft size={22} />
             </button>
-            <h2 className="font-semibold text-lg flex items-center gap-2">
+            <h2 className="font-black text-lg tracking-widest flex items-center gap-3 uppercase">
               {currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
-              <button onClick={exportToExcel} className="p-1 hover:bg-white/20 rounded transition text-emerald-300" title="Exportar Mês para Excel">
-                <Download size={16} />
+              <button onClick={exportToExcel} className="p-1.5 hover:bg-white/20 rounded-lg transition text-emerald-300" title="Exportar para Excel">
+                <Download size={18} />
               </button>
             </h2>
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-2 hover:bg-white/20 rounded-lg">
-              <ChevronRight size={20} />
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-2.5 hover:bg-white/10 rounded-xl transition-colors">
+              <ChevronRight size={22} />
             </button>
           </div>
 
@@ -922,6 +989,12 @@ export default function DashboardClient({
         {activeTab === 'incomes' && (
           /* CONTEÚDO DA ABA DE RECEITAS */
           <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+            <Charts 
+              expenses={filteredExpenses} 
+              incomes={filteredIncomes}
+              currency={currency} 
+              type="incomes"
+            />
             {/* Resumo Individualizado de Receitas - Clicável para Filtrar */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div 
@@ -1548,7 +1621,13 @@ export default function DashboardClient({
 
         {activeTab === 'expenses' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10">
-            <Charts expenses={filteredExpenses} budget={totals.limit > 0 ? totals.limit : monthlyBudget} currency={currency} />
+            <Charts 
+              expenses={filteredExpenses} 
+              incomes={filteredIncomes}
+              currency={currency} 
+              budget={totals.limit > 0 ? totals.limit : monthlyBudget} 
+              type="expenses"
+            />
 
             <div className="flex justify-between items-center mb-4">
               <div>
