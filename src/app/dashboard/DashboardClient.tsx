@@ -905,50 +905,79 @@ export default function DashboardClient({
         </div>
 
         {activeTab === 'incomes' && (
-          /* LISTA DE RECEITAS (NOVO) */
-          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white rounded-[2rem] p-8 shadow-xl border border-slate-100">
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Entradas</p>
-                <h4 className="text-2xl font-black text-slate-800">Extrato de Receitas</h4>
+          /* CONTEÚDO DA ABA DE RECEITAS */
+          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+            {/* Resumo Individualizado de Receitas */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                  <TrendingUp size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Geral</p>
+                  <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncome)}</p>
+                </div>
               </div>
-              <button 
-                onClick={() => setIsIncomeFormOpen(true)}
-                className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-600 transition-all active:scale-95"
-              >
-                <Plus size={18} /> Nova Receita
-              </button>
+              <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 font-black">A</div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Alê</p>
+                  <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncomeAle)}</p>
+                </div>
+              </div>
+              <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-pink-500/10 flex items-center justify-center text-pink-600 font-black">M</div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Maria</p>
+                  <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncomeMaria)}</p>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              {filteredIncomes.length === 0 ? (
-                <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
-                  <p className="text-slate-400 font-bold">Nenhuma receita encontrada para este filtro.</p>
+            <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100">
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Entradas</p>
+                  <h4 className="text-2xl font-black text-slate-800">Extrato de Receitas</h4>
                 </div>
-              ) : (
-                filteredIncomes
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .map(income => (
-                    <div key={income.id} className="flex items-center justify-between p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-emerald-200 transition-all group">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white ${income.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                          {income.payer.charAt(0)}
+                <button 
+                  onClick={() => setIsIncomeFormOpen(true)}
+                  className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-600 transition-all active:scale-95"
+                >
+                  <Plus size={18} /> Nova Receita
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {filteredIncomes.length === 0 ? (
+                  <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
+                    <p className="text-slate-400 font-bold">Nenhuma receita encontrada para este filtro.</p>
+                  </div>
+                ) : (
+                  filteredIncomes
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .map(income => (
+                      <div key={income.id} className="flex items-center justify-between p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-emerald-200 transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white ${income.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
+                            {income.payer.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-800 leading-tight">{income.description || 'Receita'}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{new Date(income.date + 'T12:00:00').toLocaleDateString('pt-BR')} • {income.category}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-black text-slate-800 leading-tight">{income.description || 'Receita'}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{new Date(income.date + 'T12:00:00').toLocaleDateString('pt-BR')} • {income.category}</p>
+                        <div className="flex items-center gap-6">
+                          <p className="text-lg font-black text-emerald-600">{formatMoney(Number(income.amount))}</p>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => openEditIncome(income)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm"><Edit2 size={16} /></button>
+                            <button onClick={() => handleDeleteIncome(income.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm"><Trash2 size={16} /></button>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-6">
-                        <p className="text-lg font-black text-emerald-600">{formatMoney(Number(income.amount))}</p>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => openEditIncome(income)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm"><Edit2 size={16} /></button>
-                          <button onClick={() => handleDeleteIncome(income.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm"><Trash2 size={16} /></button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-              )}
+                    ))
+                )}
+              </div>
             </div>
           </section>
         )}

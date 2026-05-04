@@ -33,8 +33,8 @@ export default function Charts({ expenses, currency, budget }: { expenses: any[]
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center">
         <h3 className="font-bold text-slate-700 mb-4 self-start">Gastos por Categoria</h3>
-        <div className="w-full h-[250px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full h-[300px] min-h-[300px]">
+          <ResponsiveContainer width="100%" height="100%" key={`pie-${expenses.length}`}>
             <PieChart>
               <Pie
                 data={categoryData}
@@ -44,6 +44,7 @@ export default function Charts({ expenses, currency, budget }: { expenses: any[]
                 outerRadius={80}
                 paddingAngle={5}
                 dataKey="value"
+                isAnimationActive={true}
               >
                 {categoryData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -58,8 +59,8 @@ export default function Charts({ expenses, currency, budget }: { expenses: any[]
 
       <div className="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center">
         <h3 className="font-bold text-slate-700 mb-4 self-start">Comparação de Gastos</h3>
-        <div className="w-full h-[250px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full h-[300px] min-h-[300px]">
+          <ResponsiveContainer width="100%" height="100%" key={`bar-${expenses.length}`}>
             <BarChart data={payerData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="name" />
