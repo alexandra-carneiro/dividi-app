@@ -13,6 +13,7 @@ import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edi
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import Charts from './Charts'
+import SummaryCards from './SummaryCards'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 export default function DashboardClient({ 
   initialExpenses, 
@@ -913,58 +914,7 @@ export default function DashboardClient({
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-10">
         
         {/* CARDS DE RESUMO NO TOPO - Sempre mostram o global do mês */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-          <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Saldo {payerFilter === 'Todos' ? 'do Mês' : `da ${payerFilter === 'Maria' ? 'Maria' : 'Alê'}`}</p>
-              <div className="group/info relative">
-                <Info size={14} className="text-slate-300 cursor-help" />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-800 text-white text-[10px] rounded-xl opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
-                  O Saldo é o que sobra do dinheiro: <br/><br/>
-                  <span className="text-emerald-400">Receitas</span> - <span className="text-red-400">Gastos</span> = <span className="font-bold underline">Saldo</span>
-                </div>
-              </div>
-            </div>
-            <h3 className={`text-3xl font-black ${(payerFilter === 'Todos' ? totals.globalBalance : (totals.filteredIncomeTotal - totals.filteredTotal)) < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-              {formatMoney(payerFilter === 'Todos' ? totals.globalBalance : (totals.filteredIncomeTotal - totals.filteredTotal))}
-            </h3>
-            <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-               <div className={`h-full transition-all duration-1000 ${(payerFilter === 'Todos' ? totals.globalBalance : (totals.filteredIncomeTotal - totals.filteredTotal)) < 0 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: '100%' }}></div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Total Receitas</p>
-              <div className="group/info relative">
-                <Info size={14} className="text-slate-300 cursor-help" />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-800 text-white text-[10px] rounded-xl opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
-                  {payerFilter === 'Todos' ? 'A soma de todo o dinheiro que entrou na conta da família este mês.' : `Total de receitas registradas para ${payerFilter}.`}
-                </div>
-              </div>
-            </div>
-            <h3 className="text-3xl font-black text-slate-900">{formatMoney(totals.filteredIncomeTotal)}</h3>
-            <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-               {payerFilter === 'Todos' ? 'Total da Família' : `Recebido por ${payerFilter}`}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Total Gastos</p>
-              <div className="group/info relative">
-                <Info size={14} className="text-slate-300 cursor-help" />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-800 text-white text-[10px] rounded-xl opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
-                  {payerFilter === 'Todos' ? 'A soma de todas as despesas e contas pagas pela família este mês.' : `Total de gastos registrados para ${payerFilter}.`}
-                </div>
-              </div>
-            </div>
-            <h3 className="text-3xl font-black text-slate-900">{formatMoney(totals.filteredTotal)}</h3>
-            <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-               {payerFilter === 'Todos' ? 'Total Geral do Mês' : `Gastos de ${payerFilter}`}
-            </div>
-          </div>
-        </div>
+        <SummaryCards payerFilter={payerFilter} totals={totals} formatMoney={formatMoney} />
 
 
 
@@ -1521,46 +1471,58 @@ export default function DashboardClient({
         )}
 
         {isIncomeFormOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }}>
-            <form id="incomeForm" onSubmit={handleAddIncome} onClick={(e) => e.stopPropagation()} className="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }}>
+            <form onSubmit={handleAddIncome} onClick={(e) => e.stopPropagation()} className="bg-white p-10 rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] w-full max-w-xl animate-in zoom-in-95 duration-300 border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
               <div className="relative mb-8 text-center">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
-                  <TrendingUp size={32} />
+                <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-emerald-100 transform -rotate-3">
+                  <TrendingUp size={40} />
                 </div>
-                <h3 className="font-black text-2xl text-slate-800">{incomeToEdit ? 'Editar Receita' : 'Lançar Receita'}</h3>
-                <button type="button" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm">
-                   <X size={24} />
+                <h3 className="font-black text-3xl text-slate-800 tracking-tighter">{incomeToEdit ? 'Editar Receita' : 'Nova Receita'}</h3>
+                <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-widest opacity-60">Lançamento de Entrada</p>
+                <button type="button" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }} className="absolute -top-2 -right-2 p-2.5 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm group">
+                   <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
                 </button>
               </div>
+              
               <input type="hidden" name="household_id" value={householdId} />
-              <div className="space-y-6">
+              
+              <div className="space-y-8">
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em] ml-1">Data</label>
-                  <input type="date" name="date" required defaultValue={incomeToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all" />
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Data da Receita</label>
+                  <input type="date" name="date" required defaultValue={incomeToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all shadow-sm" />
                 </div>
+                
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em] ml-1">Valor</label>
-                  <input type="number" name="amount" step="0.01" min="0.01" required defaultValue={incomeToEdit?.amount || ''} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all" placeholder="0,00" />
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Valor</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">{currency}</span>
+                    <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0,00" defaultValue={incomeToEdit?.amount || ''} className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all shadow-sm text-xl" />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em] ml-1">Quem recebeu?</label>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Quem recebeu?</label>
                   <div className="flex gap-3">
-                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 font-black text-xs uppercase tracking-widest has-[:checked]:text-emerald-700 text-slate-400 border-slate-100 bg-slate-50">
-                      <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={incomeToEdit?.payer === 'Alê'} /> Alê
+                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50 font-black text-slate-400 has-[:checked]:text-emerald-600 border-slate-100 bg-slate-50 hover:bg-slate-100/50">
+                      <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={incomeToEdit?.payer === 'Alê'} /> 
+                      <span className="text-xs uppercase tracking-widest">Alê</span>
                     </label>
-                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 font-black text-xs uppercase tracking-widest has-[:checked]:text-emerald-700 text-slate-400 border-slate-100 bg-slate-50">
-                      <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={incomeToEdit?.payer === 'Maria'} /> Maria
+                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50 font-black text-slate-400 has-[:checked]:text-emerald-600 border-slate-100 bg-slate-50 hover:bg-slate-100/50">
+                      <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={incomeToEdit?.payer === 'Maria'} /> 
+                      <span className="text-xs uppercase tracking-widest">Maria</span>
                     </label>
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.2em] ml-1">Descrição</label>
-                  <input type="text" name="description" placeholder="Ex: Salário" defaultValue={incomeToEdit?.description || ''} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all" />
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Descrição</label>
+                  <input type="text" name="description" placeholder="Ex: Salário Mensal" defaultValue={incomeToEdit?.description || ''} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all shadow-sm" />
                 </div>
-                <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }} className="flex-1 p-4 bg-slate-100 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500">Cancelar</button>
-                  <button type="submit" disabled={isPending} className="flex-1 p-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-emerald-700 transition-all">
-                    {isPending ? 'Salvando...' : 'Salvar Receita'}
+
+                <div className="flex gap-4 pt-6">
+                  <button type="button" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }} className="flex-1 p-5 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 transition-all">Cancelar</button>
+                  <button type="submit" disabled={isPending} className="flex-1 p-5 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50">
+                    {isPending ? 'Salvando...' : incomeToEdit ? 'Atualizar' : 'Lançar Receita'}
                   </button>
                 </div>
               </div>
@@ -1569,49 +1531,62 @@ export default function DashboardClient({
         )}
 
         {isFormOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }}>
-            <form id="expenseForm" onSubmit={handleAddExpense} onClick={(e) => e.stopPropagation()} className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto">
-              <div className="relative mb-6">
-                <h3 className="font-bold text-2xl text-slate-800 pr-10">{expenseToEdit ? 'Editar Gasto' : 'Novo Gasto'}</h3>
-                <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
-                   <X size={24} />
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }}>
+            <form id="expenseForm" onSubmit={handleAddExpense} onClick={(e) => e.stopPropagation()} className="bg-white p-10 rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] w-full max-w-xl animate-in zoom-in-95 duration-300 border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <div className="relative mb-8">
+                <h3 className="font-black text-3xl text-slate-800 tracking-tighter pr-10">{expenseToEdit ? 'Editar Gasto' : 'Novo Gasto'}</h3>
+                <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-widest opacity-60">Lançamento de Despesa</p>
+                <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="absolute -top-2 -right-2 p-2.5 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm group">
+                   <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
                 </button>
               </div>
+              
               <input type="hidden" name="household_id" value={householdId} />
-              <div className="space-y-4">
+              
+              <div className="space-y-8">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Data</label>
-                  <input type="date" name="date" required defaultValue={expenseToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Data do Gasto</label>
+                  <input type="date" name="date" required defaultValue={expenseToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm" />
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-medium mb-1">Valor</label>
-                  <input type="number" name="amount" step="0.01" min="0.01" required defaultValue={expenseToEdit?.amount || ''} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Valor</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">{currency}</span>
+                    <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0,00" defaultValue={expenseToEdit?.amount || ''} className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm text-xl" />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-slate-700">Quem pagou?</label>
-                  <div className="flex gap-2">
-                    <label className="flex-1 text-center p-3 border-2 rounded-xl cursor-pointer transition-all has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 font-bold text-blue-600">
-                      <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Alê'} /> Alê
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Quem pagou?</label>
+                  <div className="flex gap-3">
+                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50 font-black text-slate-400 has-[:checked]:text-blue-600 border-slate-100 bg-slate-50 hover:bg-slate-100/50">
+                      <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Alê'} /> 
+                      <span className="text-xs uppercase tracking-widest">Alê</span>
                     </label>
-                    <label className="flex-1 text-center p-3 border-2 rounded-xl cursor-pointer transition-all has-[:checked]:border-pink-600 has-[:checked]:bg-pink-50 font-bold text-pink-600">
-                      <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Maria'} /> Maria
+                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-pink-500 has-[:checked]:bg-pink-50/50 font-black text-slate-400 has-[:checked]:text-pink-600 border-slate-100 bg-slate-50 hover:bg-slate-100/50">
+                      <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Maria'} /> 
+                      <span className="text-xs uppercase tracking-widest">Maria</span>
                     </label>
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-1">Descrição</label>
-                  <input type="text" name="description" placeholder="Ex: Mercado Semanal" defaultValue={expenseToEdit?.description || ''} className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Descrição</label>
+                  <input type="text" name="description" placeholder="Ex: Mercado Semanal" defaultValue={expenseToEdit?.description || ''} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm" />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-1">Categoria</label>
-                  <select name="category" defaultValue={expenseToEdit?.category || 'Outros'} className="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Categoria</label>
+                  <select name="category" defaultValue={expenseToEdit?.category || 'Outros'} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm appearance-none">
                     {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="flex-1 p-3 bg-slate-100 rounded-xl font-bold">Cancelar</button>
-                  <button type="submit" disabled={isPending} className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md hover:bg-indigo-700 transition disabled:opacity-50">
-                    {isPending ? 'Salvando...' : 'Salvar'}
+
+                <div className="flex gap-4 pt-6">
+                  <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="flex-1 p-5 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 transition-all">Cancelar</button>
+                  <button type="submit" disabled={isPending} className="flex-1 p-5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50">
+                    {isPending ? 'Salvando...' : expenseToEdit ? 'Atualizar' : 'Lançar Gasto'}
                   </button>
                 </div>
               </div>
