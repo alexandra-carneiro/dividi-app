@@ -946,22 +946,7 @@ export default function DashboardClient({
               </div>
             </div>
             
-            <div className="flex justify-around sm:justify-start sm:gap-16">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-lg">A</div>
-                <div>
-                  <p className="text-sm text-slate-500">Alê</p>
-                  <p className="font-semibold text-lg">{formatMoney(totals.ale)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-pink-500 text-white flex items-center justify-center font-bold text-lg">M</div>
-                <div>
-                  <p className="text-sm text-slate-500">Maria</p>
-                  <p className="font-semibold text-lg">{formatMoney(totals.maria)}</p>
-                </div>
-              </div>
-            </div>
+
           </section>
 
           <section className="flex flex-col gap-4 justify-center">

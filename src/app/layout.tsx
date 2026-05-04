@@ -16,12 +16,15 @@ export const metadata: Metadata = {
   title: "Dividi - Gastos Compartilhados",
   description: "Controle financeiro e divisão de despesas simples.",
   manifest: "/manifest.json",
-  themeColor: "#4f46e5",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Dividi",
   },
+};
+
+export const viewport = {
+  themeColor: "#4f46e5",
 };
 
 export default function RootLayout({
