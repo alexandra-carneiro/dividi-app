@@ -762,7 +762,7 @@ export default function DashboardClient({
               </div>
             </button>
             <div className="flex gap-3">
-              <button onClick={() => setIsRecurringOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Pagar Contas (Gastos Fixos)">
+              <button onClick={() => setIsRecurringOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Contas Fixas">
                 <Receipt size={20} />
               </button>
               <button onClick={() => setIsImportOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Importar Planilha">
