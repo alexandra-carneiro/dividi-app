@@ -119,6 +119,54 @@ export default function DashboardClient({
     }
   }, [householdId, supabase])
 
+  // --- BUSCA DINÂMICA DE DADOS POR MÊS ---
+  useEffect(() => {
+    const fetchMonthData = async () => {
+      const year = currentDate.getFullYear()
+      const month = currentDate.getMonth()
+      const firstDay = new Date(year, month, 1).toISOString().split('T')[0]
+      const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0]
+
+      const [expsRes, incsRes] = await Promise.all([
+        supabase
+          .from('expenses')
+          .select('*')
+          .eq('household_id', householdId)
+          .gte('date', firstDay)
+          .lte('date', lastDay),
+        supabase
+          .from('incomes')
+          .select('*')
+          .eq('household_id', householdId)
+          .gte('date', firstDay)
+          .lte('date', lastDay)
+      ])
+
+      if (expsRes.data) {
+        setExpenses(prev => {
+          // Remove os gastos do mês atual antes de adicionar os novos para evitar duplicidade
+          const otherMonths = prev.filter(e => {
+            const d = new Date(e.date + 'T12:00:00')
+            return d.getFullYear() !== year || d.getMonth() !== month
+          })
+          return [...otherMonths, ...expsRes.data!]
+        })
+      }
+
+      if (incsRes.data) {
+        setIncomes(prev => {
+          const otherMonths = prev.filter(i => {
+            const d = new Date(i.date + 'T12:00:00')
+            return d.getFullYear() !== year || d.getMonth() !== month
+          })
+          return [...otherMonths, ...incsRes.data!]
+        })
+      }
+    }
+
+    fetchMonthData()
+  }, [currentDate, householdId, supabase])
+
   const monthExpenses = useMemo(() => {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -141,41 +189,45 @@ export default function DashboardClient({
 
   const totals = useMemo(() => {
     const monthStr = currentDate.toISOString().slice(0, 7)
-    const total = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const ale = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const maria = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
     
-    const totalCategoryBudget = categoryBudgets.reduce((sum, b) => sum + Number(b.monthly_limit), 0)
-    let currentLimit = totalCategoryBudget
+    // Valores GLOBAIS do mês (ignorando filtros de categoria)
+    const globalTotal = monthExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
+    const globalAle = monthExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
+    const globalMaria = monthExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
+    const globalIncome = incomes
+      .filter(i => i.date.startsWith(monthStr))
+      .reduce((acc, i) => acc + Number(i.amount), 0)
+    const globalPlanned = categoryBudgets.reduce((sum, b) => sum + Number(b.monthly_limit), 0)
+
+    // Valores FILTRADOS (para a seção de detalhes e semanas)
+    const filteredTotal = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
+    const aleFiltered = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
+    const mariaFiltered = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
     
+    let currentLimit = globalPlanned
     if (categoryFilter !== 'Todas') {
       const catBudget = categoryBudgets.find(b => b.category === categoryFilter)
-      if (catBudget) {
-        currentLimit = Number(catBudget.monthly_limit)
-      } else {
-        currentLimit = 0 
-      }
+      currentLimit = catBudget ? Number(catBudget.monthly_limit) : 0
     }
 
     const currentWeeklyLimit = currentLimit / totalWeeksInMonth
 
-    const totalIncome = incomes
-      .filter(i => i.date.startsWith(monthStr))
-      .reduce((acc, i) => acc + Number(i.amount), 0)
-
     return { 
-      total, 
-      ale, 
-      maria, 
-      income: totalIncome,
-      balance: totalIncome - total,
-      remaining: currentLimit > 0 ? currentLimit - total : 0,
+      globalTotal,
+      globalIncome,
+      globalBalance: globalIncome - globalTotal,
+      globalPlanned,
+      globalAle,
+      globalMaria,
+      filteredTotal, 
+      ale: aleFiltered, 
+      maria: mariaFiltered, 
+      remaining: currentLimit > 0 ? currentLimit - filteredTotal : 0,
       limit: currentLimit,
       weeklyLimit: currentWeeklyLimit,
-      totalPlanned: totalCategoryBudget,
       hideWeeklyProgress: categoryFilter === 'Contas'
     }
-  }, [filteredExpenses, incomes, categoryFilter, categoryBudgets, totalWeeksInMonth, currentDate])
+  }, [monthExpenses, filteredExpenses, incomes, categoryFilter, categoryBudgets, totalWeeksInMonth, currentDate])
 
   const weeks = useMemo(() => {
     const w: Record<number, any> = {}
@@ -687,41 +739,41 @@ export default function DashboardClient({
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-10">
         
-        {/* CARDS DE RESUMO NO TOPO */}
+        {/* CARDS DE RESUMO NO TOPO - Sempre mostram o global do mês */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl group hover:bg-white/15 transition-all">
-            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Saldo do Mês</p>
-            <h3 className={`text-3xl font-black ${totals.balance < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-              {formatMoney(totals.balance)}
+          <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Saldo do Mês</p>
+            <h3 className={`text-3xl font-black ${totals.globalBalance < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+              {formatMoney(totals.globalBalance)}
             </h3>
-            <div className="mt-4 w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-               <div className={`h-full transition-all duration-1000 ${totals.balance < 0 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: '100%' }}></div>
+            <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+               <div className={`h-full transition-all duration-1000 ${totals.globalBalance < 0 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: '100%' }}></div>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl group hover:bg-white/15 transition-all">
-            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Receitas</p>
-            <h3 className="text-3xl font-black text-white">{formatMoney(totals.income)}</h3>
+          <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Receitas</p>
+            <h3 className="text-3xl font-black text-slate-900">{formatMoney(totals.globalIncome)}</h3>
             <div className="flex items-center gap-2 mt-4">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">Dinheiro que entrou</p>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Dinheiro que entrou</p>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl group hover:bg-white/15 transition-all">
-            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Gastos</p>
-            <h3 className="text-3xl font-black text-white">{formatMoney(totals.total)}</h3>
+          <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Gastos</p>
+            <h3 className="text-3xl font-black text-slate-900">{formatMoney(totals.globalTotal)}</h3>
             <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-              <span className="text-blue-400">Alê: {formatMoney(totals.ale)}</span>
-              <span className="text-pink-400">Maria: {formatMoney(totals.maria)}</span>
+              <span className="text-blue-500">Alê: {formatMoney(totals.globalAle)}</span>
+              <span className="text-pink-500">Maria: {formatMoney(totals.globalMaria)}</span>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-[2rem] p-6 border border-white/10 shadow-2xl group hover:bg-white/15 transition-all">
-            <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Planejado (Limite)</p>
-            <h3 className="text-3xl font-black text-white">{formatMoney(totals.totalPlanned)}</h3>
-            <div className="mt-4 w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-               <div className="bg-white/20 h-full" style={{ width: `${Math.min((totals.total / totals.totalPlanned) * 100, 100)}%` }}></div>
+          <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Planejado (Limite)</p>
+            <h3 className="text-3xl font-black text-slate-900">{formatMoney(totals.globalPlanned)}</h3>
+            <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+               <div className="bg-indigo-500 h-full" style={{ width: `${Math.min((totals.globalTotal / totals.globalPlanned) * 100, 100)}%` }}></div>
             </div>
           </div>
         </div>
@@ -732,8 +784,10 @@ export default function DashboardClient({
           <section className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-xl flex flex-col justify-center border border-slate-100">
             <div className="flex flex-col sm:flex-row justify-between border-b border-slate-100 pb-6 mb-6 sm:items-center gap-6">
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Gasto Total do Mês</p>
-                <p className="text-4xl font-black text-slate-900">{formatMoney(totals.total)}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">
+                  {categoryFilter === 'Todas' ? 'Gasto Total do Mês' : `Gasto em ${categoryFilter}`}
+                </p>
+                <p className="text-4xl font-black text-slate-900">{formatMoney(totals.filteredTotal)}</p>
               </div>
               <div className="text-left sm:text-right">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">{totals.remaining < 0 ? 'Passou do Orçamento' : 'Resta no Mês'}</p>
