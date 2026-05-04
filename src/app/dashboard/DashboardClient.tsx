@@ -21,6 +21,7 @@ export default function DashboardClient({
   initialMonthlyBudget,
   initialWeeklyBudget,
   initialCurrency,
+  initialRecurringExpenses,
   initialCategoryBudgets,
   initialIncomes,
   initialMembers = []
