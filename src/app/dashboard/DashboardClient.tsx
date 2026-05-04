@@ -291,10 +291,15 @@ export default function DashboardClient({
         result = await addIncome(formData)
       }
 
-      if (result.success) {
+      if (result.success && result.data) {
+        if (incomeToEdit) {
+          setIncomes(prev => prev.map(inc => inc.id === incomeToEdit.id ? result.data : inc))
+        } else {
+          setIncomes(prev => [...prev, result.data])
+        }
         setIsIncomeFormOpen(false)
         setIncomeToEdit(null)
-      } else {
+      } else if (result.error) {
         alert('Erro: ' + result.error)
       }
     })
@@ -792,9 +797,8 @@ export default function DashboardClient({
           <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Gastos</p>
             <h3 className="text-3xl font-black text-slate-900">{formatMoney(totals.globalTotal)}</h3>
-            <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-              <span className="text-blue-500">Alê: {formatMoney(totals.globalAle)}</span>
-              <span className="text-pink-500">Maria: {formatMoney(totals.globalMaria)}</span>
+            <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+               Total Geral do Mês
             </div>
           </div>
 

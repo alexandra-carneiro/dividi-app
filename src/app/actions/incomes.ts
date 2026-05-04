@@ -28,7 +28,7 @@ export async function addIncome(formData: FormData) {
   const description = formData.get('description') as string
   const category = formData.get('category') as string || 'Salário'
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('incomes')
     .insert({
       household_id: householdId,
@@ -39,11 +39,13 @@ export async function addIncome(formData: FormData) {
       category,
       created_by: user.id
     })
+    .select()
+    .single()
 
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/dashboard')
-  return { success: true }
+  return { success: true, data }
 }
 
 export async function deleteIncome(id: string) {
@@ -91,7 +93,7 @@ export async function updateIncome(id: string, formData: FormData) {
   const description = formData.get('description') as string
   const category = formData.get('category') as string || 'Salário'
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('incomes')
     .update({
       date,
@@ -101,9 +103,11 @@ export async function updateIncome(id: string, formData: FormData) {
       category
     })
     .eq('id', id)
+    .select()
+    .single()
 
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/dashboard')
-  return { success: true }
+  return { success: true, data }
 }
