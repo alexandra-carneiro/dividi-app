@@ -907,28 +907,39 @@ export default function DashboardClient({
         {activeTab === 'incomes' && (
           /* CONTEÚDO DA ABA DE RECEITAS */
           <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-            {/* Resumo Individualizado de Receitas */}
+            {/* Resumo Individualizado de Receitas - Clicável para Filtrar */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+              <div 
+                onClick={() => setPayerFilter('Todos')}
+                className={`cursor-pointer bg-white rounded-3xl p-6 shadow-xl border transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 ${payerFilter === 'Todos' ? 'border-emerald-500 ring-4 ring-emerald-500/10' : 'border-slate-100 opacity-60'}`}
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${payerFilter === 'Todos' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
                   <TrendingUp size={24} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Geral</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Família Toda</p>
                   <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncome)}</p>
                 </div>
               </div>
-              <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 font-black">A</div>
+
+              <div 
+                onClick={() => setPayerFilter('Alê')}
+                className={`cursor-pointer bg-white rounded-3xl p-6 shadow-xl border transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 ${payerFilter === 'Alê' ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-slate-100 opacity-60'}`}
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black transition-colors ${payerFilter === 'Alê' ? 'bg-blue-500 text-white shadow-lg shadow-blue-200' : 'bg-slate-100 text-slate-400'}`}>A</div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Alê</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Receita Alê</p>
                   <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncomeAle)}</p>
                 </div>
               </div>
-              <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-pink-500/10 flex items-center justify-center text-pink-600 font-black">M</div>
+
+              <div 
+                onClick={() => setPayerFilter('Maria')}
+                className={`cursor-pointer bg-white rounded-3xl p-6 shadow-xl border transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 ${payerFilter === 'Maria' ? 'border-pink-500 ring-4 ring-pink-500/10' : 'border-slate-100 opacity-60'}`}
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black transition-colors ${payerFilter === 'Maria' ? 'bg-pink-500 text-white shadow-lg shadow-pink-200' : 'bg-slate-100 text-slate-400'}`}>M</div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Maria</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Receita Maria</p>
                   <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncomeMaria)}</p>
                 </div>
               </div>
