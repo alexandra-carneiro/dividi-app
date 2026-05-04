@@ -1559,6 +1559,9 @@ export default function DashboardClient({
           )}
         </div>
       </main>
+      <footer className="mt-20 pb-10 text-center">
+        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">Dividi App v1.2 - Atualizado</p>
+      </footer>
     </div>
   )
 }
