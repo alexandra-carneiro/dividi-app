@@ -768,9 +768,7 @@ export default function DashboardClient({
               <button onClick={() => setIsImportOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Importar Planilha">
                 <Download size={20} />
               </button>
-              <button onClick={() => setIsInviteOpen(true)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Convidar Membro">
-                <Users size={20} />
-              </button>
+
               <button onClick={openSettings} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition" title="Configurações">
                 <Settings size={20} />
               </button>
