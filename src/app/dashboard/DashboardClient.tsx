@@ -96,6 +96,7 @@ export default function DashboardClient({
   const [incomeToEdit, setIncomeToEdit] = useState<any>(null)
   const [settingsTab, setSettingsTab] = useState<'budget' | 'family' | 'account'>('budget')
   const [payerFilter, setPayerFilter] = useState<'Todos' | 'Alê' | 'Maria'>('Todos')
+  const [activeTab, setActiveTab] = useState<'expenses' | 'incomes'>('expenses')
   const [isPending, startTransition] = useTransition()
 
   const closeAllModals = () => {
@@ -883,54 +884,74 @@ export default function DashboardClient({
           </div>
         </div>
 
-        <Charts expenses={filteredExpenses} budget={totals.limit > 0 ? totals.limit : monthlyBudget} currency={currency} />
 
-        {/* LISTA DE RECEITAS (NOVO) */}
-        <section className="mt-10 bg-white rounded-[2rem] p-8 shadow-xl border border-slate-100">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Entradas</p>
-              <h4 className="text-2xl font-black text-slate-800">Extrato de Receitas</h4>
-            </div>
+
+        {/* NAVEGAÇÃO PRINCIPAL POR ABAS */}
+        <div className="flex justify-center mb-10 mt-10">
+          <div className="bg-slate-200/50 p-1.5 rounded-[2rem] flex gap-2 backdrop-blur-md border border-slate-200/50 shadow-inner">
             <button 
-              onClick={() => setIsIncomeFormOpen(true)}
-              className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-600 transition-all active:scale-95"
+              onClick={() => setActiveTab('expenses')}
+              className={`flex items-center gap-3 px-10 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 ${activeTab === 'expenses' ? 'bg-white text-indigo-600 shadow-xl scale-105' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              <Plus size={18} /> Nova Receita
+              <Wallet size={18} /> Gastos
+            </button>
+            <button 
+              onClick={() => setActiveTab('incomes')}
+              className={`flex items-center gap-3 px-10 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 ${activeTab === 'incomes' ? 'bg-white text-emerald-600 shadow-xl scale-105' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <TrendingUp size={18} /> Receitas
             </button>
           </div>
+        </div>
 
-          <div className="space-y-4">
-            {filteredIncomes.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
-                <p className="text-slate-400 font-bold">Nenhuma receita encontrada para este filtro.</p>
+        {activeTab === 'incomes' && (
+          /* LISTA DE RECEITAS (NOVO) */
+          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white rounded-[2rem] p-8 shadow-xl border border-slate-100">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Entradas</p>
+                <h4 className="text-2xl font-black text-slate-800">Extrato de Receitas</h4>
               </div>
-            ) : (
-              filteredIncomes
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map(income => (
-                  <div key={income.id} className="flex items-center justify-between p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-emerald-200 transition-all group">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white ${income.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                        {income.payer.charAt(0)}
+              <button 
+                onClick={() => setIsIncomeFormOpen(true)}
+                className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-600 transition-all active:scale-95"
+              >
+                <Plus size={18} /> Nova Receita
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {filteredIncomes.length === 0 ? (
+                <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
+                  <p className="text-slate-400 font-bold">Nenhuma receita encontrada para este filtro.</p>
+                </div>
+              ) : (
+                filteredIncomes
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map(income => (
+                    <div key={income.id} className="flex items-center justify-between p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-emerald-200 transition-all group">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white ${income.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
+                          {income.payer.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-800 leading-tight">{income.description || 'Receita'}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{new Date(income.date + 'T12:00:00').toLocaleDateString('pt-BR')} • {income.category}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-black text-slate-800 leading-tight">{income.description || 'Receita'}</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{new Date(income.date + 'T12:00:00').toLocaleDateString('pt-BR')} • {income.category}</p>
+                      <div className="flex items-center gap-6">
+                        <p className="text-lg font-black text-emerald-600">{formatMoney(Number(income.amount))}</p>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => openEditIncome(income)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm"><Edit2 size={16} /></button>
+                          <button onClick={() => handleDeleteIncome(income.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm"><Trash2 size={16} /></button>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <p className="text-lg font-black text-emerald-600">{formatMoney(Number(income.amount))}</p>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEditIncome(income)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm"><Edit2 size={16} /></button>
-                        <button onClick={() => handleDeleteIncome(income.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm"><Trash2 size={16} /></button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-            )}
-          </div>
-        </section>
+                  ))
+              )}
+            </div>
+          </section>
+        )}
 
 
 
@@ -1470,67 +1491,80 @@ export default function DashboardClient({
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {weeks.length === 0 ? (
-            <p className="text-center text-slate-500 py-8 md:col-span-2">Nenhum gasto neste mês.</p>
-          ) : (
-            weeks.map(week => {
-              const weekLimit = totals.weeklyLimit > 0 ? totals.weeklyLimit : (monthlyBudget / totalWeeksInMonth)
-              const remaining = weekLimit - week.total
-              return (
-                <div key={week.number} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-                  <div className="flex justify-between border-b pb-3 mb-3 items-center">
-                    <h3 className="font-bold text-slate-800">Semana {week.number}</h3>
-                    {!totals.hideWeeklyProgress && (
-                      <div className="text-right">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">Gasto: {formatMoney(week.total)}</p>
-                        <p className={`text-sm font-black ${remaining < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                          {remaining < 0 ? 'Passou: ' : 'Resta: '}{formatMoney(Math.abs(remaining))}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-3">
-                    {week.expenses.map((exp: any) => (
-                      <div key={exp.id} className="p-3 hover:bg-slate-50 rounded-2xl transition-colors border-b border-slate-50 last:border-0">
-                        <div className="flex gap-3">
-                          {/* Avatar */}
-                          <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${exp.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                            {exp.payer.charAt(0)}
-                          </div>
+        {activeTab === 'expenses' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10">
+            <Charts expenses={filteredExpenses} budget={totals.limit > 0 ? totals.limit : monthlyBudget} currency={currency} />
 
-                          {/* Conteúdo */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start gap-4 mb-2">
-                              <p className="font-bold text-base text-slate-800 leading-tight break-words">{exp.description || 'Gasto'}</p>
-                              <span className="font-black text-base text-slate-900 whitespace-nowrap leading-none mt-0.5">{formatMoney(Number(exp.amount))}</span>
-                            </div>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Saídas</p>
+                <h4 className="text-2xl font-black text-slate-800">Seus Gastos</h4>
+              </div>
+              <button 
+                onClick={() => setIsFormOpen(true)}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+              >
+                <Plus size={18} /> Novo Gasto
+              </button>
+            </div>
 
-                            {/* Linha 2: Categoria, Data e Ações */}
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[9px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-500 uppercase rounded-md tracking-wider leading-none">{exp.category || 'Outros'}</span>
-                                <span className="text-[10px] text-slate-400 font-bold leading-none">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <button onClick={() => openEditExpense(exp)} className="text-indigo-500 hover:text-indigo-700 p-1 transition-colors" title="Editar">
-                                  <Edit2 size={16} />
-                                </button>
-                                <button onClick={() => handleDelete(exp.id)} className="text-red-500 hover:text-red-700 p-1 transition-colors" title="Excluir">
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20">
+              {weeks.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 md:col-span-2 xl:col-span-3">
+                  <p className="text-slate-400 font-bold text-lg">Nenhum gasto registrado este mês.</p>
+                  <p className="text-slate-300 text-sm mt-1 font-medium">Use o botão acima para começar!</p>
                 </div>
-              )
-            })
-          )}
-        </div>
+              ) : (
+                weeks.map(week => {
+                  const weekLimit = totals.weeklyLimit > 0 ? totals.weeklyLimit : (monthlyBudget / totalWeeksInMonth)
+                  const remaining = weekLimit - week.total
+                  return (
+                    <div key={week.number} className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-50 hover:shadow-2xl transition-all group/week">
+                      <div className="flex justify-between border-b border-slate-50 pb-4 mb-4 items-center">
+                        <h3 className="font-black text-slate-800 uppercase text-[10px] tracking-widest bg-slate-100 px-3 py-1 rounded-lg">Semana {week.number}</h3>
+                        {!totals.hideWeeklyProgress && (
+                          <div className="text-right">
+                            <p className="text-[9px] text-slate-400 uppercase font-black">Gasto: {formatMoney(week.total)}</p>
+                            <p className={`text-sm font-black ${remaining < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                              {remaining < 0 ? '-' : ''}{formatMoney(Math.abs(remaining))}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        {week.expenses.map((exp: any) => (
+                          <div key={exp.id} className="p-3 hover:bg-slate-50 rounded-2xl transition-all group/item">
+                            <div className="flex gap-3">
+                              <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-xs font-black text-white shadow-sm transition-transform group-hover/item:scale-110 ${exp.payer === 'Alê' ? 'bg-blue-500 shadow-blue-100' : 'bg-pink-500 shadow-pink-100'}`}>
+                                {exp.payer.charAt(0)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start gap-4 mb-0.5">
+                                  <p className="font-bold text-sm text-slate-800 leading-tight truncate">{exp.description || 'Gasto'}</p>
+                                  <span className="font-black text-sm text-slate-900">{formatMoney(Number(exp.amount))}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[8px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-500 uppercase rounded-md tracking-wider">{exp.category || 'Outros'}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                    <button onClick={() => openEditExpense(exp)} className="text-slate-400 hover:text-indigo-600 p-1"><Edit2 size={14} /></button>
+                                    <button onClick={() => handleDelete(exp.id)} className="text-slate-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        )}
       </main>
       <footer className="mt-20 pb-10 text-center">
         <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">Dividi App v1.2 - Atualizado</p>
