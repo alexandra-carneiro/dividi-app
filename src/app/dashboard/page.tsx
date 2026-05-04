@@ -47,7 +47,7 @@ export default async function DashboardPage() {
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
 
-    const [expsRes, hhRes, recRes, budgetsRes, incomesRes] = await Promise.all([
+    const [expsRes, hhRes, recRes, budgetsRes, incomesRes, membersRes] = await Promise.all([
       supabase
         .from('expenses')
         .select('*')
@@ -72,7 +72,11 @@ export default async function DashboardPage() {
         .from('incomes')
         .select('*')
         .eq('household_id', householdId)
-        .order('date', { ascending: false })
+        .order('date', { ascending: false }),
+      supabase
+        .from('household_members')
+        .select('*')
+        .eq('household_id', householdId)
     ])
 
     if (expsRes.data) initialExpenses = expsRes.data
@@ -80,19 +84,23 @@ export default async function DashboardPage() {
     if (recRes.data) initialRecurring = recRes.data
     if (budgetsRes.data) initialCategoryBudgets = budgetsRes.data
     if (incomesRes.data) initialIncomes = incomesRes.data
+    const initialMembers = membersRes.data || []
+
+    return (
+      <DashboardClient 
+        initialExpenses={initialExpenses} 
+        householdId={householdId} 
+        userEmail={user.email || ''} 
+        initialMonthlyBudget={householdData?.monthly_budget ?? 250.00}
+        initialWeeklyBudget={householdData?.weekly_budget ?? 62.50}
+        initialCurrency={householdData?.currency ?? 'BRL'}
+        initialRecurringExpenses={initialRecurring}
+        initialCategoryBudgets={initialCategoryBudgets || []}
+        initialIncomes={initialIncomes}
+        initialMembers={initialMembers}
+      />
+    )
   }
 
-  return (
-    <DashboardClient 
-      initialExpenses={initialExpenses} 
-      householdId={householdId} 
-      userEmail={user.email || ''} 
-      initialMonthlyBudget={householdData?.monthly_budget ?? 250.00}
-      initialWeeklyBudget={householdData?.weekly_budget ?? 62.50}
-      initialCurrency={householdData?.currency ?? 'BRL'}
-      initialRecurringExpenses={initialRecurring}
-      initialCategoryBudgets={initialCategoryBudgets || []}
-      initialIncomes={initialIncomes}
-    />
-  )
+  return null
 }

@@ -21,9 +21,9 @@ export default function DashboardClient({
   initialMonthlyBudget,
   initialWeeklyBudget,
   initialCurrency,
-  initialRecurringExpenses,
   initialCategoryBudgets,
-  initialIncomes
+  initialIncomes,
+  initialMembers = []
 }: { 
   initialExpenses: any[], 
   householdId: string, 
@@ -33,10 +33,12 @@ export default function DashboardClient({
   initialCurrency: string,
   initialRecurringExpenses: any[],
   initialCategoryBudgets: any[],
-  initialIncomes: any[]
+  initialIncomes: any[],
+  initialMembers: any[]
 }) {
   const [expenses, setExpenses] = useState(initialExpenses)
   const [incomes, setIncomes] = useState(initialIncomes)
+  const [members, setMembers] = useState(initialMembers)
   const [recurringExpenses, setRecurringExpenses] = useState(initialRecurringExpenses)
   const [monthlyBudget, setMonthlyBudget] = useState(initialMonthlyBudget)
   const [weeklyBudget, setWeeklyBudget] = useState(initialWeeklyBudget)
@@ -140,9 +142,20 @@ export default function DashboardClient({
       })
       .subscribe()
 
+    const membersChannel = supabase.channel('realtime_members')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: `household_id=eq.${householdId}` }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setMembers(prev => [...prev, payload.new])
+        } else if (payload.eventType === 'DELETE') {
+          setMembers(prev => prev.filter(m => m.user_id !== payload.old.user_id))
+        }
+      })
+      .subscribe()
+
     return () => {
       supabase.removeChannel(channel)
       supabase.removeChannel(incomeChannel)
+      supabase.removeChannel(membersChannel)
     }
   }, [householdId, supabase])
 
@@ -931,11 +944,11 @@ export default function DashboardClient({
 
         {isSettingsOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsSettingsOpen(false)}>
-            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl animate-in zoom-in-95 duration-200 border border-slate-200 overflow-hidden flex flex-col md:flex-row min-h-[600px] max-h-[90vh]">
+            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-300 border border-slate-200 overflow-hidden flex flex-col md:flex-row min-h-[550px] max-h-[90vh]">
               
               {/* Sidebar das Configurações */}
-              <div className="w-full md:w-64 bg-slate-50 border-r border-slate-100 p-8 flex flex-col">
-                <h3 className="font-black text-slate-800 text-xl mb-8 uppercase tracking-widest">Ajustes</h3>
+              <div className="w-full md:w-60 bg-slate-50 border-r border-slate-100 p-6 md:p-8 flex flex-col">
+                <h3 className="font-black text-slate-800 text-lg mb-8 uppercase tracking-[0.2em] opacity-80">Ajustes</h3>
                 <nav className="space-y-2 flex-1">
                   <button 
                     onClick={() => setSettingsTab('budget')}
@@ -964,7 +977,7 @@ export default function DashboardClient({
               </div>
 
               {/* Conteúdo das Abas */}
-              <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar relative">
+              <div className="flex-1 p-6 md:p-10 overflow-y-auto custom-scrollbar relative">
                 <button type="button" onClick={() => setIsSettingsOpen(false)} className="absolute top-8 right-8 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm">
                    <X size={24} />
                 </button>
@@ -1057,15 +1070,21 @@ export default function DashboardClient({
                     <div>
                       <h5 className="font-black text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-6 ml-1">Membros Atuais</h5>
                       <div className="space-y-3">
-                         <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100">
+                        {members.map(member => (
+                          <div key={member.user_id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-black text-slate-500">{userEmail.charAt(0).toUpperCase()}</div>
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white ${member.email === userEmail ? 'bg-indigo-500' : 'bg-slate-300'}`}>
+                                {member.email.charAt(0).toUpperCase()}
+                              </div>
                               <div>
-                                <p className="font-black text-slate-800 text-sm">{userEmail}</p>
-                                <p className="text-[10px] font-black text-indigo-500 uppercase">Você (Admin)</p>
+                                <p className="font-black text-slate-800 text-sm">{member.email}</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase">
+                                  {member.email === userEmail ? 'Você (Admin)' : 'Membro'}
+                                </p>
                               </div>
                             </div>
-                         </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
