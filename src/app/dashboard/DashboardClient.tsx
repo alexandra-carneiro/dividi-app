@@ -931,7 +931,7 @@ export default function DashboardClient({
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-10">
           <section className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-xl flex flex-col justify-center border border-slate-100">
-            <div className="flex flex-col sm:flex-row justify-between border-b border-slate-100 pb-6 mb-6 sm:items-center gap-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">
                   {categoryFilter === 'Todas' ? 'Gasto Total do Mês' : `Gasto em ${categoryFilter}`}
