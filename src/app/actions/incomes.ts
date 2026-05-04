@@ -26,7 +26,7 @@ export async function addIncome(formData: FormData) {
   const amount = parseFloat(formData.get('amount') as string)
   const payer = formData.get('payer') as string
   const description = formData.get('description') as string
-  const category = formData.get('category') as string
+  const category = formData.get('category') as string || 'Salário'
 
   const { error } = await supabase
     .from('incomes')
@@ -89,7 +89,7 @@ export async function updateIncome(id: string, formData: FormData) {
   const amount = parseFloat(formData.get('amount') as string)
   const payer = formData.get('payer') as string
   const description = formData.get('description') as string
-  const category = formData.get('category') as string
+  const category = formData.get('category') as string || 'Salário'
 
   const { error } = await supabase
     .from('incomes')
