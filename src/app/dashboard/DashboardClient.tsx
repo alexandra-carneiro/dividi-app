@@ -9,10 +9,11 @@ import { inviteUser } from '../actions/invite'
 import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses, updateRecurringExpense } from '../actions/recurring'
 import { updateCategoryBudget } from '../actions/budgets'
 import { addIncome, deleteIncome, updateIncome } from '../actions/incomes'
-import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp, Receipt } from 'lucide-react'
+import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp, Receipt, Plus } from 'lucide-react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import Charts from './Charts'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 export default function DashboardClient({ 
   initialExpenses, 
   householdId, 
@@ -48,7 +49,33 @@ export default function DashboardClient({
   const [localWeekly, setLocalWeekly] = useState(initialWeeklyBudget)
   const [localCurrency, setLocalCurrency] = useState(initialCurrency)
   
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const initialDate = useMemo(() => {
+    const monthParam = searchParams.get('month')
+    if (monthParam) {
+      const [year, month] = monthParam.split('-').map(Number)
+      if (!isNaN(year) && !isNaN(month)) {
+        return new Date(year, month - 1, 1)
+      }
+    }
+    return new Date()
+  }, [searchParams])
+
+  const [currentDate, setCurrentDate] = useState(initialDate)
+
+  // Sincronizar data com a URL
+  useEffect(() => {
+    const monthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
+    if (searchParams.get('month') !== monthStr) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('month', monthStr)
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    }
+  }, [currentDate, pathname, router, searchParams])
+
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [expenseToEdit, setExpenseToEdit] = useState<any>(null)
@@ -188,7 +215,9 @@ export default function DashboardClient({
   }, [monthExpenses, categoryFilter])
 
   const totals = useMemo(() => {
-    const monthStr = currentDate.toISOString().slice(0, 7)
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`
     
     // Valores GLOBAIS do mês (ignorando filtros de categoria)
     const globalTotal = monthExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
@@ -779,6 +808,60 @@ export default function DashboardClient({
         </div>
 
         <Charts expenses={filteredExpenses} budget={totals.limit > 0 ? totals.limit : monthlyBudget} currency={currency} />
+
+        {/* LISTA DE RECEITAS (NOVO) */}
+        <section className="mt-10 bg-white rounded-[2rem] p-8 shadow-xl border border-slate-100">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Entradas</p>
+              <h4 className="text-2xl font-black text-slate-800">Extrato de Receitas</h4>
+            </div>
+            <button 
+              onClick={() => setIsIncomeFormOpen(true)}
+              className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-600 transition-all active:scale-95"
+            >
+              <Plus size={18} /> Nova Receita
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {incomes.filter(i => {
+               const d = new Date(i.date + 'T12:00:00');
+               return d.getFullYear() === currentDate.getFullYear() && d.getMonth() === currentDate.getMonth();
+            }).length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
+                <p className="text-slate-400 font-bold">Nenhuma receita registrada neste mês.</p>
+              </div>
+            ) : (
+              incomes
+                .filter(i => {
+                  const d = new Date(i.date + 'T12:00:00');
+                  return d.getFullYear() === currentDate.getFullYear() && d.getMonth() === currentDate.getMonth();
+                })
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map(income => (
+                  <div key={income.id} className="flex items-center justify-between p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-emerald-200 transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white ${income.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
+                        {income.payer.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-black text-slate-800 leading-tight">{income.description || 'Receita'}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{new Date(income.date + 'T12:00:00').toLocaleDateString('pt-BR')} • {income.category}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <p className="text-lg font-black text-emerald-600">{formatMoney(Number(income.amount))}</p>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEditIncome(income)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm"><Edit2 size={16} /></button>
+                        <button onClick={() => handleDeleteIncome(income.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm"><Trash2 size={16} /></button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-10">
           <section className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-xl flex flex-col justify-center border border-slate-100">
