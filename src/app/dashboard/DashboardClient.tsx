@@ -239,6 +239,12 @@ export default function DashboardClient({
     const globalIncome = incomes
       .filter(i => i.date.startsWith(monthStr))
       .reduce((acc, i) => acc + Number(i.amount), 0)
+    const globalIncomeAle = incomes
+      .filter(i => i.date.startsWith(monthStr) && i.payer === 'Alê')
+      .reduce((acc, i) => acc + Number(i.amount), 0)
+    const globalIncomeMaria = incomes
+      .filter(i => i.date.startsWith(monthStr) && i.payer === 'Maria')
+      .reduce((acc, i) => acc + Number(i.amount), 0)
     const globalPlanned = categoryBudgets.reduce((sum, b) => sum + Number(b.monthly_limit), 0)
 
     // Valores FILTRADOS (para a seção de detalhes e semanas)
@@ -246,6 +252,12 @@ export default function DashboardClient({
     const aleFiltered = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
     const mariaFiltered = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
     
+    // Receitas Filtradas (se necessário no futuro)
+    const filteredIncomes = incomes.filter(i => {
+      const d = new Date(i.date + 'T12:00:00')
+      return d.getFullYear() === year && d.getMonth() === month
+    })
+
     let currentLimit = globalPlanned
     if (categoryFilter !== 'Todas') {
       const catBudget = categoryBudgets.find(b => b.category === categoryFilter)
@@ -257,6 +269,8 @@ export default function DashboardClient({
     return { 
       globalTotal,
       globalIncome,
+      globalIncomeAle,
+      globalIncomeMaria,
       globalBalance: globalIncome - globalTotal,
       globalPlanned,
       globalAle,
@@ -327,7 +341,11 @@ export default function DashboardClient({
     if (!confirm('Tem certeza que deseja excluir esta receita?')) return
     startTransition(async () => {
       const result = await deleteIncome(id)
-      if (!result.success) alert('Erro ao excluir: ' + result.error)
+      if (result.success) {
+        setIncomes(prev => prev.filter(i => i.id !== id))
+      } else {
+        alert('Erro ao excluir: ' + result.error)
+      }
     })
   }
 
@@ -801,9 +819,9 @@ export default function DashboardClient({
           <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Receitas</p>
             <h3 className="text-3xl font-black text-slate-900">{formatMoney(totals.globalIncome)}</h3>
-            <div className="flex items-center gap-2 mt-4">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Dinheiro que entrou</p>
+            <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+              <span className="text-blue-500">Alê: {formatMoney(totals.globalIncomeAle)}</span>
+              <span className="text-pink-500">Maria: {formatMoney(totals.globalIncomeMaria)}</span>
             </div>
           </div>
 
