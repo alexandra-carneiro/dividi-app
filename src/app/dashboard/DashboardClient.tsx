@@ -95,6 +95,7 @@ export default function DashboardClient({
   const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(false)
   const [incomeToEdit, setIncomeToEdit] = useState<any>(null)
   const [settingsTab, setSettingsTab] = useState<'budget' | 'family' | 'account'>('budget')
+  const [payerFilter, setPayerFilter] = useState<'Todos' | 'Alê' | 'Maria'>('Todos')
   const [isPending, startTransition] = useTransition()
 
   const closeAllModals = () => {
@@ -224,9 +225,27 @@ export default function DashboardClient({
   }, [currentDate])
 
   const filteredExpenses = useMemo(() => {
-    if (categoryFilter === 'Todas') return monthExpenses
-    return monthExpenses.filter(exp => exp.category === categoryFilter)
-  }, [monthExpenses, categoryFilter])
+    let filtered = monthExpenses
+    if (categoryFilter !== 'Todas') {
+      filtered = filtered.filter(exp => exp.category === categoryFilter)
+    }
+    if (payerFilter !== 'Todos') {
+      filtered = filtered.filter(exp => exp.payer === payerFilter)
+    }
+    return filtered
+  }, [monthExpenses, categoryFilter, payerFilter])
+
+  const filteredIncomes = useMemo(() => {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const monthIncomes = incomes.filter(i => {
+      const d = new Date(i.date + 'T12:00:00')
+      return d.getFullYear() === year && d.getMonth() === month
+    })
+    
+    if (payerFilter === 'Todos') return monthIncomes
+    return monthIncomes.filter(inc => inc.payer === payerFilter)
+  }, [incomes, currentDate, payerFilter])
 
   const totals = useMemo(() => {
     const year = currentDate.getFullYear()
@@ -253,11 +272,8 @@ export default function DashboardClient({
     const aleFiltered = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
     const mariaFiltered = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
     
-    // Receitas Filtradas (se necessário no futuro)
-    const filteredIncomes = incomes.filter(i => {
-      const d = new Date(i.date + 'T12:00:00')
-      return d.getFullYear() === year && d.getMonth() === month
-    })
+    // Receitas Filtradas
+    const filteredIncomeTotal = filteredIncomes.reduce((acc, i) => acc + Number(i.amount), 0)
 
     let currentLimit = globalPlanned
     if (categoryFilter !== 'Todas') {
@@ -277,6 +293,7 @@ export default function DashboardClient({
       globalAle,
       globalMaria,
       filteredTotal, 
+      filteredIncomeTotal,
       ale: aleFiltered, 
       maria: mariaFiltered, 
       remaining: currentLimit > 0 ? currentLimit - filteredTotal : 0,
@@ -284,7 +301,7 @@ export default function DashboardClient({
       weeklyLimit: currentWeeklyLimit,
       hideWeeklyProgress: categoryFilter === 'Contas'
     }
-  }, [monthExpenses, filteredExpenses, incomes, categoryFilter, categoryBudgets, totalWeeksInMonth, currentDate])
+  }, [monthExpenses, filteredExpenses, filteredIncomes, incomes, categoryFilter, categoryBudgets, totalWeeksInMonth, currentDate])
 
   const weeks = useMemo(() => {
     const w: Record<number, any> = {}
@@ -774,31 +791,52 @@ export default function DashboardClient({
             </button>
           </div>
 
-          {/* Filtros de Categoria em Destaque */}
-          <div className="mt-8 flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2">
-            <button
-              onClick={() => setCategoryFilter('Todas')}
-              className={`px-6 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shadow-md border uppercase tracking-widest ${
-                categoryFilter === 'Todas' 
-                  ? 'bg-white text-indigo-600 border-white' 
-                  : 'bg-indigo-400/30 text-indigo-100 border-indigo-400/20 hover:bg-white/20'
-              }`}
-            >
-              Tudo
-            </button>
-            {CATEGORIES.map(cat => (
+          {/* Filtros de Membro e Categoria */}
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mr-2">Filtrar por:</span>
+              <div className="flex gap-2 bg-indigo-500/20 p-1 rounded-2xl border border-indigo-400/20">
+                {['Todos', 'Alê', 'Maria'].map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setPayerFilter(p as any)}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest ${
+                      payerFilter === p 
+                        ? 'bg-white text-indigo-600 shadow-md' 
+                        : 'text-indigo-100 hover:bg-white/10'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
+                onClick={() => setCategoryFilter('Todas')}
                 className={`px-6 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shadow-md border uppercase tracking-widest ${
-                  categoryFilter === cat 
+                  categoryFilter === 'Todas' 
                     ? 'bg-white text-indigo-600 border-white' 
                     : 'bg-indigo-400/30 text-indigo-100 border-indigo-400/20 hover:bg-white/20'
                 }`}
               >
-                {cat}
+                Todas Categorias
               </button>
-            ))}
+              {CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`px-6 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shadow-md border uppercase tracking-widest ${
+                    categoryFilter === cat 
+                      ? 'bg-white text-indigo-600 border-white' 
+                      : 'bg-indigo-400/30 text-indigo-100 border-indigo-400/20 hover:bg-white/20'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>
@@ -819,10 +857,9 @@ export default function DashboardClient({
 
           <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl group hover:shadow-2xl transition-all">
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Receitas</p>
-            <h3 className="text-3xl font-black text-slate-900">{formatMoney(totals.globalIncome)}</h3>
-            <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-              <span className="text-blue-500">Alê: {formatMoney(totals.globalIncomeAle)}</span>
-              <span className="text-pink-500">Maria: {formatMoney(totals.globalIncomeMaria)}</span>
+            <h3 className="text-3xl font-black text-slate-900">{formatMoney(payerFilter === 'Todos' ? totals.globalIncome : totals.filteredIncomeTotal)}</h3>
+            <div className="mt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+               {payerFilter === 'Todos' ? 'Total da Família' : `Recebido por ${payerFilter}`}
             </div>
           </div>
 
@@ -861,19 +898,12 @@ export default function DashboardClient({
           </div>
 
           <div className="space-y-4">
-            {incomes.filter(i => {
-               const d = new Date(i.date + 'T12:00:00');
-               return d.getFullYear() === currentDate.getFullYear() && d.getMonth() === currentDate.getMonth();
-            }).length === 0 ? (
+            {filteredIncomes.length === 0 ? (
               <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
-                <p className="text-slate-400 font-bold">Nenhuma receita registrada neste mês.</p>
+                <p className="text-slate-400 font-bold">Nenhuma receita encontrada para este filtro.</p>
               </div>
             ) : (
-              incomes
-                .filter(i => {
-                  const d = new Date(i.date + 'T12:00:00');
-                  return d.getFullYear() === currentDate.getFullYear() && d.getMonth() === currentDate.getMonth();
-                })
+              filteredIncomes
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map(income => (
                   <div key={income.id} className="flex items-center justify-between p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-emerald-200 transition-all group">
