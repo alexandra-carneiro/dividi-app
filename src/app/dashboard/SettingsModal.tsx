@@ -5,8 +5,8 @@ import { useState } from 'react'
 interface SettingsModalProps {
   isSettingsOpen: boolean
   setIsSettingsOpen: (open: boolean) => void
-  settingsTab: 'budget' | 'family' | 'account'
-  setSettingsTab: (tab: 'budget' | 'family' | 'account') => void
+  settingsTab: 'budget' | 'family' | 'account' | 'support'
+  setSettingsTab: (tab: 'budget' | 'family' | 'account' | 'support') => void
   localCurrency: string
   setLocalCurrency: (c: string) => void
   CATEGORIES: string[]

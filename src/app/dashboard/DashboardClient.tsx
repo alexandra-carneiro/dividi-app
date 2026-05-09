@@ -342,6 +342,7 @@ export default function DashboardClient(props: any) {
           localCurrency={localCurrency} setLocalCurrency={setLocalCurrency}
           CATEGORIES={CATEGORIES} categoryBudgets={categoryBudgets}
           updateCategoryBudget={updateCategoryBudget} setCategoryBudgets={setCategoryBudgets}
+          householdId={householdId} currency={currency} members={members}
           userEmail={userEmail} handleInvite={handleInvite} handleSignOut={handleSignOut}
           displayName={displayName} handleUpdateProfile={handleUpdateProfile}
           supabase={supabase}

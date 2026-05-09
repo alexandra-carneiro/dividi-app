@@ -81,7 +81,7 @@ export function useDashboardState({
   const [categoryFilter, setCategoryFilter] = useState('Todas')
   const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(false)
   const [incomeToEdit, setIncomeToEdit] = useState<any>(null)
-  const [settingsTab, setSettingsTab] = useState<'budget' | 'family' | 'account'>('budget')
+  const [settingsTab, setSettingsTab] = useState<'budget' | 'family' | 'account' | 'support'>('budget')
   const [payerFilter, setPayerFilter] = useState<'Todos' | 'Alê' | 'Maria'>('Todos')
   const [activeTab, setActiveTab] = useState<'expenses' | 'incomes'>('expenses')
   const [searchTerm, setSearchTerm] = useState('')
