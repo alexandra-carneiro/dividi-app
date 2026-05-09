@@ -2,6 +2,7 @@
 CREATE TABLE public.profiles (
     id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     email text NOT NULL,
+    display_name text,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -78,6 +79,7 @@ ALTER TABLE public.category_budgets ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS Policies
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update their own profiles" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 CREATE POLICY "Users can view their households" ON public.households FOR SELECT USING (id IN (SELECT household_id FROM public.household_members WHERE user_id = auth.uid()));
 CREATE POLICY "Users can insert households" ON public.households FOR INSERT WITH CHECK (true);

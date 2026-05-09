@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useFormStatus } from 'react-dom'
 import { login, signup, resetPassword } from './actions'
@@ -31,17 +31,12 @@ function SubmitButton({ text, loadingText, className, formAction }: { text: stri
 }
 
 function LoginContent() {
-  const [mode, setMode] = useState<Mode>('login')
+  const searchParams = useSearchParams()
+  const initialMode = (searchParams.get('mode') as Mode) || 'login'
+  const [mode, setMode] = useState<Mode>(initialMode)
   const [showPassword, setShowPassword] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
-  const searchParams = useSearchParams()
   const message = searchParams.get('message')
-  const initialMode = searchParams.get('mode') as Mode
-
-  // Se houver uma mensagem de erro/sucesso ou modo inicial na URL
-  useEffect(() => {
-    if (initialMode) setMode(initialMode)
-  }, [initialMode])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#060608] p-4 relative overflow-hidden font-sans">

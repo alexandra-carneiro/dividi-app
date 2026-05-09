@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts'
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#a28CFE', '#ff6b6b']
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 export default function Charts({ 
   expenses, 
@@ -32,7 +32,9 @@ export default function Charts({
     const data = type === 'expenses' ? expenses : incomes
     const map: Record<string, number> = {}
     data.forEach(e => {
-      map[e.payer] = (map[e.payer] || 0) + Number(e.amount)
+      if (e.payer) {
+        map[e.payer] = (map[e.payer] || 0) + Number(e.amount)
+      }
     })
     return Object.keys(map).map(k => ({ name: k, value: map[k] }))
   }, [expenses, incomes, type])
@@ -45,56 +47,142 @@ export default function Charts({
   if (dataToUse.length === 0) return null
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-in fade-in duration-500">
-      <div className="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-100 flex flex-col items-center group hover:shadow-2xl transition-all">
-        <h3 className="font-black text-slate-800 mb-6 self-start uppercase text-[10px] tracking-widest bg-slate-100 px-4 py-1.5 rounded-full">
-          {type === 'expenses' ? 'Gastos por Categoria' : 'Receitas por Categoria'}
-        </h3>
-        <div className="w-full h-[300px] min-h-[300px]">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-16 animate-in fade-in duration-1000">
+      {/* CHART CONTAINER CATEGORY */}
+      <div className="glass-card p-10 rounded-[3rem] border border-white/5 flex flex-col items-center group hover:border-white/10 transition-all duration-700 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/5 rounded-full blur-3xl"></div>
+        
+        <div className="flex justify-between items-center w-full mb-10">
+           <h3 className="font-black text-slate-500 uppercase text-[10px] tracking-[0.4em] bg-white/5 px-5 py-2 rounded-2xl border border-white/5">
+            {type === 'expenses' ? 'Distribuição por Categoria' : 'Receitas por Categoria'}
+           </h3>
+           <div className="flex gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/50"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/20"></div>
+           </div>
+        </div>
+
+        <div className="w-full h-[350px] min-h-[350px]">
           <ResponsiveContainer width="100%" height="100%" key={`${type}-pie-${dataToUse.length}`}>
             <PieChart>
+              <defs>
+                {COLORS.map((color, idx) => (
+                  <linearGradient key={`grad-${idx}`} id={`grad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={color} stopOpacity={1} />
+                    <stop offset="100%" stopColor={color} stopOpacity={0.6} />
+                  </linearGradient>
+                ))}
+              </defs>
               <Pie
                 data={categoryData}
                 cx="50%"
-                cy="50%"
-                innerRadius={70}
-                outerRadius={90}
+                cy="45%"
+                innerRadius={80}
+                outerRadius={105}
                 paddingAngle={8}
                 dataKey="value"
                 isAnimationActive={true}
+                stroke="none"
               >
                 {categoryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={type === 'expenses' ? COLORS[index % COLORS.length] : ['#10b981', '#34d399', '#059669', '#6ee7b7'][index % 4]} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={`url(#grad-${index % COLORS.length})`}
+                    className="hover:opacity-80 transition-opacity cursor-pointer focus:outline-none drop-shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                  />
                 ))}
               </Pie>
               <Tooltip 
-                contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                formatter={(value: any) => [formatMoney(Number(value)), 'Valor']} 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                  borderRadius: '1.5rem', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                  padding: '12px 16px'
+                }}
+                itemStyle={{ color: '#fff', fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                formatter={(value: any) => [formatMoney(Number(value)), '']} 
+                cursor={{ fill: 'transparent' }}
               />
-              <Legend verticalAlign="bottom" height={36}/>
+              <Legend 
+                verticalAlign="bottom" 
+                align="center"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ paddingTop: '30px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#64748b' }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-100 flex flex-col items-center group hover:shadow-2xl transition-all">
-        <h3 className="font-black text-slate-800 mb-6 self-start uppercase text-[10px] tracking-widest bg-slate-100 px-4 py-1.5 rounded-full">
-          {type === 'expenses' ? 'Comparação de Gastos' : 'Comparação de Receitas'}
-        </h3>
-        <div className="w-full h-[300px] min-h-[300px]">
+      {/* CHART CONTAINER COMPARISON */}
+      <div className="glass-card p-10 rounded-[3rem] border border-white/5 flex flex-col items-center group hover:border-white/10 transition-all duration-700 shadow-2xl relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl"></div>
+
+        <div className="flex justify-between items-center w-full mb-10">
+           <h3 className="font-black text-slate-500 uppercase text-[10px] tracking-[0.4em] bg-white/5 px-5 py-2 rounded-2xl border border-white/5">
+            {type === 'expenses' ? 'Comparativo Mensal Alê vs Maria' : 'Comparação de Receitas'}
+           </h3>
+           <div className="flex gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/20"></div>
+           </div>
+        </div>
+
+        <div className="w-full h-[350px] min-h-[350px]">
           <ResponsiveContainer width="100%" height="100%" key={`${type}-bar-${dataToUse.length}`}>
-            <BarChart data={payerData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }} tickFormatter={(val) => val.toLocaleString('pt-BR')} />
+            <BarChart data={payerData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+              <defs>
+                <linearGradient id="barGradIndigo" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.6} />
+                </linearGradient>
+                <linearGradient id="barGradRose" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f43f5e" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#e11d48" stopOpacity={0.6} />
+                </linearGradient>
+                <linearGradient id="barGradEmerald" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#059669" stopOpacity={0.6} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255, 255, 255, 0.03)" />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fontWeight: 900, fill: '#475569' }} 
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 9, fontWeight: 700, fill: '#334155' }} 
+                tickFormatter={(val) => val.toLocaleString('pt-BR')} 
+              />
               <Tooltip 
-                cursor={{fill: '#f8fafc'}}
-                contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                cursor={{fill: 'rgba(255, 255, 255, 0.03)', radius: 15}}
+                contentStyle={{ 
+                  backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                  borderRadius: '1.5rem', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                  padding: '12px 16px'
+                }}
+                itemStyle={{ color: '#fff', fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.05em' }}
                 formatter={(value: any) => [formatMoney(Number(value)), 'Total']} 
               />
-              <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={40}>
+              <Bar dataKey="value" radius={[15, 15, 6, 6]} barSize={55} isAnimationActive={true}>
                 {payerData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.name === 'Alê' ? '#3b82f6' : entry.name === 'Maria' ? '#ec4899' : '#10b981'} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.name === 'Alê' ? 'url(#barGradIndigo)' : entry.name === 'Maria' ? 'url(#barGradRose)' : 'url(#barGradEmerald)'} 
+                    className="hover:opacity-80 transition-opacity cursor-pointer focus:outline-none drop-shadow-[0_10px_20px_rgba(0,0,0,0.3)]"
+                  />
                 ))}
               </Bar>
             </BarChart>

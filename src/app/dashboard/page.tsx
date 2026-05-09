@@ -47,7 +47,7 @@ export default async function DashboardPage() {
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
 
-    const [expsRes, hhRes, recRes, budgetsRes, incomesRes, membersRes] = await Promise.all([
+    const [expsRes, hhRes, recRes, budgetsRes, incomesRes, membersRes, profileRes] = await Promise.all([
       supabase
         .from('expenses')
         .select('*')
@@ -76,7 +76,12 @@ export default async function DashboardPage() {
       supabase
         .from('household_members')
         .select('*')
-        .eq('household_id', householdId)
+        .eq('household_id', householdId),
+      supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single()
     ])
 
     if (expsRes.data) initialExpenses = expsRes.data
@@ -85,12 +90,14 @@ export default async function DashboardPage() {
     if (budgetsRes.data) initialCategoryBudgets = budgetsRes.data
     if (incomesRes.data) initialIncomes = incomesRes.data
     const initialMembers = membersRes.data || []
+    const initialDisplayName = profileRes.data?.display_name || user.email?.split('@')[0] || 'Usuário'
 
     return (
       <DashboardClient 
         initialExpenses={initialExpenses} 
         householdId={householdId} 
         userEmail={user.email || ''} 
+        initialDisplayName={initialDisplayName}
         initialMonthlyBudget={householdData?.monthly_budget ?? 250.00}
         initialWeeklyBudget={householdData?.weekly_budget ?? 62.50}
         initialCurrency={householdData?.currency ?? 'BRL'}

@@ -1,1693 +1,380 @@
 'use client'
-// Dividi App - Dashboard Client - v1.1.0 (Tabbed Settings & Incomes)
-
-import { useState, useMemo, useTransition, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
-import { addExpense, updateExpense, deleteExpense } from '../actions/expenses'
-import { updateHouseholdSettings } from '../actions/settings'
-import { inviteUser } from '../actions/invite'
-import { addRecurringExpense, deleteRecurringExpense, applyRecurringExpenses, updateRecurringExpense } from '../actions/recurring'
-import { updateCategoryBudget } from '../actions/budgets'
-import { addIncome, deleteIncome, updateIncome } from '../actions/incomes'
-import { Trash2, Upload, ChevronLeft, ChevronRight, LogOut, Users, Settings, Edit2, Repeat, Download, X, Wallet, TrendingUp, Receipt, Plus, Info, Search, CheckCircle } from 'lucide-react'
-import Papa from 'papaparse'
-import * as XLSX from 'xlsx'
-import Charts from './Charts'
+import { useState } from 'react'
+import { LogOut, Settings, Download, ChevronLeft, ChevronRight, Search, CheckCircle, Receipt, Sparkles, TrendingUp, TrendingDown, Target, LayoutGrid, Calendar, HelpCircle, User } from 'lucide-react'
+import Sidebar from './components/Sidebar'
 import SummaryCards from './SummaryCards'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-export default function DashboardClient({ 
-  initialExpenses, 
-  householdId, 
-  userEmail,
-  initialMonthlyBudget,
-  initialWeeklyBudget,
-  initialCurrency,
-  initialRecurringExpenses,
-  initialCategoryBudgets,
-  initialIncomes,
-  initialMembers = []
-}: { 
-  initialExpenses: any[], 
-  householdId: string, 
-  userEmail: string,
-  initialMonthlyBudget: number,
-  initialWeeklyBudget: number,
-  initialCurrency: string,
-  initialRecurringExpenses: any[],
-  initialCategoryBudgets: any[],
-  initialIncomes: any[],
-  initialMembers: any[]
-}) {
-  const [expenses, setExpenses] = useState(initialExpenses)
-  const [incomes, setIncomes] = useState(initialIncomes)
-  const [members, setMembers] = useState(initialMembers)
-  const [recurringExpenses, setRecurringExpenses] = useState(initialRecurringExpenses)
-  const [monthlyBudget, setMonthlyBudget] = useState(initialMonthlyBudget)
-  const [weeklyBudget, setWeeklyBudget] = useState(initialWeeklyBudget)
-  const [currency, setCurrency] = useState(initialCurrency)
-  const [categoryBudgets, setCategoryBudgets] = useState<any[]>(initialCategoryBudgets)
-  const [recurringTab, setRecurringTab] = useState<'launch' | 'manage'>('launch')
+import TabNavigation from './TabNavigation'
+import IncomesTab from './IncomesTab'
+import ExpensesTab from './ExpensesTab'
+import RecurringExpensesModal from './RecurringExpensesModal'
+import SettingsModal from './SettingsModal'
+import ImportModal from './ImportModal'
+import IncomeModal from './IncomeModal'
+import ExpenseModal from './ExpenseModal'
+import InviteModal from './InviteModal'
+import DashboardSkeleton from './components/SkeletonLoader'
+import BottomNavigation from './components/BottomNavigation'
+import Logo from './components/Logo'
+
+import { useDashboardState } from './hooks/useDashboardState'
+import { handleFileImport } from './utils/ImportLogic'
+import { exportExpensesToExcel } from './utils/ExportLogic'
+import { CATEGORIES, formatCurrency } from './utils/constants'
+import { updateCategoryBudget } from '../actions/budgets'
+
+export default function DashboardClient(props: any) {
+  const state = useDashboardState(props)
+  const [showRadarInfo, setShowRadarInfo] = useState(false)
   
-  // Estados para o formulário de configurações
-  const [localMonthly, setLocalMonthly] = useState(initialMonthlyBudget)
-  const [localWeekly, setLocalWeekly] = useState(initialWeeklyBudget)
-  const [localCurrency, setLocalCurrency] = useState(initialCurrency)
-  
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const pathname = usePathname()
+  const {
+    householdId, userEmail, currency, currentDate, setCurrentDate, 
+    isFormOpen, setIsFormOpen, isSettingsOpen, setIsSettingsOpen,
+    expenseToEdit, setExpenseToEdit, isImportOpen, setIsImportOpen,
+    pendingImports, setPendingImports, detectedHeaders, setDetectedHeaders,
+    isInviteOpen, setIsInviteOpen, isRecurringOpen, setIsRecurringOpen,
+    recurringToEdit, setRecurringToEdit, recurringDate, setRecurringDate,
+    categoryFilter, setCategoryFilter, isIncomeFormOpen, setIsIncomeFormOpen,
+    incomeToEdit, setIncomeToEdit, settingsTab, setSettingsTab,
+    payerFilter, setPayerFilter, activeTab, setActiveTab,
+    searchTerm, setSearchTerm, toast, isPending, recurringTab, setRecurringTab,
+    mainTab, setMainTab, viewMode, setViewMode,
+    totals, weeks, groupedExpenses, filteredExpenses, filteredIncomes, totalWeeksInMonth,
+    recurringExpenses, members, categoryBudgets, setCategoryBudgets,
+    monthlyBudget, localCurrency, setLocalCurrency,
+    handleAddExpense, handleDeleteExpense, handleAddIncome, handleDeleteIncome,
+    handleUpdateLimits, handleAddRecurring, handleDeleteRecurring, 
+    handleApplyRecurring, handleInvite, handleSignOut, supabase,
+    handleUpdateProfile, displayName
+  } = state
 
-  const initialDate = useMemo(() => {
-    const monthParam = searchParams.get('month')
-    if (monthParam) {
-      const [year, month] = monthParam.split('-').map(Number)
-      if (!isNaN(year) && !isNaN(month)) {
-        return new Date(year, month - 1, 1)
-      }
-    }
-    return new Date()
-  }, [searchParams])
+  const formatMoney = (v: number) => formatCurrency(v, currency)
+  const safeExpenses = Number(totals.globalTotal || 0)
+  const safeBudget = Number(monthlyBudget || 0)
+  const percentage = safeBudget > 0 ? Math.round((safeExpenses / safeBudget) * 100) : 0
 
-  const [currentDate, setCurrentDate] = useState(initialDate)
-
-  // Sincronizar data com a URL
-  useEffect(() => {
-    const monthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-    if (searchParams.get('month') !== monthStr) {
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('month', monthStr)
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-    }
-  }, [currentDate, pathname, router, searchParams])
-
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [expenseToEdit, setExpenseToEdit] = useState<any>(null)
-  const [isImportOpen, setIsImportOpen] = useState(false)
-  const [pendingImports, setPendingImports] = useState<any[]>([])
-  const [detectedHeaders, setDetectedHeaders] = useState<string[]>([])
-  const [isInviteOpen, setIsInviteOpen] = useState(false)
-  const [isRecurringOpen, setIsRecurringOpen] = useState(false)
-  const [recurringToEdit, setRecurringToEdit] = useState<any>(null)
-  const [recurringDate, setRecurringDate] = useState(new Date().toISOString().split('T')[0])
-  const [categoryFilter, setCategoryFilter] = useState('Todas')
-  
-  // Novos estados para Receitas e Abas
-  const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(false)
-  const [incomeToEdit, setIncomeToEdit] = useState<any>(null)
-  const [settingsTab, setSettingsTab] = useState<'budget' | 'family' | 'account'>('budget')
-  const [payerFilter, setPayerFilter] = useState<'Todos' | 'Alê' | 'Maria'>('Todos')
-  const [activeTab, setActiveTab] = useState<'expenses' | 'incomes'>('expenses')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null)
-  const [isPending, startTransition] = useTransition()
-
-  // Auto-dismiss toast
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [toast])
-
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToast({ message, type })
-  }
-
-  const closeAllModals = () => {
-    setIsFormOpen(false)
-    setIsSettingsOpen(false)
-    setIsRecurringOpen(false)
-    setIsInviteOpen(false)
-    setIsImportOpen(false)
-    setExpenseToEdit(null)
-  }
-  
-  const CATEGORIES = ['Mercado', 'Contas', 'Lazer', 'Saúde', 'Transporte', 'Outros']
-  
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  useEffect(() => {
-    // Sincronização em Tempo Real (Realtime Magic)
-    const channel = supabase.channel('realtime_expenses')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses', filter: `household_id=eq.${householdId}` }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setExpenses(prev => {
-            if (prev.find(e => e.id === payload.new.id)) return prev
-            return [...prev, payload.new]
-          })
-        } else if (payload.eventType === 'UPDATE') {
-          setExpenses(prev => prev.map(e => e.id === payload.new.id ? payload.new : e))
-        } else if (payload.eventType === 'DELETE') {
-          setExpenses(prev => prev.filter(e => e.id !== payload.old.id))
-        }
-      })
-      .subscribe()
-
-    // Incomes Realtime
-    const incomeChannel = supabase.channel('realtime_incomes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'incomes', filter: `household_id=eq.${householdId}` }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setIncomes(prev => [...prev, payload.new])
-        } else if (payload.eventType === 'UPDATE') {
-          setIncomes(prev => prev.map(i => i.id === payload.new.id ? payload.new : i))
-        } else if (payload.eventType === 'DELETE') {
-          setIncomes(prev => prev.filter(i => i.id !== payload.old.id))
-        }
-      })
-      .subscribe()
-
-    const membersChannel = supabase.channel('realtime_members')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: `household_id=eq.${householdId}` }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setMembers(prev => [...prev, payload.new])
-        } else if (payload.eventType === 'DELETE') {
-          setMembers(prev => prev.filter(m => m.user_id !== payload.old.user_id))
-        }
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-      supabase.removeChannel(incomeChannel)
-      supabase.removeChannel(membersChannel)
-    }
-  }, [householdId, supabase])
-
-  // --- BUSCA DINÂMICA DE DADOS POR MÊS ---
-  useEffect(() => {
-    const fetchMonthData = async () => {
-      const year = currentDate.getFullYear()
-      const month = currentDate.getMonth()
-      const firstDay = new Date(year, month, 1).toISOString().split('T')[0]
-      const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0]
-
-      const [expsRes, incsRes] = await Promise.all([
-        supabase
-          .from('expenses')
-          .select('*')
-          .eq('household_id', householdId)
-          .gte('date', firstDay)
-          .lte('date', lastDay),
-        supabase
-          .from('incomes')
-          .select('*')
-          .eq('household_id', householdId)
-          .gte('date', firstDay)
-          .lte('date', lastDay)
-      ])
-
-      if (expsRes.data) {
-        setExpenses(prev => {
-          // Remove os gastos do mês atual antes de adicionar os novos para evitar duplicidade
-          const otherMonths = prev.filter(e => {
-            const d = new Date(e.date + 'T12:00:00')
-            return d.getFullYear() !== year || d.getMonth() !== month
-          })
-          return [...otherMonths, ...expsRes.data!]
-        })
-      }
-
-      if (incsRes.data) {
-        setIncomes(prev => {
-          const otherMonths = prev.filter(i => {
-            const d = new Date(i.date + 'T12:00:00')
-            return d.getFullYear() !== year || d.getMonth() !== month
-          })
-          return [...otherMonths, ...incsRes.data!]
-        })
-      }
-    }
-
-    fetchMonthData()
-  }, [currentDate, householdId, supabase])
-
-  const monthExpenses = useMemo(() => {
-    const year = currentDate.getFullYear()
-    const month = currentDate.getMonth()
-    return expenses.filter(exp => {
-      const expDate = new Date(exp.date + 'T12:00:00')
-      return expDate.getFullYear() === year && expDate.getMonth() === month
-    })
-  }, [expenses, currentDate])
-
-  // --- Cálculo de Semanas no Mês ---
-  const totalWeeksInMonth = useMemo(() => {
-    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
-    return getWeekOfMonth(lastDay)
-  }, [currentDate])
-
-  const filteredExpenses = useMemo(() => {
-    let filtered = monthExpenses
-    if (categoryFilter !== 'Todas') {
-      filtered = filtered.filter(exp => exp.category === categoryFilter)
-    }
-    if (payerFilter !== 'Todos') {
-      filtered = filtered.filter(exp => exp.payer === payerFilter)
-    }
-    if (searchTerm) {
-      const lowSearch = searchTerm.toLowerCase()
-      filtered = filtered.filter(exp => 
-        (exp.description?.toLowerCase().includes(lowSearch)) || 
-        (exp.category?.toLowerCase().includes(lowSearch))
-      )
-    }
-    return filtered
-  }, [monthExpenses, categoryFilter, payerFilter, searchTerm])
-
-  const filteredIncomes = useMemo(() => {
-    const year = currentDate.getFullYear()
-    const month = currentDate.getMonth()
-    const monthIncomes = incomes.filter(i => {
-      const d = new Date(i.date + 'T12:00:00')
-      return d.getFullYear() === year && d.getMonth() === month
-    })
-    
-    let filtered = monthIncomes
-    if (payerFilter !== 'Todos') {
-      filtered = filtered.filter(inc => inc.payer === payerFilter)
-    }
-    
-    if (searchTerm) {
-      const lowSearch = searchTerm.toLowerCase()
-      filtered = filtered.filter(inc => 
-        (inc.description?.toLowerCase().includes(lowSearch)) || 
-        (inc.category?.toLowerCase().includes(lowSearch))
-      )
-    }
-    
-    return filtered
-  }, [incomes, currentDate, payerFilter, searchTerm])
-
-  const totals = useMemo(() => {
-    const year = currentDate.getFullYear()
-    const month = currentDate.getMonth()
-    const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`
-    
-    // Valores GLOBAIS do mês (ignorando filtros de categoria)
-    const globalTotal = monthExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const globalAle = monthExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const globalMaria = monthExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const globalIncome = incomes
-      .filter(i => i.date.startsWith(monthStr))
-      .reduce((acc, i) => acc + Number(i.amount), 0)
-    const globalIncomeAle = incomes
-      .filter(i => i.date.startsWith(monthStr) && i.payer === 'Alê')
-      .reduce((acc, i) => acc + Number(i.amount), 0)
-    const globalIncomeMaria = incomes
-      .filter(i => i.date.startsWith(monthStr) && i.payer === 'Maria')
-      .reduce((acc, i) => acc + Number(i.amount), 0)
-    const globalPlanned = categoryBudgets.reduce((sum, b) => sum + Number(b.monthly_limit), 0)
-
-    // Valores FILTRADOS (para a seção de detalhes e semanas)
-    const filteredTotal = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const aleFiltered = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const mariaFiltered = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
-    
-    // Receitas Filtradas
-    const filteredIncomeTotal = filteredIncomes.reduce((acc, i) => acc + Number(i.amount), 0)
-
-    let currentLimit = globalPlanned
-    if (categoryFilter !== 'Todas') {
-      const catBudget = categoryBudgets.find(b => b.category === categoryFilter)
-      currentLimit = catBudget ? Number(catBudget.monthly_limit) : 0
-    }
-
-    const currentWeeklyLimit = currentLimit / totalWeeksInMonth
-
-    return { 
-      globalTotal,
-      globalIncome,
-      globalIncomeAle,
-      globalIncomeMaria,
-      globalBalance: globalIncome - globalTotal,
-      globalPlanned,
-      globalAle,
-      globalMaria,
-      filteredTotal, 
-      filteredIncomeTotal,
-      ale: aleFiltered, 
-      maria: mariaFiltered, 
-      remaining: currentLimit > 0 ? currentLimit - filteredTotal : 0,
-      limit: currentLimit,
-      weeklyLimit: currentWeeklyLimit,
-      hideWeeklyProgress: categoryFilter === 'Contas'
-    }
-  }, [monthExpenses, filteredExpenses, filteredIncomes, incomes, categoryFilter, categoryBudgets, totalWeeksInMonth, currentDate])
-
-  const weeks = useMemo(() => {
-    const w: Record<number, any> = {}
-    filteredExpenses.forEach(exp => {
-      const expDate = new Date(exp.date + 'T12:00:00')
-      const weekNum = getWeekOfMonth(expDate)
-      if (!w[weekNum]) w[weekNum] = { number: weekNum, total: 0, expenses: [] }
-      w[weekNum].total += Number(exp.amount)
-      w[weekNum].expenses.push(exp)
-    })
-    return Object.values(w).sort((a, b) => a.number - b.number).map(week => ({
-      ...week,
-      expenses: week.expenses.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    }))
-  }, [filteredExpenses])
-
-  const formatMoney = (v: number) => {
-    return v.toLocaleString('pt-BR', { 
-      style: 'currency', 
-      currency: currency 
-    })
-  }
-
-  const handleAddIncome = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    startTransition(async () => {
-      let result
-      if (incomeToEdit) {
-        result = await updateIncome(incomeToEdit.id, formData)
-      } else {
-        result = await addIncome(formData)
-      }
-
-      if (result.success && result.data) {
-        if (incomeToEdit) {
-          setIncomes(prev => prev.map(inc => inc.id === incomeToEdit.id ? result.data : inc))
-          showToast('Receita atualizada!', 'success')
-        } else {
-          setIncomes(prev => [...prev, result.data])
-          showToast('Receita registrada!', 'success')
-        }
-        setIsIncomeFormOpen(false)
-        setIncomeToEdit(null)
-      } else if (result.error) {
-        showToast('Erro: ' + result.error, 'error')
-      }
-    })
-  }
-
-  const openEditIncome = (income: any) => {
-    setIncomeToEdit(income)
-    setIsIncomeFormOpen(true)
-  }
-
-  const handleDeleteIncome = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta receita?')) return
-    startTransition(async () => {
-      const result = await deleteIncome(id)
-      if (result.success) {
-        setIncomes(prev => prev.filter(i => i.id !== id))
-        showToast('Receita excluída.', 'info')
-      } else {
-        showToast('Erro ao excluir: ' + result.error, 'error')
-      }
-    })
-  }
-
-  const handleAddExpense = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    if (!formData.get('description')) {
-      formData.set('description', 'Mercado')
-    }
-    
-    startTransition(async () => {
-      if (expenseToEdit) {
-        const result = await updateExpense(expenseToEdit.id, formData)
-        if (result.success && result.data) {
-          setExpenses(prev => prev.map(exp => exp.id === expenseToEdit.id ? result.data : exp))
-          setIsFormOpen(false)
-          setExpenseToEdit(null)
-          showToast('Gasto atualizado com sucesso!', 'success')
-        } else {
-          showToast('Erro ao atualizar: ' + (result.error || 'Desconhecido'), 'error')
-        }
-      } else {
-        const result = await addExpense(formData)
-        if (result.success && result.data) {
-          setExpenses(prev => [...prev, result.data])
-          setIsFormOpen(false)
-          showToast('Gasto registrado!', 'success')
-          const formElement = document.getElementById('expenseForm') as HTMLFormElement
-          if (formElement) formElement.reset()
-        } else {
-          showToast('Erro ao salvar: ' + (result.error || 'Desconhecido'), 'error')
-        }
-      }
-    })
-  }
-
-  const openEditExpense = (exp: any) => {
-    setExpenseToEdit(exp)
-    setIsFormOpen(true)
-  }
-
-  const handleDelete = async (id: string) => {
-    if (confirm('Excluir este gasto?')) {
-      startTransition(async () => {
-        const result = await deleteExpense(id)
-        if (result.success) {
-          setExpenses(prev => prev.filter(e => e.id !== id))
-          showToast('Gasto excluído.', 'info')
-        } else {
-          showToast('Erro ao excluir: ' + result.error, 'error')
-        }
+  const getInsights = () => {
+    const insights = []
+    if (totals.globalBalance < 0) {
+      insights.push({ 
+        icon: <TrendingDown className="text-rose-400" size={18} />, 
+        text: "Fluxo de caixa sob pressão. Considere adiar compras não essenciais.",
+        type: 'warning'
       })
     }
+    if (percentage > 90) {
+      insights.push({ 
+        icon: <Target className="text-rose-500" size={18} />, 
+        text: `Alerta Vermelho: Você já atingiu ${percentage}% do teto mensal!`,
+        type: 'danger'
+      })
+    } else if (percentage > 70) {
+      insights.push({ 
+        icon: <Target className="text-amber-400" size={18} />, 
+        text: `Atenção: ${percentage}% do orçamento consumido. Reduza o passo.`,
+        type: 'info'
+      })
+    }
+    if (insights.length === 0) {
+      insights.push({
+        icon: <Sparkles className="text-indigo-400" size={18} />,
+        text: "Radar Financeiro: Sua gestão está impecável. Continue assim!",
+        type: 'neutral'
+      })
+    }
+    return insights
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (file) handleFileImport(file, householdId, setDetectedHeaders, setPendingImports)
+  }
 
-    const processData = (rows: any[]) => {
-      // Filtra as linhas do Excel que não têm absolutamente nenhum valor real
-      const validRows = rows.filter(r => {
-        return Object.values(r).some(val => val !== undefined && val !== null && String(val).trim() !== '')
-      })
-
-      if (validRows.length === 0) {
-        alert('A planilha parece estar completamente vazia.')
-        return
-      }
-
-      const ptMonths = {
-        'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04', 'maio': '05', 'junho': '06',
-        'julho': '07', 'agosto': '08', 'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
-      }
-
-      const newExpenses: any[] = []
-      
-      validRows.forEach((r, index) => {
-        const keys = Object.keys(r).filter(k => k !== '_sheetName')
-        if (index === 0) setDetectedHeaders(keys)
-
-        const dateKey = keys.find(k => k.toLowerCase().includes('data') || k.toLowerCase().includes('date') || k.toLowerCase().includes('dia'))
-        const valKey = keys.find(k => k.toLowerCase().includes('valor') && !k.toLowerCase().includes('alê') && !k.toLowerCase().includes('maria'))
-        const payerKey = keys.find(k => k.toLowerCase() === 'pagador' || k.toLowerCase() === 'quem' || k.toLowerCase() === 'payer' || k.toLowerCase() === 'pessoa')
-        const descKey = keys.find(k => k.toLowerCase().includes('desc') || k.toLowerCase().includes('nome') || k.toLowerCase().includes('item') || k.toLowerCase().includes('lugar') || k.toLowerCase().includes('local'))
-
-        let rawDate = dateKey ? String(r[dateKey]).trim() : ''
-        let rawDesc = descKey ? String(r[descKey]).trim() : 'Mercado' // Padrão solicitado pelo usuário
-        const sheetName = r._sheetName ? String(r._sheetName).toLowerCase().trim() : ''
-
-        // Ignorar completamente linhas que são apenas subtotais da planilha
-        const lowerDate = rawDate.toLowerCase()
-        if (lowerDate.includes('total') || lowerDate.includes('resta') || lowerDate.includes('gasto') || lowerDate.includes('falta') || lowerDate.includes('resumo')) {
-           return // Pula esta linha
-        }
-
-        // Inferir a data completa se for apenas o "Dia" (1 a 31)
-        if (/^\d{1,2}$/.test(rawDate)) {
-           const monthNum = ptMonths[sheetName as keyof typeof ptMonths]
-           if (monthNum) {
-               const day = rawDate.padStart(2, '0')
-               const currentYear = new Date().getFullYear()
-               // Se a aba for de um mês final do ano passado (ex: novembro) mas estamos no início do ano (ex: março)
-               // Ajusta o ano para trás por precaução (assumindo que a planilha acompanha o ano vigente/anterior)
-               let year = currentYear
-               const currentMonth = new Date().getMonth() + 1
-               if (parseInt(monthNum) > currentMonth + 3) {
-                   year = currentYear - 1
-               }
-               rawDate = `${year}-${monthNum}-${day}`
-           }
-        } else if (rawDate.includes('/')) {
-           const parts = rawDate.split('/')
-           if(parts.length === 3) {
-               const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2]
-               rawDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
-           }
-        } else if (!isNaN(Number(rawDate)) && Number(rawDate) > 40000) {
-           const excelDate = new Date(Math.round((Number(rawDate) - 25569) * 86400 * 1000));
-           rawDate = excelDate.toISOString().split('T')[0];
-        }
-
-        // Função auxiliar para converter qualquer moeda (R$, €) para número
-        const parseAmount = (val: any) => {
-            if (typeof val === 'number') return val;
-            let str = String(val);
-            str = str.replace(/[^\d.,-]/g, '');
-            
-            const lastDot = str.lastIndexOf('.');
-            const lastComma = str.lastIndexOf(',');
-            
-            if (lastComma > lastDot) {
-               // Vírgula é o decimal (ex: 34,98 ou 1.000,50)
-               str = str.replace(/\./g, '').replace(',', '.');
-            } else if (lastDot > lastComma) {
-               // Ponto é o decimal (ex: 34.98 ou 1,000.50)
-               str = str.replace(/,/g, '');
-            }
-            
-            const num = parseFloat(str)
-            return isNaN(num) ? 0 : num
-        }
-
-        // Se a planilha tem UMA coluna de "Valor" e UMA de "Pagador"
-        if (valKey && payerKey) {
-          const numAmount = parseAmount(String(r[valKey]))
-          let rawPayer = payerKey ? String(r[payerKey]) : ''
-          
-          if (numAmount > 0) {
-            newExpenses.push({
-              _id: 'temp_' + index,
-              household_id: householdId,
-              date: rawDate,
-              amount: numAmount,
-              payer: rawPayer,
-              description: rawDesc
-            })
-          }
-        } else {
-          // Formato alternativo: Cada pessoa tem sua própria coluna (ex: Valor - Alê, Valor - Maria)
-          let foundPayer = false
-          
-          keys.forEach(k => {
-             const lowerK = k.toLowerCase()
-             // Ignora as colunas de Data, Descrição, Totais, e também colunas sem cabeçalho (__EMPTY) que costumam ter anotações laterais
-             if (k !== dateKey && k !== descKey && !lowerK.includes('total') && !lowerK.includes('resta') && !lowerK.includes('falta') && !k.startsWith('__EMPTY')) {
-                const numAmount = parseAmount(String(r[k]))
-                
-                if (numAmount > 0) {
-                   foundPayer = true
-                   let extractedPayer = k
-                   if (lowerK.includes('alê') || lowerK.includes('ale')) extractedPayer = 'Alê'
-                   else if (lowerK.includes('maria')) extractedPayer = 'Maria'
-
-                   newExpenses.push({
-                     _id: 'temp_' + index + '_' + k,
-                     household_id: householdId,
-                     date: rawDate,
-                     amount: numAmount,
-                     payer: extractedPayer,
-                     description: rawDesc
-                   })
-                }
-             }
-          })
-
-          // Só adiciona erro se for uma linha de Dia válida, mas que não tinha gasto pra ninguém
-          if (!foundPayer && rawDate && !isNaN(Date.parse(rawDate))) {
-             newExpenses.push({
-                _id: 'temp_' + index,
-                household_id: householdId,
-                date: rawDate,
-                amount: 0,
-                payer: '',
-                description: rawDesc
-             })
-          }
-        }
-      })
-      
-      const missingColumns = newExpenses.every(e => e.date === '' && e.amount === 0)
-      if (missingColumns) {
-        alert('Não conseguimos reconhecer os títulos das colunas na sua planilha.\nPor favor, certifique-se de que a primeira linha contém os nomes: Data, Valor, Pagador e Descrição.')
-        return
-      }
-
-      setPendingImports(newExpenses)
-    }
-
-    if (file.name.endsWith('.csv')) {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => processData(results.data as any[])
-      })
-    } else {
-      const reader = new FileReader()
-      reader.onload = (evt) => {
-        const bstr = evt.target?.result
-        const wb = XLSX.read(bstr, { type: 'binary' })
-        
-        let allData: any[] = []
-        // Percorrer todas as abas (SheetNames)
-        for (const wsname of wb.SheetNames) {
-          const ws = wb.Sheets[wsname]
-          const data = XLSX.utils.sheet_to_json(ws, { raw: false })
-          // Injetar o nome da aba em cada linha para inferir o mês depois
-          const dataWithSheet = data.map((r: any) => ({ ...r, _sheetName: wsname }))
-          allData = allData.concat(dataWithSheet)
-        }
-        
-        processData(allData)
-      }
-      reader.readAsBinaryString(file)
-    }
+  const onExportExcel = () => {
+    exportExpensesToExcel(state.expenses.filter((exp: any) => {
+        const expDate = new Date(exp.date + 'T12:00:00')
+        return expDate.getFullYear() === currentDate.getFullYear() && expDate.getMonth() === currentDate.getMonth()
+    }), currentDate)
   }
 
   const confirmImport = async () => {
-    // Filtra apenas os válidos antes de enviar
-    const validExpenses = pendingImports.filter(e => e.date && !isNaN(e.amount) && e.amount > 0 && e.payer).map(({_id, ...rest}) => rest)
-
-    if (validExpenses.length === 0) {
-      alert('Nenhum dado válido encontrado para importar.')
-      setPendingImports([])
-      return
-    }
-
+    const validExpenses = pendingImports.filter((e: any) => e.date && !isNaN(e.amount) && e.amount > 0 && e.payer).map(({_id, ...rest}: any) => rest)
+    if (validExpenses.length === 0) return
     const { data, error } = await supabase.from('expenses').insert(validExpenses).select()
     if (!error && data) {
-      setExpenses(prev => [...prev, ...data])
-      alert(`${data.length} gastos importados com sucesso!`)
+      state.setExpenses((prev: any) => [...prev, ...data])
       setPendingImports([])
       setIsImportOpen(false)
-    } else {
-      alert(`Erro ao salvar no banco: ${error?.message}`)
     }
   }
 
-  const cancelImport = () => {
-    setPendingImports([])
+  const closeAllModals = () => {
+    setIsFormOpen(false); setIsSettingsOpen(false); setIsRecurringOpen(false);
+    setIsInviteOpen(false); setIsImportOpen(false); setExpenseToEdit(null);
   }
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    window.location.href = '/login'
-  }
-
-  const handleInvite = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    
-    startTransition(async () => {
-      const result = await inviteUser(householdId, email)
-      if (result.success) {
-        alert('Sucesso! Agora a pessoa já tem acesso aos dados e gastos compartilhados.')
-        setIsInviteOpen(false)
-      } else {
-        alert(result.error)
-      }
-    })
-  }
-
-  const exportToExcel = () => {
-    if (monthExpenses.length === 0) {
-      alert('Não há gastos neste mês para exportar.')
-      return
-    }
-
-    const dataToExport = monthExpenses.map(exp => ({
-      Data: exp.date.split('-').reverse().join('/'),
-      Descrição: exp.description,
-      Categoria: exp.category || 'Outros',
-      Pagador: exp.payer,
-      Valor: Number(exp.amount)
-    }))
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Gastos")
-    const monthName = currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).replace(' de ', '_')
-    XLSX.writeFile(wb, `Dividi_${monthName}.xlsx`)
-  }
-
-  const handleUpdateLimits = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    // Add missing inputs manually since they might not be in a FormData if we use controlled state
-    formData.append('monthly_budget', localMonthly.toString())
-    formData.append('weekly_budget', localWeekly.toString())
-    formData.append('currency', localCurrency)
-
-    startTransition(async () => {
-      const result = await updateHouseholdSettings(householdId, formData)
-      if (result.success) {
-        setMonthlyBudget(localMonthly)
-        setWeeklyBudget(localWeekly)
-        setCurrency(localCurrency)
-        setIsSettingsOpen(false)
-        alert('Configurações atualizadas com sucesso!')
-      } else {
-        alert('Erro ao atualizar configurações: ' + result.error)
-      }
-    })
-  }
-
-  const openSettings = () => {
-    setLocalMonthly(monthlyBudget)
-    setLocalWeekly(weeklyBudget)
-    setLocalCurrency(currency)
-    setIsSettingsOpen(true)
-  }
-
-  const handleAddRecurring = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    startTransition(async () => {
-      let result
-      if (recurringToEdit) {
-        result = await updateRecurringExpense(recurringToEdit.id, formData)
-      } else {
-        result = await addRecurringExpense(formData)
-      }
-
-      if (result.success && result.data) {
-        if (recurringToEdit) {
-          setRecurringExpenses(prev => prev.map(r => r.id === recurringToEdit.id ? result.data : r))
-          setRecurringToEdit(null)
-        } else {
-          setRecurringExpenses(prev => [...prev, result.data])
-        }
-        e.currentTarget.reset()
-      } else {
-        alert('Erro ao salvar gasto fixo: ' + result.error)
-      }
-    })
-  }
-
-  const handleDeleteRecurring = async (id: string) => {
-    if (confirm('Excluir este gasto fixo?')) {
-      startTransition(async () => {
-        const result = await deleteRecurringExpense(id)
-        if (result.success) {
-          setRecurringExpenses(prev => prev.filter(e => e.id !== id))
-        } else {
-          alert('Erro ao excluir: ' + result.error)
-        }
-      })
-    }
-  }
-
-  const handleApplyRecurring = async (expenseId?: string, specificDate?: string) => {
-    startTransition(async () => {
-      const dateToUse = specificDate || recurringDate
-      const result = await applyRecurringExpenses(householdId, dateToUse, expenseId)
-      if (result.success) {
-        showToast(expenseId ? 'Gasto fixo lançado!' : `${result.count} gastos fixos lançados!`, 'success')
-        if (!expenseId) setIsRecurringOpen(false)
-      } else {
-        showToast('Erro ao lançar: ' + result.error, 'error')
-      }
-    })
-  }
+  if (state.loading) return <DashboardSkeleton />
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 pb-12 font-sans text-slate-800">
-      {/* NOTIFICAÇÃO TOAST */}
+    <div className="w-full min-h-screen bg-[#020617] md:pl-80 font-sans text-slate-50 selection:bg-indigo-500/30 overflow-x-hidden">
+      
+      {/* SIDEBAR */}
+      <Sidebar 
+        mainTab={mainTab} setMainTab={setMainTab}
+        setIsFormOpen={setIsFormOpen} setIsSettingsOpen={setIsSettingsOpen}
+        setIsRecurringOpen={setIsRecurringOpen} handleSignOut={handleSignOut}
+      />
+
+      {/* TOAST PREMIUM */}
       {toast && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300`}>
-          <div className={`flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border border-white/20 text-white font-black text-sm ${toast.type === 'success' ? 'bg-emerald-500/90' : toast.type === 'error' ? 'bg-red-500/90' : 'bg-indigo-500/90'}`}>
-            <CheckCircle size={18} />
-            {toast.message}
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 md:left-[calc(50%+160px)] z-[300] animate-in fade-in slide-in-from-top-8 duration-500">
+          <div className="glass-morphism px-8 py-4 rounded-[2rem] shadow-2xl border border-white/10 flex items-center gap-4 glow-primary">
+             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                <CheckCircle size={16} className="text-white" />
+             </div>
+             <p className="font-bold text-sm tracking-tight">{toast.message}</p>
           </div>
         </div>
       )}
 
-      <header className="bg-gradient-to-br from-indigo-600 via-indigo-500 to-indigo-400 text-white p-6 md:py-10 shadow-2xl relative overflow-hidden">
-        {/* Efeito de luz no fundo */}
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-300/20 rounded-full blur-3xl"></div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-10">
-            <button onClick={closeAllModals} className="flex items-center gap-5 group text-left focus:outline-none cursor-pointer">
-              <div className="w-14 h-14 bg-white rounded-[1.25rem] flex items-center justify-center p-1.5 shadow-2xl transform -rotate-6 group-hover:rotate-0 group-active:scale-90 transition duration-500 ease-out">
-                <img src="/logo.png" alt="Dividi Logo" className="w-full h-full object-contain rounded-lg" />
-              </div>
-              <div className="group-hover:translate-x-1 transition-transform duration-500">
-                <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic text-white drop-shadow-lg leading-none">Dividi</h1>
-                <p className="text-[11px] font-black text-indigo-100 uppercase tracking-[0.3em] mt-1 opacity-80">Gestão Compartilhada</p>
-              </div>
-            </button>
-
-            {/* Barra de Busca Moderna */}
-            <div className="flex-1 max-w-md w-full relative group">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-indigo-200 group-focus-within:text-white transition-colors">
-                <Search size={18} />
-              </div>
-              <input 
-                type="text" 
-                placeholder="Buscar gastos ou receitas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold placeholder:text-indigo-200/60 focus:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/10 transition-all shadow-inner"
-              />
-            </div>
-
-            <div className="flex gap-4">
-              <button onClick={() => setIsRecurringOpen(true)} className="w-12 h-12 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-all hover:scale-110 active:scale-90 shadow-lg border border-white/10" title="Contas Fixas">
-                <Receipt size={22} />
-              </button>
-              <button onClick={() => setIsImportOpen(true)} className="w-12 h-12 flex items-center justify-center bg-white/10 rounded-2xl hover:bg-white/20 transition-all hover:scale-110 active:scale-90 shadow-lg border border-white/10" title="Importar Planilha">
-                <Download size={22} />
-              </button>
-              <button onClick={openSettings} className="w-12 h-12 flex items-center justify-center bg-white/20 rounded-2xl hover:bg-white/30 transition-all hover:scale-110 active:scale-90 shadow-lg border border-white/20" title="Configurações">
-                <Settings size={22} />
-              </button>
-              <div className="w-px h-10 bg-white/10 self-center mx-1"></div>
-              <button onClick={handleSignOut} className="w-12 h-12 flex items-center justify-center bg-red-500/20 rounded-2xl hover:bg-red-500/40 transition-all hover:scale-110 active:scale-90 shadow-lg border border-red-500/20 text-red-100" title="Sair">
-                <LogOut size={22} />
-              </button>
-            </div>
-          </div>
-          
-          <div className="flex justify-between items-center bg-black/10 rounded-2xl p-2 backdrop-blur-md max-w-sm mx-auto md:mx-0 border border-white/5">
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-2.5 hover:bg-white/10 rounded-xl transition-colors">
-              <ChevronLeft size={22} />
-            </button>
-            <h2 className="font-black text-lg tracking-widest flex items-center gap-3 uppercase">
-              {currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
-              <button onClick={exportToExcel} className="p-1.5 hover:bg-white/20 rounded-lg transition text-emerald-300" title="Exportar para Excel">
-                <Download size={18} />
-              </button>
-            </h2>
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-2.5 hover:bg-white/10 rounded-xl transition-colors">
-              <ChevronRight size={22} />
-            </button>
-          </div>
-
-          {/* Filtros de Membro e Categoria */}
-          <div className="mt-8 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mr-2">Filtrar por:</span>
-              <div className="flex gap-2 bg-indigo-500/20 p-1 rounded-2xl border border-indigo-400/20">
-                {['Todos', 'Alê', 'Maria'].map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setPayerFilter(p as any)}
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest ${
-                      payerFilter === p 
-                        ? 'bg-white text-indigo-600 shadow-md' 
-                        : 'text-indigo-100 hover:bg-white/10'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              <button
-                onClick={() => setCategoryFilter('Todas')}
-                className={`px-6 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shadow-md border uppercase tracking-widest ${
-                  categoryFilter === 'Todas' 
-                    ? 'bg-white text-indigo-600 border-white' 
-                    : 'bg-indigo-400/30 text-indigo-100 border-indigo-400/20 hover:bg-white/20'
-                }`}
-              >
-                Todas Categorias
-              </button>
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`px-6 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shadow-md border uppercase tracking-widest ${
-                    categoryFilter === cat 
-                      ? 'bg-white text-indigo-600 border-white' 
-                      : 'bg-indigo-400/30 text-indigo-100 border-indigo-400/20 hover:bg-white/20'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* MOBILE HEADER */}
+      <header className="md:hidden flex justify-between items-center px-6 py-8 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
+        <Logo size="small" onClick={closeAllModals} />
+        <button onClick={() => setIsSettingsOpen(true)} className="p-3 bg-white/5 rounded-xl text-slate-400">
+           <User size={20} />
+        </button>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-10">
+      <main className="max-w-[1400px] mx-auto px-6 py-8 md:py-16 space-y-12 pb-32">
         
-        {/* CARDS DE RESUMO NO TOPO - Sempre mostram o global do mês */}
-        <SummaryCards payerFilter={payerFilter} totals={totals} formatMoney={formatMoney} />
+        {/* VIEW 1: OVERVIEW (CLEAN DASHBOARD) */}
+        {mainTab === 'overview' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-12">
+            <header>
+               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-2">Bem-vindo ao seu</p>
+               <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase">Centro de Controle</h2>
+            </header>
 
-
-
-        {/* NAVEGAÇÃO PRINCIPAL POR ABAS */}
-        <div className="flex justify-center mb-10 mt-10">
-          <div className="bg-slate-200/50 p-1.5 rounded-[2rem] flex gap-2 backdrop-blur-md border border-slate-200/50 shadow-inner">
-            <button 
-              onClick={() => setActiveTab('expenses')}
-              className={`flex items-center gap-3 px-10 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 ${activeTab === 'expenses' ? 'bg-white text-indigo-600 shadow-xl scale-105' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              <Wallet size={18} /> Gastos
-            </button>
-            <button 
-              onClick={() => setActiveTab('incomes')}
-              className={`flex items-center gap-3 px-10 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 ${activeTab === 'incomes' ? 'bg-white text-emerald-600 shadow-xl scale-105' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              <TrendingUp size={18} /> Receitas
-            </button>
-          </div>
-        </div>
-
-        {activeTab === 'incomes' && (
-          /* CONTEÚDO DA ABA DE RECEITAS */
-          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-            <Charts 
-              expenses={filteredExpenses} 
-              incomes={filteredIncomes}
-              currency={currency} 
-              type="incomes"
-            />
-            {/* Resumo Individualizado de Receitas - Clicável para Filtrar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div 
-                onClick={() => setPayerFilter('Todos')}
-                className={`cursor-pointer bg-white rounded-3xl p-6 shadow-xl border transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 ${payerFilter === 'Todos' ? 'border-emerald-500 ring-4 ring-emerald-500/10' : 'border-slate-100 opacity-60'}`}
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${payerFilter === 'Todos' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
-                  <TrendingUp size={24} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Família Toda</p>
-                  <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncome)}</p>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setPayerFilter('Alê')}
-                className={`cursor-pointer bg-white rounded-3xl p-6 shadow-xl border transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 ${payerFilter === 'Alê' ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-slate-100 opacity-60'}`}
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black transition-colors ${payerFilter === 'Alê' ? 'bg-blue-500 text-white shadow-lg shadow-blue-200' : 'bg-slate-100 text-slate-400'}`}>A</div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Receita Alê</p>
-                  <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncomeAle)}</p>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setPayerFilter('Maria')}
-                className={`cursor-pointer bg-white rounded-3xl p-6 shadow-xl border transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 ${payerFilter === 'Maria' ? 'border-pink-500 ring-4 ring-pink-500/10' : 'border-slate-100 opacity-60'}`}
-              >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black transition-colors ${payerFilter === 'Maria' ? 'bg-pink-500 text-white shadow-lg shadow-pink-200' : 'bg-slate-100 text-slate-400'}`}>M</div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Receita Maria</p>
-                  <p className="text-xl font-black text-slate-900">{formatMoney(totals.globalIncomeMaria)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100">
-              <div className="flex justify-between items-center mb-8">
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Entradas</p>
-                  <h4 className="text-2xl font-black text-slate-800">Extrato de Receitas</h4>
-                </div>
-                <button 
-                  onClick={() => setIsIncomeFormOpen(true)}
-                  className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-200 hover:bg-emerald-600 transition-all active:scale-95"
-                >
-                  <Plus size={18} /> Nova Receita
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {filteredIncomes.length === 0 ? (
-                  <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
-                    <p className="text-slate-400 font-bold">Nenhuma receita encontrada para este filtro.</p>
-                  </div>
-                ) : (
-                  filteredIncomes
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                    .map(income => (
-                      <div key={income.id} className="flex items-center justify-between p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-emerald-200 transition-all group">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white ${income.payer === 'Alê' ? 'bg-blue-500' : 'bg-pink-500'}`}>
-                            {income.payer.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-black text-slate-800 leading-tight">{income.description || 'Receita'}</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{new Date(income.date + 'T12:00:00').toLocaleDateString('pt-BR')} • {income.category}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <p className="text-lg font-black text-emerald-600">{formatMoney(Number(income.amount))}</p>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => openEditIncome(income)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-sm"><Edit2 size={16} /></button>
-                            <button onClick={() => handleDeleteIncome(income.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm"><Trash2 size={16} /></button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
-
-
-        {isSettingsOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsSettingsOpen(false)}>
-            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-300 border border-slate-200 overflow-hidden flex flex-col md:flex-row min-h-[550px] max-h-[90vh]">
-              
-              {/* Sidebar das Configurações */}
-              <div className="w-full md:w-60 bg-slate-50 border-r border-slate-100 p-6 md:p-8 flex flex-col">
-                <h3 className="font-black text-slate-800 text-lg mb-8 uppercase tracking-[0.2em] opacity-80">Ajustes</h3>
-                <nav className="space-y-2 flex-1">
-                  <button 
-                    onClick={() => setSettingsTab('budget')}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${settingsTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-200/50'}`}
-                  >
-                    <Wallet size={18} /> Orçamento
-                  </button>
-                  <button 
-                    onClick={() => setSettingsTab('family')}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${settingsTab === 'family' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-200/50'}`}
-                  >
-                    <Users size={18} /> Família
-                  </button>
-                  <button 
-                    onClick={() => setSettingsTab('account')}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${settingsTab === 'account' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-200/50'}`}
-                  >
-                    <Settings size={18} /> Minha Conta
-                  </button>
-                </nav>
-                <form action="/auth/signout" method="post" className="mt-8">
-                  <button type="submit" className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all">
-                    <LogOut size={18} /> Sair do App
-                  </button>
-                </form>
-              </div>
-
-              {/* Conteúdo das Abas */}
-              <div className="flex-1 p-6 md:p-10 overflow-y-auto custom-scrollbar relative">
-                <button type="button" onClick={() => setIsSettingsOpen(false)} className="absolute top-8 right-8 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm">
-                   <X size={24} />
-                </button>
-
-                {settingsTab === 'budget' && (
-                  <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                    <header className="mb-10">
-                      <h4 className="font-black text-slate-800 text-2xl mb-2">Orçamento e Moeda</h4>
-                      <p className="text-slate-500 font-medium">Defina como você quer visualizar e controlar seus gastos.</p>
-                    </header>
-
-                    <div className="space-y-8">
-                      <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-400 mb-3 tracking-[0.2em] ml-1">Moeda Principal</label>
-                        <select 
-                          value={localCurrency}
-                          onChange={(e) => setLocalCurrency(e.target.value)}
-                          className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm"
-                        >
-                          <option value="BRL">Real (R$)</option>
-                          <option value="EUR">Euro (€)</option>
-                          <option value="USD">Dólar (US$)</option>
-                        </select>
-                      </div>
-
-                      <div className="pt-8 border-t border-slate-100">
-                        <h5 className="font-black text-indigo-900 text-sm uppercase tracking-widest mb-6">Limites por Categoria</h5>
-                        <div className="space-y-3">
-                          {CATEGORIES.map(cat => {
-                            const budget = categoryBudgets.find(b => b.category === cat)
-                            return (
-                              <div key={cat} className="flex items-center justify-between gap-4 p-4 bg-slate-50 rounded-[1.5rem] border border-slate-100 hover:border-indigo-100 transition-all">
-                                <span className="font-black text-slate-700 text-sm uppercase tracking-wider">{cat}</span>
-                                <div className="flex items-center gap-3">
-                                  <span className="text-slate-400 font-black text-xs">{currency}</span>
-                                  <input 
-                                    type="number" 
-                                    step="1"
-                                    placeholder="Sem limite"
-                                    defaultValue={budget?.monthly_limit || ''}
-                                    onBlur={(e) => {
-                                      const val = parseFloat(e.target.value)
-                                      if (!isNaN(val)) {
-                                        updateCategoryBudget(householdId, cat, val).then(res => {
-                                          if (res.success) {
-                                            setCategoryBudgets(prev => {
-                                              const existing = prev.find(p => p.category === cat)
-                                              if (existing) return prev.map(p => p.category === cat ? { ...p, monthly_limit: val } : p)
-                                              return [...prev, { category: cat, monthly_limit: val }]
-                                            })
-                                          }
-                                        })
-                                      }
-                                    }}
-                                    className="w-28 p-2.5 bg-white border-2 border-slate-100 rounded-xl font-black text-slate-900 text-right focus:border-indigo-500 outline-none"
-                                  />
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {settingsTab === 'family' && (
-                  <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                    <header className="mb-10">
-                      <h4 className="font-black text-slate-800 text-2xl mb-2">Membros da Família</h4>
-                      <p className="text-slate-500 font-medium">Compartilhe este dashboard com outras pessoas.</p>
-                    </header>
-
-                    <form onSubmit={handleInvite} className="bg-indigo-50 p-6 rounded-[2rem] border-2 border-indigo-100 mb-10">
-                      <label className="block text-[10px] font-black uppercase text-indigo-400 mb-3 tracking-[0.2em] ml-1">Convidar por E-mail</label>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <input 
-                          type="email" 
-                          name="email" 
-                          required 
-                          placeholder="email@exemplo.com" 
-                          className="flex-1 p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none shadow-sm"
-                        />
-                        <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all">
-                          Convidar
+            {/* ROW 1: Smart Insights & Gauge */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-8 glass-card rounded-[3rem] p-10 relative overflow-hidden">
+                <div className="absolute -top-24 -right-24 w-80 h-80 bg-indigo-600/5 rounded-full blur-[100px]"></div>
+                <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+                   <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-8">
+                        <h3 className="text-xl font-black text-white tracking-tight italic uppercase">Radar Estratégico</h3>
+                        <button onClick={() => setShowRadarInfo(!showRadarInfo)} className="text-slate-600 hover:text-indigo-400 transition-colors">
+                           <HelpCircle size={18} />
                         </button>
                       </div>
-                    </form>
+                      
+                      {showRadarInfo && (
+                        <div className="mb-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl animate-in zoom-in-95 duration-300">
+                           <p className="text-[10px] font-bold text-indigo-300 leading-relaxed uppercase tracking-wider">
+                             O Radar analisa seu orçamento mensal e histórico de gastos para projetar sua saúde financeira e sugerir ações corretivas em tempo real.
+                           </p>
+                        </div>
+                      )}
 
-                    <div>
-                      <h5 className="font-black text-slate-400 text-[10px] uppercase tracking-[0.3em] mb-6 ml-1">Membros Atuais</h5>
-                      <div className="space-y-3">
-                        {members.map(member => (
-                          <div key={member.user_id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white ${member.email === userEmail ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                                {member.email.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="font-black text-slate-800 text-sm">{member.email}</p>
-                                <p className="text-[10px] font-black text-slate-400 uppercase">
-                                  {member.email === userEmail ? 'Você (Admin)' : 'Membro'}
-                                </p>
-                              </div>
-                            </div>
+                      <div className="space-y-5">
+                        {getInsights().map((insight, idx) => (
+                          <div key={idx} className="flex items-start gap-4">
+                             <div className="mt-1">{insight.icon}</div>
+                             <p className="text-sm font-bold text-slate-400 leading-snug">{insight.text}</p>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  </div>
-                )}
-                {settingsTab === 'account' && (
-                  <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                    <header className="mb-10">
-                      <h4 className="font-black text-slate-800 text-2xl mb-2">Minha Conta</h4>
-                      <p className="text-slate-500 font-medium">Informações do seu perfil pessoal.</p>
-                    </header>
-
-                    <div className="bg-slate-50 p-8 rounded-[2rem] border-2 border-slate-100">
-                      <div className="flex flex-col items-center text-center">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-4xl shadow-2xl mb-6 ring-8 ring-white">
-                          {userEmail.charAt(0).toUpperCase()}
-                        </div>
-                        <h5 className="font-black text-slate-800 text-xl mb-1">{userEmail.split('@')[0]}</h5>
-                        <p className="text-slate-400 font-bold text-sm mb-8">{userEmail}</p>
-                        
-                        <div className="w-full pt-8 border-t border-slate-200 text-left">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Segurança</p>
-                          <button className="w-full p-4 bg-white border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-all text-left flex justify-between items-center">
-                             Alterar Senha
-                             <Settings size={16} className="text-slate-300" />
-                          </button>
-                        </div>
+                   </div>
+                   <div className="relative w-44 h-44 flex items-center justify-center">
+                      <svg className="w-full h-full transform -rotate-90">
+                         <circle cx="88" cy="88" r="80" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-white/5" />
+                         <circle 
+                            cx="88" cy="88" r="80" stroke="currentColor" strokeWidth="12" fill="transparent" 
+                            strokeDasharray={502} 
+                            strokeDashoffset={502 - (502 * Math.min(percentage, 100)) / 100}
+                            className={`${percentage > 90 ? 'text-rose-500' : 'text-indigo-500'} transition-all duration-1000 ease-out`}
+                            strokeLinecap="round"
+                         />
+                      </svg>
+                      <div className="absolute flex flex-col items-center">
+                         <span className="text-4xl font-black">{percentage}%</span>
+                         <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Utilizado</span>
                       </div>
-                    </div>
-                  </div>
-                )}
+                   </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-4 flex flex-col gap-6">
+                <div className="flex-1 glass-card rounded-[3rem] p-10 flex flex-col justify-center items-center text-center">
+                   <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mb-6">
+                      <TrendingUp size={32} />
+                   </div>
+                   <h4 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Saldo Projetado</h4>
+                   <p className={`text-4xl font-black ${totals.globalBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {formatMoney(totals.globalBalance)}
+                   </p>
+                </div>
+                <button onClick={() => setMainTab('history')} className="w-full py-5 flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-[2rem] transition-all border border-white/5 font-black text-[11px] uppercase tracking-widest group">
+                   Ver Detalhamento <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </button>
               </div>
             </div>
+
+            {/* SUMMARY CARDS */}
+            <SummaryCards payerFilter={payerFilter} totals={totals} formatMoney={formatMoney} />
           </div>
         )}
 
-      {isRecurringOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
-          <div className="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="relative mb-6">
-              <h3 className="font-bold text-3xl text-slate-800 pr-10">Gastos Fixos</h3>
-              <p className="text-slate-500 font-medium">Lance seus pagamentos ou gerencie seus modelos.</p>
-              <button type="button" onClick={() => setIsRecurringOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar">
-                <X size={24} />
-              </button>
-            </div>
+        {/* VIEW 2: HISTORY (DETAILED TRANSACTIONS) */}
+        {mainTab === 'history' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-12">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+               <div>
+                  <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.4em] mb-2">Auditoria</p>
+                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase">Histórico de Fluxo</h2>
+               </div>
 
-            {/* Seletor de Abas */}
-            <div className="flex gap-2 bg-slate-100 p-1.5 rounded-[1.25rem] mb-8">
-              <button 
-                onClick={() => setRecurringTab('launch')}
-                className={`flex-1 py-3.5 rounded-[1rem] font-black text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${recurringTab === 'launch' ? 'bg-white text-indigo-600 shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                <Receipt size={16} />
-                Pagar / Lançar
-              </button>
-              <button 
-                onClick={() => setRecurringTab('manage')}
-                className={`flex-1 py-3.5 rounded-[1rem] font-black text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${recurringTab === 'manage' ? 'bg-white text-indigo-600 shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                <Settings size={16} />
-                Configurar Contas
-              </button>
-            </div>
-
-            {recurringTab === 'launch' ? (
-              <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-                <div className="space-y-3 mb-10">
-                  {recurringExpenses.length === 0 ? (
-                    <div className="text-center py-20 px-6 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-100">
-                      <p className="text-slate-400 font-black text-lg mb-4 italic">Nenhum gasto fixo cadastrado.</p>
-                      <button onClick={() => setRecurringTab('manage')} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md">Cadastrar Primeiro Gasto</button>
-                    </div>
-                  ) : (
-                    recurringExpenses.map(req => (
-                      <div key={req.id} className="group bg-white p-6 rounded-[1.5rem] border border-slate-100 hover:border-indigo-200 hover:shadow-xl transition-all flex flex-col lg:flex-row lg:items-center gap-6">
-                        <div className="flex-1 min-w-[220px]">
-                          <div className="flex items-center gap-3 mb-1.5">
-                            <p className="font-black text-slate-800 text-xl leading-tight">{req.description}</p>
-                            <span className="px-3 py-1 bg-indigo-50 text-indigo-500 text-[10px] font-black rounded-full uppercase tracking-widest">{req.category}</span>
-                          </div>
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Pagador: {req.payer}</p>
-                        </div>
-
-                        <div className="flex flex-wrap items-end lg:items-center gap-8">
-                          <div className="flex flex-col items-center">
-                            <p className="text-[10px] text-slate-400 font-black uppercase mb-2 tracking-widest">Valor</p>
-                            <div className="bg-slate-50 px-5 py-2.5 rounded-xl border border-slate-100 min-w-[130px] text-center">
-                              <p className="font-black text-slate-900 text-lg">{formatMoney(Number(req.amount))}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-col">
-                            <p className="text-[10px] text-slate-400 font-black uppercase mb-2 tracking-widest text-center">Data Pagamento</p>
-                            <input 
-                              type="date" 
-                              id={`date-${req.id}`}
-                              defaultValue={new Date().toISOString().split('T')[0]}
-                              className="p-3 text-sm border-2 border-slate-100 rounded-xl bg-white font-black outline-none focus:border-indigo-500 transition-all shadow-sm"
-                            />
-                          </div>
-
-                          <button 
-                            onClick={() => {
-                              const dateVal = (document.getElementById(`date-${req.id}`) as HTMLInputElement).value
-                              handleApplyRecurring(req.id, dateVal)
-                            }} 
-                            className="bg-emerald-500 text-white hover:bg-emerald-600 px-8 py-3.5 rounded-2xl transition-all shadow-lg flex items-center gap-3 group/btn active:scale-95"
-                          >
-                            <Repeat size={20} className="group-hover/btn:rotate-180 transition-transform duration-500" />
-                            <span className="text-xs font-black uppercase tracking-widest">Lançar</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {recurringExpenses.length > 0 && (
-                  <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                    <div className="relative z-10 text-center md:text-left">
-                      <h4 className="font-black text-white uppercase text-lg tracking-widest mb-1">Lançamento em Lote</h4>
-                      <p className="text-indigo-100/80 text-sm font-medium">Lançar todos os gastos acima com a mesma data.</p>
-                    </div>
-                    <div className="flex items-center gap-4 w-full md:w-auto relative z-10">
-                      <input 
-                        type="date" 
-                        value={recurringDate}
-                        onChange={(e) => setRecurringDate(e.target.value)}
-                        className="flex-1 md:w-44 p-4 text-sm border-none rounded-2xl bg-white/10 text-white font-black outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-md"
-                      />
-                      <button 
-                        onClick={() => handleApplyRecurring()} 
-                        disabled={isPending}
-                        className="bg-white text-indigo-600 px-10 py-4 rounded-2xl font-black shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 whitespace-nowrap"
-                      >
-                        <Repeat size={22} className={isPending ? "animate-spin" : ""} /> 
-                        LANÇAR TUDO
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-10">
-                <form onSubmit={handleAddRecurring} className={`p-8 rounded-[2rem] border-2 transition-all ${recurringToEdit ? 'bg-indigo-50 border-indigo-200 ring-4 ring-indigo-100' : 'bg-slate-50 border-slate-100'}`}>
-                  <div className="flex justify-between items-center mb-8">
-                    <div>
-                      <h4 className="font-black text-indigo-900 uppercase text-sm tracking-[0.2em]">{recurringToEdit ? 'Editando Modelo' : 'Novo Gasto Fixo'}</h4>
-                      <p className="text-xs text-slate-500 mt-1 font-bold">Defina os valores base que serão usados nos lançamentos.</p>
-                    </div>
-                    {recurringToEdit && (
-                      <button type="button" onClick={() => setRecurringToEdit(null)} className="bg-white px-4 py-2 rounded-lg text-[10px] font-black text-indigo-500 hover:bg-red-50 hover:text-red-500 shadow-sm transition-all uppercase tracking-widest border border-indigo-100">Cancelar Edição</button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-6 mb-8">
-                    <div>
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.15em] ml-2">Descrição do Gasto</label>
-                      <input type="text" name="description" required defaultValue={recurringToEdit?.description || ''} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm" placeholder="Ex: Aluguel" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div>
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.15em] ml-2">Valor Base</label>
-                      <input type="number" step="0.01" name="amount" required defaultValue={recurringToEdit?.amount || ''} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm" placeholder="0,00" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.15em] ml-2">Quem Paga?</label>
-                      <select name="payer" defaultValue={recurringToEdit?.payer || 'Alê'} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm">
-                        <option value="Alê">Alê</option>
-                        <option value="Maria">Maria</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-[0.15em] ml-2">Categoria</label>
-                      <select name="category" defaultValue={recurringToEdit?.category || 'Contas'} className="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm">
-                        {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  <button type="submit" className="w-full p-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] font-black shadow-xl transition-all active:scale-[0.98] uppercase tracking-[0.2em] text-sm">
-                    {recurringToEdit ? 'Atualizar Conta' : 'Salvar Conta Fixa'}
+               {/* DATE FILTER RELOCATED HERE */}
+               <div className="flex items-center gap-4 bg-white/5 p-2 rounded-[2rem] border border-white/5 shadow-xl">
+                  <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-3 hover:bg-white/10 rounded-xl transition-all text-indigo-400">
+                    <ChevronLeft size={20} />
                   </button>
-                </form>
+                  <div className="px-4 text-center min-w-[120px]">
+                    <span className="font-black text-sm tracking-widest text-white uppercase italic">
+                      {currentDate.toLocaleString('pt-BR', { month: 'short' })} {currentDate.getFullYear()}
+                    </span>
+                  </div>
+                  <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-3 hover:bg-white/10 rounded-xl transition-all text-indigo-400">
+                    <ChevronRight size={20} />
+                  </button>
+               </div>
+            </header>
 
-                <div className="border-t-2 border-slate-100 pt-10">
-                  <h4 className="font-black text-slate-400 uppercase text-[10px] tracking-[0.3em] mb-8 text-center">Minhas Contas Fixas</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {recurringExpenses.map(req => (
-                      <div key={req.id} className="p-5 bg-white rounded-2xl border border-slate-100 flex items-center justify-between group hover:border-indigo-200 hover:shadow-lg transition-all">
-                        <div>
-                          <p className="font-black text-slate-800 text-lg">{req.description}</p>
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{formatMoney(Number(req.amount))} • {req.payer}</p>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setRecurringToEdit(req)} className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"><Edit2 size={18} /></button>
-                          <button onClick={() => handleDeleteRecurring(req.id)} className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><Trash2 size={18} /></button>
-                        </div>
-                      </div>
+            {/* SEARCH & CATEGORY/PAYER FILTERS */}
+            <div className="space-y-8 bg-white/[0.02] p-8 rounded-[3rem] border border-white/5">
+               <div className="flex flex-col xl:flex-row gap-6">
+                  <div className="flex-1 relative">
+                    <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-slate-700">
+                      <Search size={20} />
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="Pesquisar transações..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-white/5 rounded-[2rem] py-5 pl-14 pr-8 text-sm font-bold focus:border-indigo-500 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="flex bg-white/5 p-1 rounded-[1.5rem] border border-white/5">
+                    {['day', 'week', 'month'].map((m) => (
+                      <button 
+                        key={m}
+                        onClick={() => setViewMode(m as any)}
+                        className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                      >
+                        {m === 'day' ? 'Dia' : m === 'week' ? 'Semana' : 'Mês'}
+                      </button>
                     ))}
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+               </div>
 
-        {isImportOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsImportOpen(false)}>
-            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-xl text-slate-800">Importar Planilha</h3>
-                <button type="button" onClick={() => setIsImportOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition">
-                  <X size={20} />
-                </button>
-              </div>
+               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div className="flex items-center gap-2 bg-slate-950/50 p-1.5 rounded-[1.5rem] border border-white/5">
+                    {['Todos', 'Alê', 'Maria'].map(p => (
+                      <button
+                        key={p}
+                        onClick={() => setPayerFilter(p as any)}
+                        className={`px-8 py-2.5 rounded-[1.25rem] text-[10px] font-black transition-all uppercase tracking-widest ${
+                          payerFilter === p ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
 
-              {pendingImports.length === 0 ? (
-                <div className="border-2 border-dashed border-slate-200 p-12 text-center rounded-2xl">
-                  <Upload size={40} className="mx-auto text-slate-300 mb-4" />
-                  <p className="text-sm text-slate-500 mb-4">Arraste seu arquivo .xlsx, .xls ou .csv aqui ou clique para selecionar.</p>
-                  <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFileUpload} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm text-slate-500 mb-2">Verifique se os dados da planilha foram lidos corretamente. Linhas com erros serão ignoradas.</p>
-                  {detectedHeaders.length > 0 && (
-                    <div className="mb-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600 font-mono">
-                      <strong>Colunas detectadas:</strong> {detectedHeaders.join(', ')}
-                    </div>
-                  )}
-                  <div className="overflow-x-auto max-h-96 overflow-y-auto mb-6 border rounded-xl">
-                    <table className="w-full text-left text-sm whitespace-nowrap">
-                      <thead className="bg-slate-50 sticky top-0 border-b">
-                        <tr>
-                          <th className="p-3 font-semibold text-slate-600">Data</th>
-                          <th className="p-3 font-semibold text-slate-600">Descrição</th>
-                          <th className="p-3 font-semibold text-slate-600">Pagador</th>
-                          <th className="p-3 font-semibold text-slate-600">Valor</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {pendingImports.map((exp) => {
-                          const isValid = exp.date && !isNaN(exp.amount) && exp.payer;
-                          return (
-                            <tr key={exp._id} className={isValid ? "hover:bg-slate-50 text-slate-800" : "bg-red-50 text-red-500"}>
-                              <td className="p-3">{exp.date || 'Faltando'}</td>
-                              <td className="p-3 truncate max-w-[200px]">{exp.description}</td>
-                              <td className="p-3">{exp.payer || 'Faltando'}</td>
-                              <td className="p-3 font-bold">{!isNaN(exp.amount) ? formatMoney(exp.amount) : 'Inválido'}</td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="flex gap-4">
-                    <button onClick={cancelImport} className="flex-1 p-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200">Cancelar</button>
-                    <button onClick={confirmImport} className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-md">Confirmar e Salvar</button>
-                  </div>
-                </>
+                  <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+               </div>
+            </div>
+
+            <div className="animate-in fade-in duration-1000">
+              {activeTab === 'incomes' && (
+                <IncomesTab 
+                  payerFilter={payerFilter} setPayerFilter={setPayerFilter}
+                  filteredIncomes={filteredIncomes} totals={totals}
+                  formatMoney={formatMoney} openEditIncome={(i: any) => { setIncomeToEdit(i); setIsIncomeFormOpen(true); }}
+                  handleDeleteIncome={handleDeleteIncome}
+                />
+              )}
+
+              {activeTab === 'expenses' && (
+                <ExpensesTab 
+                  filteredExpenses={filteredExpenses} weeks={weeks} totals={totals}
+                  monthlyBudget={props.initialMonthlyBudget} totalWeeksInMonth={totalWeeksInMonth}
+                  currency={currency} formatMoney={formatMoney}
+                  setIsFormOpen={setIsFormOpen} openEditExpense={(e: any) => { setExpenseToEdit(e); setIsFormOpen(true); }}
+                  handleDelete={handleDeleteExpense}
+                  viewMode={viewMode} groupedExpenses={groupedExpenses}
+                />
               )}
             </div>
+            
+            <button onClick={onExportExcel} className="w-full py-5 flex items-center justify-center gap-3 bg-white/5 hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-400 rounded-[2rem] transition-all border border-white/5 font-black text-[11px] uppercase tracking-widest group">
+               <Download size={16} /> Exportar Relatório do Mês
+            </button>
           </div>
         )}
 
-        {isInviteOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsInviteOpen(false)}>
-            <form onSubmit={handleInvite} onClick={(e) => e.stopPropagation()} className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-xl animate-in zoom-in-95 duration-200 border border-slate-200">
-              <div className="relative mb-6">
-                <h3 className="font-bold text-2xl text-slate-800 pr-10">Convidar para a Casa</h3>
-                <button type="button" onClick={() => setIsInviteOpen(false)} className="absolute -top-2 -right-2 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm" title="Fechar e voltar ao Dashboard">
-                   <X size={24} />
-                </button>
-              </div>
-              <p className="text-sm text-slate-500 mb-4">Insira o e-mail da pessoa que você deseja convidar para compartilhar estes dados.</p>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">E-mail do convidado</label>
-                  <input type="email" name="email" required placeholder="email@exemplo.com" className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={() => setIsInviteOpen(false)} className="flex-1 p-3 bg-slate-100 rounded-xl font-bold">Cancelar</button>
-                  <button type="submit" className="flex-1 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md hover:bg-indigo-700 transition">Convidar</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        )}
+        {/* MODALS */}
+        <RecurringExpensesModal 
+          isRecurringOpen={isRecurringOpen} setIsRecurringOpen={setIsRecurringOpen}
+          recurringTab={recurringTab} setRecurringTab={setRecurringTab}
+          recurringExpenses={recurringExpenses} recurringToEdit={recurringToEdit} setRecurringToEdit={setRecurringToEdit}
+          recurringDate={recurringDate} setRecurringDate={setRecurringDate}
+          handleApplyRecurring={handleApplyRecurring} handleAddRecurring={handleAddRecurring}
+          handleDeleteRecurring={handleDeleteRecurring} formatMoney={formatMoney}
+          CATEGORIES={CATEGORIES} isPending={isPending}
+        />
 
-        {isIncomeFormOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }}>
-            <form onSubmit={handleAddIncome} onClick={(e) => e.stopPropagation()} className="bg-white p-10 rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] w-full max-w-xl animate-in zoom-in-95 duration-300 border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
-              <div className="relative mb-8 text-center">
-                <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-emerald-100 transform -rotate-3">
-                  <TrendingUp size={40} />
-                </div>
-                <h3 className="font-black text-3xl text-slate-800 tracking-tighter">{incomeToEdit ? 'Editar Receita' : 'Nova Receita'}</h3>
-                <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-widest opacity-60">Lançamento de Entrada</p>
-                <button type="button" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }} className="absolute -top-2 -right-2 p-2.5 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm group">
-                   <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-                </button>
-              </div>
-              
-              <input type="hidden" name="household_id" value={householdId} />
-              
-              <div className="space-y-8">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Data da Receita</label>
-                  <input type="date" name="date" required defaultValue={incomeToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all shadow-sm" />
-                </div>
-                
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Valor</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">{currency}</span>
-                    <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0,00" defaultValue={incomeToEdit?.amount || ''} className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all shadow-sm text-xl" />
-                  </div>
-                </div>
+        <SettingsModal 
+          isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen}
+          settingsTab={settingsTab} setSettingsTab={setSettingsTab}
+          localCurrency={localCurrency} setLocalCurrency={setLocalCurrency}
+          CATEGORIES={CATEGORIES} categoryBudgets={categoryBudgets}
+          updateCategoryBudget={updateCategoryBudget} setCategoryBudgets={setCategoryBudgets}
+          userEmail={userEmail} handleInvite={handleInvite} handleSignOut={handleSignOut}
+          displayName={displayName} handleUpdateProfile={handleUpdateProfile}
+          supabase={supabase}
+        />
 
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Quem recebeu?</label>
-                  <div className="flex gap-3">
-                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50 font-black text-slate-400 has-[:checked]:text-emerald-600 border-slate-100 bg-slate-50 hover:bg-slate-100/50">
-                      <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={incomeToEdit?.payer === 'Alê'} /> 
-                      <span className="text-xs uppercase tracking-widest">Alê</span>
-                    </label>
-                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50 font-black text-slate-400 has-[:checked]:text-emerald-600 border-slate-100 bg-slate-50 hover:bg-slate-100/50">
-                      <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={incomeToEdit?.payer === 'Maria'} /> 
-                      <span className="text-xs uppercase tracking-widest">Maria</span>
-                    </label>
-                  </div>
-                </div>
+        <ImportModal 
+          isImportOpen={isImportOpen} setIsImportOpen={setIsImportOpen}
+          pendingImports={pendingImports} detectedHeaders={detectedHeaders}
+          handleFileUpload={onFileUpload} cancelImport={() => setPendingImports([])}
+          confirmImport={confirmImport} formatMoney={formatMoney}
+        />
 
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Descrição</label>
-                  <input type="text" name="description" placeholder="Ex: Salário Mensal" defaultValue={incomeToEdit?.description || ''} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-emerald-500 outline-none transition-all shadow-sm" />
-                </div>
+        <IncomeModal 
+          isIncomeFormOpen={isIncomeFormOpen} setIsIncomeFormOpen={setIsIncomeFormOpen}
+          incomeToEdit={incomeToEdit} setIncomeToEdit={setIncomeToEdit}
+          handleAddIncome={handleAddIncome} householdId={householdId}
+          currency={currency} isPending={isPending}
+        />
 
-                <div className="flex gap-4 pt-6">
-                  <button type="button" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }} className="flex-1 p-5 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 transition-all">Cancelar</button>
-                  <button type="submit" disabled={isPending} className="flex-1 p-5 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50">
-                    {isPending ? 'Salvando...' : incomeToEdit ? 'Atualizar' : 'Lançar Receita'}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        )}
+        <ExpenseModal 
+          isFormOpen={isFormOpen} setIsFormOpen={setIsFormOpen}
+          expenseToEdit={expenseToEdit} setExpenseToEdit={setExpenseToEdit}
+          handleAddExpense={handleAddExpense} householdId={householdId}
+          currency={currency} CATEGORIES={CATEGORIES} isPending={isPending}
+        />
 
-        {isFormOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }}>
-            <form id="expenseForm" onSubmit={handleAddExpense} onClick={(e) => e.stopPropagation()} className="bg-white p-10 rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] w-full max-w-xl animate-in zoom-in-95 duration-300 border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
-              <div className="relative mb-8">
-                <h3 className="font-black text-3xl text-slate-800 tracking-tighter pr-10">{expenseToEdit ? 'Editar Gasto' : 'Novo Gasto'}</h3>
-                <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-widest opacity-60">Lançamento de Despesa</p>
-                <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="absolute -top-2 -right-2 p-2.5 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full text-slate-400 transition-all shadow-sm group">
-                   <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-                </button>
-              </div>
-              
-              <input type="hidden" name="household_id" value={householdId} />
-              
-              <div className="space-y-8">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Data do Gasto</label>
-                  <input type="date" name="date" required defaultValue={expenseToEdit?.date || new Date().toISOString().split('T')[0]} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm" />
-                </div>
-                
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Valor</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">{currency}</span>
-                    <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0,00" defaultValue={expenseToEdit?.amount || ''} className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm text-xl" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Quem pagou?</label>
-                  <div className="flex gap-3">
-                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50 font-black text-slate-400 has-[:checked]:text-blue-600 border-slate-100 bg-slate-50 hover:bg-slate-100/50">
-                      <input type="radio" name="payer" value="Alê" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Alê'} /> 
-                      <span className="text-xs uppercase tracking-widest">Alê</span>
-                    </label>
-                    <label className="flex-1 text-center p-4 border-2 rounded-2xl cursor-pointer transition-all has-[:checked]:border-pink-500 has-[:checked]:bg-pink-50/50 font-black text-slate-400 has-[:checked]:text-pink-600 border-slate-100 bg-slate-50 hover:bg-slate-100/50">
-                      <input type="radio" name="payer" value="Maria" className="hidden" required defaultChecked={expenseToEdit?.payer === 'Maria'} /> 
-                      <span className="text-xs uppercase tracking-widest">Maria</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Descrição</label>
-                  <input type="text" name="description" placeholder="Ex: Mercado Semanal" defaultValue={expenseToEdit?.description || ''} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm" />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Categoria</label>
-                  <select name="category" defaultValue={expenseToEdit?.category || 'Outros'} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 focus:border-indigo-500 outline-none transition-all shadow-sm appearance-none">
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div className="flex gap-4 pt-6">
-                  <button type="button" onClick={() => { setIsFormOpen(false); setExpenseToEdit(null) }} className="flex-1 p-5 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-500 transition-all">Cancelar</button>
-                  <button type="submit" disabled={isPending} className="flex-1 p-5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50">
-                    {isPending ? 'Salvando...' : expenseToEdit ? 'Atualizar' : 'Lançar Gasto'}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {activeTab === 'expenses' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10">
-            <Charts 
-              expenses={filteredExpenses} 
-              incomes={filteredIncomes}
-              currency={currency} 
-              budget={totals.limit > 0 ? totals.limit : monthlyBudget} 
-              type="expenses"
-            />
-
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Saídas</p>
-                <h4 className="text-2xl font-black text-slate-800">Seus Gastos</h4>
-              </div>
-              <button 
-                onClick={() => setIsFormOpen(true)}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
-              >
-                <Plus size={18} /> Novo Gasto
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20">
-              {weeks.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 md:col-span-2 xl:col-span-3">
-                  <p className="text-slate-400 font-bold text-lg">Nenhum gasto registrado este mês.</p>
-                  <p className="text-slate-300 text-sm mt-1 font-medium">Use o botão acima para começar!</p>
-                </div>
-              ) : (
-                weeks.map(week => {
-                  const weekLimit = totals.weeklyLimit > 0 ? totals.weeklyLimit : (monthlyBudget / totalWeeksInMonth)
-                  const remaining = weekLimit - week.total
-                  return (
-                    <div key={week.number} className="bg-white rounded-[2rem] p-6 shadow-xl border border-slate-50 hover:shadow-2xl transition-all group/week">
-                      <div className="flex justify-between border-b border-slate-50 pb-4 mb-4 items-center">
-                        <h3 className="font-black text-slate-800 uppercase text-[10px] tracking-widest bg-slate-100 px-3 py-1 rounded-lg">Semana {week.number}</h3>
-                        {!totals.hideWeeklyProgress && (
-                          <div className="text-right">
-                            <p className="text-[9px] text-slate-400 uppercase font-black">Gasto: {formatMoney(week.total)}</p>
-                            <p className={`text-sm font-black ${remaining < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                              {remaining < 0 ? '-' : ''}{formatMoney(Math.abs(remaining))}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        {week.expenses.map((exp: any) => (
-                          <div key={exp.id} className="p-3 hover:bg-slate-50 rounded-2xl transition-all group/item">
-                            <div className="flex gap-3">
-                              <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-xs font-black text-white shadow-sm transition-transform group-hover/item:scale-110 ${exp.payer === 'Alê' ? 'bg-blue-500 shadow-blue-100' : 'bg-pink-500 shadow-pink-100'}`}>
-                                {exp.payer.charAt(0)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start gap-4 mb-0.5">
-                                  <p className="font-bold text-sm text-slate-800 leading-tight truncate">{exp.description || 'Gasto'}</p>
-                                  <span className="font-black text-sm text-slate-900">{formatMoney(Number(exp.amount))}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[8px] font-black px-1.5 py-0.5 bg-slate-100 text-slate-500 uppercase rounded-md tracking-wider">{exp.category || 'Outros'}</span>
-                                    <span className="text-[9px] text-slate-400 font-bold">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                                    <button onClick={() => openEditExpense(exp)} className="text-slate-400 hover:text-indigo-600 p-1"><Edit2 size={14} /></button>
-                                    <button onClick={() => handleDelete(exp.id)} className="text-slate-400 hover:text-red-600 p-1"><Trash2 size={14} /></button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          </div>
-        )}
+        <InviteModal isInviteOpen={isInviteOpen} setIsInviteOpen={setIsInviteOpen} handleInvite={handleInvite} />
       </main>
-      <footer className="mt-20 pb-10 text-center">
-        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">Dividi App v1.2 - Atualizado</p>
-      </footer>
+
+      <BottomNavigation 
+        mainTab={mainTab} setMainTab={setMainTab}
+        setIsFormOpen={setIsFormOpen} setIsSettingsOpen={setIsSettingsOpen} setIsRecurringOpen={setIsRecurringOpen}
+      />
     </div>
   )
-}
-
-function getWeekOfMonth(date: Date) {
-  // Pega o primeiro dia do mês da data fornecida
-  const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
-  
-  // getDay() retorna 0 para Domingo, 1 para Segunda, etc.
-  // A fórmula Math.ceil((dia + diaDaSemanaDoPrimeiroDia) / 7) 
-  // quebra as semanas perfeitamente de Domingo a Sábado.
-  return Math.ceil((date.getDate() + firstDayOfMonth.getDay()) / 7)
 }
