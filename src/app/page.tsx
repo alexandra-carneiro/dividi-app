@@ -70,7 +70,7 @@ export default function Home() {
               Fluxo.
             </h1>
             
-            <p className="text-xl text-slate-400 font-medium max-w-xl leading-relaxed">
+            <p className="text-xl text-slate-300 font-medium max-w-xl leading-relaxed">
               Diga adeus às planilhas complexas. Dividi é a plataforma definitiva para casais e residências que buscam transparência financeira total.
             </p>
 
@@ -78,7 +78,7 @@ export default function Home() {
               <Link href="/login?mode=signup" className="px-10 py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-3 group">
                 Criar Conta Agora <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
-              <div className="flex items-center gap-4 px-6 text-slate-500 font-bold text-xs uppercase tracking-widest">
+              <div className="flex items-center gap-4 px-6 text-slate-400 font-bold text-xs uppercase tracking-widest">
                 <ShieldCheck size={20} className="text-emerald-500" />
                 Segurança Nível Bancário
               </div>
@@ -87,12 +87,18 @@ export default function Home() {
             <div className="flex items-center gap-6 pt-10">
               <div className="flex -space-x-3">
                 {[1,2,3,4].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center text-[10px] font-black overflow-hidden">
-                    <img src={`https://i.pravatar.cc/100?u=${i}`} alt="User" />
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center text-[10px] font-black overflow-hidden relative">
+                    <Image 
+                      src={`https://i.pravatar.cc/100?u=${i}`} 
+                      alt="User avatar" 
+                      width={40}
+                      height={40}
+                      className="object-cover"
+                    />
                   </div>
                 ))}
               </div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 <span className="text-white">+5.000</span> usuários economizando hoje
               </p>
             </div>
@@ -101,9 +107,12 @@ export default function Home() {
           <div className="relative animate-in fade-in slide-in-from-right-8 duration-1000">
             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-[3rem] blur-2xl opacity-20 animate-pulse"></div>
             <div className="relative glass-card rounded-[3rem] p-4 overflow-hidden shadow-2xl">
-              <img 
+              <Image 
                 src="/app-mockup.png" 
                 alt="Dividi App Interface" 
+                width={800}
+                height={600}
+                priority
                 className="w-full h-auto rounded-[2.2rem] shadow-2xl border border-white/5"
               />
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-indigo-600/80 backdrop-blur-md rounded-full flex items-center justify-center text-white cursor-pointer hover:scale-110 transition-transform md:hidden">
@@ -128,7 +137,7 @@ export default function Home() {
                     {f.icon}
                   </div>
                   <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight italic">{f.title}</h3>
-                  <p className="text-slate-500 font-medium leading-relaxed">{f.description}</p>
+                  <p className="text-slate-400 font-medium leading-relaxed">{f.description}</p>
                 </div>
               ))}
             </div>
@@ -143,12 +152,12 @@ export default function Home() {
                     Upgrade para a <br />
                     <span className="text-indigo-400">Elite Edition.</span>
                  </h2>
-                 <p className="text-lg text-slate-400 font-medium">
+                 <p className="text-lg text-slate-300 font-medium">
                     A versão mais poderosa do Dividi, projetada para quem leva a gestão doméstica a sério. Recursos que automatizam o que importa.
                  </p>
                  <ul className="grid sm:grid-cols-2 gap-6">
                     {eliteFeatures.map((item, i) => (
-                       <li key={i} className="flex items-center gap-3 text-sm font-bold text-slate-300">
+                       <li key={i} className="flex items-center gap-3 text-sm font-bold text-slate-200">
                           <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
                           {item}
                        </li>
@@ -200,14 +209,14 @@ export default function Home() {
               Pronto para ter o <br />
               Controle?
            </h2>
-           <p className="text-xl text-slate-500 font-medium max-w-xl mx-auto">
+           <p className="text-xl text-slate-400 font-medium max-w-xl mx-auto">
               Junte-se a milhares de pessoas que transformaram sua relação com o dinheiro.
            </p>
            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
               <Link href="/login?mode=signup" className="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-indigo-600/40 transition-all active:scale-95">
                  Criar Minha Conta Grátis
               </Link>
-              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Sem cartão de crédito necessário</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sem cartão de crédito necessário</span>
            </div>
         </section>
       </main>
@@ -216,13 +225,13 @@ export default function Home() {
       <footer className="border-t border-white/5 py-12 bg-slate-950">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <Logo size="small" />
-          <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
             © 2026 Dividi Inc. Desenvolvido por Avante Digital.
           </p>
           <div className="flex gap-8">
-            <a href="#" className="text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Termos</a>
-            <a href="#" className="text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Privacidade</a>
-            <a href="#" className="text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Suporte</a>
+            <a href="#" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">Termos</a>
+            <a href="#" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">Privacidade</a>
+            <a href="#" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">Suporte</a>
           </div>
         </div>
       </footer>
