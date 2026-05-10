@@ -149,10 +149,10 @@ export default function DashboardClient(props: any) {
         {/* VIEW 1: OVERVIEW (CLEAN DASHBOARD) */}
         {mainTab === 'overview' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-12">
-            <header>
-               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-2">Bem-vindo ao seu</p>
-               <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase">Centro de Controle</h2>
-            </header>
+            <div>
+               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-2">Dividi Elite</p>
+               <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase leading-[1.2] pt-1">Centro de Controle</h2>
+            </div>
 
             {/* ROW 1: Smart Insights & Gauge */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -230,7 +230,7 @@ export default function DashboardClient(props: any) {
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                <div>
                   <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.4em] mb-2">Auditoria</p>
-                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase">Histórico de Fluxo</h2>
+                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase leading-[1.2] pt-1">Histórico de Fluxo</h2>
                </div>
 
                {/* DATE FILTER RELOCATED HERE */}

@@ -100,7 +100,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
           </div>
         </div>
         
-        <h3 className="text-4xl md:text-5xl font-black text-white tracking-tighter italic">
+        <h3 className="text-4xl md:text-5xl font-black text-white tracking-tighter italic leading-[1.2] pt-1">
           {formatMoney(totals.filteredTotal)}
         </h3>
 
