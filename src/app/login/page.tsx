@@ -58,7 +58,7 @@ function LoginContent() {
             </div>
           </div>
           <h1 className="text-4xl font-black text-white tracking-tight mb-1">Dividi</h1>
-          <div className="flex items-center justify-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest">
+          <div className="flex items-center justify-center gap-2 text-slate-300 text-xs font-bold uppercase tracking-widest">
             <Lock size={12} className="text-emerald-500/70" />
             <span>Conexão Criptografada</span>
           </div>
@@ -72,13 +72,13 @@ function LoginContent() {
             <div className="flex p-1.5 bg-black/40 rounded-2xl mb-8 border border-white/5 shadow-inner">
               <button
                 onClick={() => setMode('login')}
-                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all duration-300 ${mode === 'login' ? 'bg-indigo-600 text-white shadow-xl scale-[1.02]' : 'text-slate-500 hover:text-slate-300'}`}
+                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all duration-300 ${mode === 'login' ? 'bg-indigo-600 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 LOGIN
               </button>
               <button
                 onClick={() => setMode('signup')}
-                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all duration-300 ${mode === 'signup' ? 'bg-purple-600 text-white shadow-xl scale-[1.02]' : 'text-slate-500 hover:text-slate-300'}`}
+                className={`flex-1 py-3 text-sm font-black rounded-xl transition-all duration-300 ${mode === 'signup' ? 'bg-purple-600 text-white shadow-xl scale-[1.02]' : 'text-slate-400 hover:text-slate-300'}`}
               >
                 CADASTRO
               </button>
@@ -98,7 +98,7 @@ function LoginContent() {
             <div className="space-y-5">
               {/* Campo E-mail */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
+                <label className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] ml-1">
                   <Mail size={12} className="text-indigo-500" />
                   E-mail
                 </label>
@@ -116,7 +116,7 @@ function LoginContent() {
               {mode !== 'reset' && (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center ml-1">
-                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
                       <Lock size={12} className="text-indigo-500" />
                       Senha de Acesso
                     </label>
@@ -144,7 +144,7 @@ function LoginContent() {
                       type="button" 
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -155,7 +155,7 @@ function LoginContent() {
               {/* Campo Confirmar Senha (Apenas Cadastro) */}
               {mode === 'signup' && (
                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                  <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
+                  <label className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] ml-1">
                     <CheckCircle2 size={12} className="text-purple-500" />
                     Confirmar Senha
                   </label>
@@ -178,7 +178,7 @@ function LoginContent() {
                     <div className="w-5 h-5 border-2 border-white/10 rounded-md bg-black/40 peer-checked:bg-purple-600 peer-checked:border-purple-600 transition-all"></div>
                     <CheckCircle2 size={12} className="absolute left-1 top-1 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                   </label>
-                  <span className="text-[11px] text-slate-400 font-medium">
+                  <span className="text-[11px] text-slate-300 font-medium">
                     Li e aceito os <button type="button" onClick={() => setShowTerms(true)} className="text-purple-400 hover:underline">Termos e Condições</button>
                   </span>
                 </div>
@@ -199,7 +199,7 @@ function LoginContent() {
                     <button 
                       onClick={() => setShowTerms(false)} 
                       aria-label="Fechar termos"
-                      className="text-slate-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
+                      className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
                     >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -211,28 +211,28 @@ function LoginContent() {
                   <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
                     <section className="space-y-3">
                       <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">01. Uso da Plataforma</h4>
-                      <p className="text-slate-400 text-sm leading-relaxed">
+                      <p className="text-slate-300 text-sm leading-relaxed">
                         O Dividi é um serviço de gestão financeira compartilhada. Ao utilizar o sistema, você concorda que seus registros serão visíveis apenas para os membros da sua casa (household) devidamente autorizados.
                       </p>
                     </section>
                     
                     <section className="space-y-3">
                       <h4 className="text-xs font-black text-purple-400 uppercase tracking-widest">02. Blindagem de Dados</h4>
-                      <p className="text-slate-400 text-sm leading-relaxed">
+                      <p className="text-slate-300 text-sm leading-relaxed">
                         Implementamos camadas de segurança de nível bancário através de RLS (Row Level Security). Seus dados são criptografados e nunca serão compartilhados com terceiros sem seu consentimento explícito.
                       </p>
                     </section>
                     
                     <section className="space-y-3">
                       <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest">03. Responsabilidades</h4>
-                      <p className="text-slate-400 text-sm leading-relaxed">
+                      <p className="text-slate-300 text-sm leading-relaxed">
                         Você é responsável pela veracidade dos dados inseridos. O Dividi é uma ferramenta de auxílio, e decisões financeiras tomadas a partir dos relatórios são de inteira responsabilidade do usuário.
                       </p>
                     </section>
 
                     <section className="space-y-3">
                       <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">04. Atualizações</h4>
-                      <p className="text-slate-400 text-sm leading-relaxed">
+                      <p className="text-slate-300 text-sm leading-relaxed">
                         Estes termos podem ser atualizados para refletir melhorias no sistema. Notificaremos você sobre mudanças significativas através da própria plataforma.
                       </p>
                     </section>
@@ -282,7 +282,7 @@ function LoginContent() {
                   <button
                     type="button"
                     onClick={() => setMode('login')}
-                    className="w-full py-2 text-[10px] text-slate-500 hover:text-white font-black uppercase tracking-[0.2em] transition-colors"
+                    className="w-full py-2 text-[10px] text-slate-300 hover:text-white font-black uppercase tracking-[0.2em] transition-colors"
                   >
                     Voltar ao Login
                   </button>
@@ -293,7 +293,7 @@ function LoginContent() {
         </div>
 
         <div className="mt-10 text-center">
-          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-2">
+          <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-2">
             <span className="w-8 h-px bg-slate-800"></span>
             Desenvolvido por Avante Digital 2026
             <span className="w-8 h-px bg-slate-800"></span>

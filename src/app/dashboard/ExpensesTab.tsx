@@ -52,7 +52,7 @@ export default function ExpensesTab({
         {groupedExpenses.length === 0 || (groupedExpenses.length === 1 && groupedExpenses[0].expenses.length === 0) ? (
           <div className="text-center py-24 glass-card rounded-[3rem] border border-dashed border-white/5 md:col-span-2 xl:col-span-3">
             <ShoppingBag size={40} className="mx-auto mb-6 text-slate-800" />
-            <p className="text-slate-500 font-black text-xs uppercase tracking-widest">Nenhum registro encontrado</p>
+            <p className="text-slate-400 font-black text-xs uppercase tracking-widest">Nenhum registro encontrado</p>
           </div>
         ) : (
           groupedExpenses.map((group, idx) => (
@@ -66,7 +66,7 @@ export default function ExpensesTab({
                    {getIcon()}
                    <h3 className="font-black text-slate-400 uppercase text-[10px] tracking-[0.2em]">{group.label}</h3>
                 </div>
-                <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-600 uppercase tracking-widest">
+                <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest">
                   {group.expenses.length} itens
                 </div>
               </div>
@@ -85,7 +85,7 @@ export default function ExpensesTab({
                         </div>
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
-                            <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-500 uppercase rounded-md tracking-widest">{exp.category || 'Outros'}</span>
+                            <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-400 uppercase rounded-md tracking-widest">{exp.category || 'Outros'}</span>
                             {viewMode !== 'day' && <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>}
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">

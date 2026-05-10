@@ -50,10 +50,10 @@ export default function ImportModal({
         {pendingImports.length === 0 ? (
           <div className="border-2 border-dashed border-white/10 p-12 md:p-20 text-center rounded-[3rem] bg-white/5 group hover:bg-white/[0.07] hover:border-indigo-500/50 transition-all duration-500">
             <div className="bg-slate-900 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl group-hover:scale-110 transition-transform duration-500 border border-white/5">
-              <FileText size={48} className="text-slate-600 group-hover:text-indigo-400" />
+              <FileText size={48} className="text-slate-400 group-hover:text-indigo-400" />
             </div>
             <p className="text-xl font-black text-slate-300 mb-2">Arraste seu arquivo aqui</p>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-10 opacity-80">Suporta .xlsx, .xls ou .csv</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-10 opacity-80">Suporta .xlsx, .xls ou .csv</p>
             <label className="bg-indigo-600 hover:bg-indigo-500 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-500/20 active:scale-95 transition-all cursor-pointer inline-block">
               Selecionar Arquivo
               <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFileUpload} className="hidden"/>
@@ -73,7 +73,7 @@ export default function ImportModal({
 
             {detectedHeaders.length > 0 && (
               <div className="mb-8 p-4 bg-black/40 rounded-2xl text-[9px] text-indigo-400 font-mono border border-white/5 shadow-inner overflow-x-auto whitespace-nowrap scrollbar-hide">
-                <strong className="text-slate-500 uppercase tracking-widest mr-4">Headers:</strong> {detectedHeaders.join(' | ')}
+                <strong className="text-slate-400 uppercase tracking-widest mr-4">Headers:</strong> {detectedHeaders.join(' | ')}
               </div>
             )}
 
@@ -81,10 +81,10 @@ export default function ImportModal({
               <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
                 <thead className="bg-slate-900/50 sticky top-0 z-10 border-b border-white/5 backdrop-blur-md">
                   <tr>
-                    <th className="p-6 font-black text-slate-500 uppercase tracking-widest text-[9px]">Data</th>
-                    <th className="p-6 font-black text-slate-500 uppercase tracking-widest text-[9px]">Descrição</th>
-                    <th className="p-6 font-black text-slate-500 uppercase tracking-widest text-[9px]">Pagador</th>
-                    <th className="p-6 font-black text-slate-500 uppercase tracking-widest text-[9px] text-right">Valor</th>
+                    <th className="p-6 font-black text-slate-400 uppercase tracking-widest text-[9px]">Data</th>
+                    <th className="p-6 font-black text-slate-400 uppercase tracking-widest text-[9px]">Descrição</th>
+                    <th className="p-6 font-black text-slate-400 uppercase tracking-widest text-[9px]">Pagador</th>
+                    <th className="p-6 font-black text-slate-400 uppercase tracking-widest text-[9px] text-right">Valor</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">

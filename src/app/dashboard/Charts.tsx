@@ -53,7 +53,7 @@ export default function Charts({
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/5 rounded-full blur-3xl"></div>
         
         <div className="flex justify-between items-center w-full mb-10">
-           <h3 className="font-black text-slate-500 uppercase text-[10px] tracking-[0.4em] bg-white/5 px-5 py-2 rounded-2xl border border-white/5">
+           <h3 className="font-black text-slate-400 uppercase text-[10px] tracking-[0.4em] bg-white/5 px-5 py-2 rounded-2xl border border-white/5">
             {type === 'expenses' ? 'Distribuição por Categoria' : 'Receitas por Categoria'}
            </h3>
            <div className="flex gap-1">
@@ -123,7 +123,7 @@ export default function Charts({
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl"></div>
 
         <div className="flex justify-between items-center w-full mb-10">
-           <h3 className="font-black text-slate-500 uppercase text-[10px] tracking-[0.4em] bg-white/5 px-5 py-2 rounded-2xl border border-white/5">
+           <h3 className="font-black text-slate-400 uppercase text-[10px] tracking-[0.4em] bg-white/5 px-5 py-2 rounded-2xl border border-white/5">
             {type === 'expenses' ? 'Comparativo Mensal Alê vs Maria' : 'Comparação de Receitas'}
            </h3>
            <div className="flex gap-1">

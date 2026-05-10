@@ -96,19 +96,19 @@ export default function RecurringExpensesModal({
                         <p className="font-black text-white text-xl tracking-tight leading-tight">{req.description}</p>
                         <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-[9px] font-black rounded-lg uppercase tracking-widest border border-indigo-500/20">{req.category}</span>
                       </div>
-                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Pagador: <span className="text-slate-300">{req.payer}</span></p>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Pagador: <span className="text-slate-300">{req.payer}</span></p>
                     </div>
 
                     <div className="flex flex-wrap items-end lg:items-center gap-6">
                       <div className="flex flex-col">
-                        <p className="text-[9px] text-slate-500 font-black uppercase mb-2 tracking-widest text-center">Valor Base</p>
+                        <p className="text-[9px] text-slate-400 font-black uppercase mb-2 tracking-widest text-center">Valor Base</p>
                         <div className="bg-white/5 px-6 py-3 rounded-2xl border border-white/10 min-w-[120px] text-center">
                           <p className="font-black text-white text-lg tracking-tight">{formatMoney(Number(req.amount))}</p>
                         </div>
                       </div>
                       
                       <div className="flex flex-col">
-                        <p className="text-[9px] text-slate-500 font-black uppercase mb-2 tracking-widest text-center">Data</p>
+                        <p className="text-[9px] text-slate-400 font-black uppercase mb-2 tracking-widest text-center">Data</p>
                         <input 
                           type="date" 
                           id={`date-${req.id}`}
@@ -174,7 +174,7 @@ export default function RecurringExpensesModal({
               <div className="flex justify-between items-center mb-10">
                 <div>
                   <h4 className="font-black text-white uppercase text-lg tracking-tighter">{recurringToEdit ? 'Editando Modelo' : 'Novo Gasto Fixo'}</h4>
-                  <p className="text-[10px] text-slate-500 mt-1 font-bold uppercase tracking-widest opacity-80">Configuração de Gasto Recorrente</p>
+                  <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest opacity-80">Configuração de Gasto Recorrente</p>
                 </div>
                 {recurringToEdit && (
                   <button 
@@ -256,13 +256,13 @@ export default function RecurringExpensesModal({
             </form>
 
             <div className="pt-4">
-              <h4 className="font-black text-slate-500 uppercase text-[10px] tracking-[0.4em] mb-10 text-center opacity-60">Modelos Cadastrados</h4>
+              <h4 className="font-black text-slate-400 uppercase text-[10px] tracking-[0.4em] mb-10 text-center opacity-60">Modelos Cadastrados</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {recurringExpenses.map(req => (
                   <div key={req.id} className="p-6 glass-card rounded-3xl border border-white/5 flex items-center justify-between group hover:border-white/10 transition-all">
                     <div>
                       <p className="font-black text-white text-xl tracking-tight leading-tight mb-1">{req.description}</p>
-                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{formatMoney(Number(req.amount))} • {req.payer}</p>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{formatMoney(Number(req.amount))} • {req.payer}</p>
                     </div>
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={() => setRecurringToEdit(req)} className="p-3 bg-white/5 text-slate-400 hover:text-indigo-400 hover:bg-white/10 rounded-2xl transition-all"><Edit2 size={16} /></button>

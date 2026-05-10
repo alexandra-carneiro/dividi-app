@@ -114,7 +114,7 @@ export default function SettingsModal({
                 key={tab.id}
                 type="button"
                 onClick={() => setSettingsTab(tab.id as any)}
-                className={`flex items-center gap-3 px-4 md:px-6 py-2 md:py-4 rounded-xl md:rounded-2xl transition-all font-black text-[9px] md:text-[10px] uppercase tracking-widest whitespace-nowrap ${settingsTab === tab.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+                className={`flex items-center gap-3 px-4 md:px-6 py-2 md:py-4 rounded-xl md:rounded-2xl transition-all font-black text-[9px] md:text-[10px] uppercase tracking-widest whitespace-nowrap ${settingsTab === tab.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:text-slate-300 hover:bg-white/5'}`}
               >
                 {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
               </button>
@@ -131,7 +131,7 @@ export default function SettingsModal({
           <button 
             type="button" 
             onClick={() => setIsSettingsOpen(false)} 
-            className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-rose-500/20 hover:text-rose-400 rounded-xl text-slate-500 transition-all"
+            className="absolute top-8 right-8 w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-rose-500/20 hover:text-rose-400 rounded-xl text-slate-400 transition-all"
           >
              <X size={20} />
           </button>
@@ -145,7 +145,7 @@ export default function SettingsModal({
 
               <div className="space-y-10">
                 <div className="bg-white/5 p-8 rounded-3xl border border-white/5">
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-4 tracking-widest">Moeda do Sistema</label>
+                  <label className="block text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Moeda do Sistema</label>
                   <select 
                     value={localCurrency}
                     onChange={(e) => setLocalCurrency(e.target.value)}
@@ -162,9 +162,9 @@ export default function SettingsModal({
                     const budget = categoryBudgets.find(b => b.category === cat)
                     return (
                       <div key={cat} className="p-6 bg-white/5 rounded-3xl border border-white/5">
-                        <span className="font-black text-slate-500 text-[9px] uppercase tracking-widest block mb-3">{cat}</span>
+                        <span className="font-black text-slate-400 text-[9px] uppercase tracking-widest block mb-3">{cat}</span>
                         <div className="flex items-center">
-                          <span className="text-lg font-black text-slate-600 mr-2">{currency}</span>
+                          <span className="text-lg font-black text-slate-400 mr-2">{currency}</span>
                           <input 
                             type="number" 
                             defaultValue={budget?.monthly_limit || ''}
@@ -212,7 +212,7 @@ export default function SettingsModal({
                       </div>
                       <div>
                         <p className="font-black text-white text-lg tracking-tight">{member.email}</p>
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Membro Ativo</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Membro Ativo</span>
                       </div>
                     </div>
                   </div>
@@ -249,7 +249,7 @@ export default function SettingsModal({
                                className="bg-transparent font-black text-4xl text-white border-b-2 border-transparent focus:border-indigo-500 outline-none w-full italic mb-2"
                                placeholder="Seu Nome"
                              />
-                             <div className="flex items-center justify-center sm:justify-start gap-2 text-slate-500">
+                             <div className="flex items-center justify-center sm:justify-start gap-2 text-slate-400">
                                <Mail size={12} />
                                <p className="font-bold text-xs uppercase tracking-widest">{safeEmail}</p>
                              </div>
@@ -290,15 +290,15 @@ export default function SettingsModal({
                                </div>
                                <div>
                                   <h5 className="font-black text-white text-xl uppercase tracking-tight italic">Atualizar Segurança</h5>
-                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Proteja sua conta com uma senha forte</p>
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Proteja sua conta com uma senha forte</p>
                                </div>
                             </div>
 
                             <div className="space-y-6">
                                <div className="space-y-3">
-                                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nova Senha</label>
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Senha</label>
                                   <div className="relative">
-                                     <ShieldCheck size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600" />
+                                     <ShieldCheck size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
                                      <input 
                                        type="password" 
                                        value={newPassword}
@@ -310,9 +310,9 @@ export default function SettingsModal({
                                </div>
 
                                <div className="space-y-3">
-                                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Confirmar Nova Senha</label>
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</label>
                                   <div className="relative">
-                                     <ShieldCheck size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600" />
+                                     <ShieldCheck size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
                                      <input 
                                        type="password" 
                                        value={confirmPassword}
@@ -355,7 +355,7 @@ export default function SettingsModal({
                   </div>
                   <button 
                     onClick={() => setSettingsTab('account')}
-                    className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors font-black text-[9px] uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl"
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-black text-[9px] uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl"
                   >
                      <ChevronRight size={14} className="rotate-180" /> Voltar
                   </button>
@@ -364,7 +364,7 @@ export default function SettingsModal({
                 <form onSubmit={handleSupportSubmit} className="space-y-6">
                    <div className="bg-white/5 p-10 rounded-[3rem] border border-white/5 space-y-8">
                       <div className="space-y-3">
-                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Como podemos ajudar?</label>
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Como podemos ajudar?</label>
                          <textarea 
                            required
                            value={supportMessage}

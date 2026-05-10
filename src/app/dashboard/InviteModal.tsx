@@ -40,7 +40,7 @@ export default function InviteModal({
         
         <div className="space-y-6">
           <div>
-            <label className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-500 mb-2.5 tracking-widest ml-1">
+            <label className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-widest ml-1">
               <Mail size={12} className="text-indigo-400" /> E-mail do convidado
             </label>
             <input 

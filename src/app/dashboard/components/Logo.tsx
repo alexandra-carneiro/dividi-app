@@ -16,7 +16,7 @@ export default function Logo({ size = "normal", className = "", onClick }: { siz
       </div>
       <div className="flex flex-col">
         <h1 className={`${s.title} font-black tracking-[0.2em] uppercase text-white leading-none`}>Dividi</h1>
-        <span className={`${s.sub} font-black text-slate-300 uppercase tracking-[0.5em] mt-1`}>Smart Analytics</span>
+        <span className={`${s.sub} font-black text-slate-200 uppercase tracking-[0.5em] mt-1`}>Smart Analytics</span>
       </div>
     </div>
   )

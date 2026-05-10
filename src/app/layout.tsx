@@ -13,9 +13,9 @@ export const metadata: Metadata = {
   description: "Controle financeiro inteligente e divisão de despesas para casais e residências.",
   manifest: "/manifest.json",
   icons: {
-    icon: '/icon.png',
-    shortcut: '/icon.png',
-    apple: '/icon.png',
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
   },
   appleWebApp: {
     capable: true,

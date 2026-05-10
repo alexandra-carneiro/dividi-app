@@ -70,7 +70,7 @@ export default function IncomeModal({
                 <DollarSign size={12} className="text-emerald-400" /> Valor
               </label>
               <div className="relative">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-500">{currency}</span>
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">{currency}</span>
                 <input 
                   type="number" 
                   name="amount" 
