@@ -76,6 +76,7 @@ export default function Sidebar({
         </button>
         <button 
           onClick={handleSignOut}
+          aria-label="Sair da conta"
           className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-rose-500 hover:bg-rose-500/10 transition-all font-black text-[11px] uppercase tracking-widest mt-2"
         >
           <LogOut size={22} />

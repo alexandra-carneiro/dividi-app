@@ -139,7 +139,7 @@ export default function DashboardClient(props: any) {
       {/* MOBILE HEADER */}
       <header className="md:hidden flex justify-between items-center px-6 py-8 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
         <Logo size="small" onClick={closeAllModals} />
-        <button onClick={() => setIsSettingsOpen(true)} className="p-3 bg-white/5 rounded-xl text-slate-400">
+        <button onClick={() => setIsSettingsOpen(true)} aria-label="Abrir configurações de perfil" className="p-3 bg-white/5 rounded-xl text-slate-400">
            <User size={20} />
         </button>
       </header>
@@ -162,7 +162,7 @@ export default function DashboardClient(props: any) {
                    <div className="flex-1">
                       <div className="flex items-center gap-3 mb-8">
                         <h3 className="text-xl font-black text-white tracking-tight italic uppercase">Radar Estratégico</h3>
-                        <button onClick={() => setShowRadarInfo(!showRadarInfo)} className="text-slate-600 hover:text-indigo-400 transition-colors">
+                        <button onClick={() => setShowRadarInfo(!showRadarInfo)} aria-label="Informações sobre o Radar Estratégico" className="text-slate-600 hover:text-indigo-400 transition-colors">
                            <HelpCircle size={18} />
                         </button>
                       </div>

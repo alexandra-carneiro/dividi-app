@@ -39,7 +39,7 @@ function LoginContent() {
   const message = searchParams.get('message')
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#060608] p-4 relative overflow-hidden font-sans">
+    <main className="flex min-h-screen items-center justify-center bg-[#060608] p-4 relative overflow-hidden font-sans">
       {/* Background Decorativo - Blindagem Visual */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
@@ -143,6 +143,7 @@ function LoginContent() {
                     <button 
                       type="button" 
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -197,6 +198,7 @@ function LoginContent() {
                     </div>
                     <button 
                       onClick={() => setShowTerms(false)} 
+                      aria-label="Fechar termos"
                       className="text-slate-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
                     >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -298,7 +300,7 @@ function LoginContent() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 
