@@ -8,6 +8,13 @@ export interface RawExpense {
   amount: number
   payer: string
   description: string
+  category?: string
+}
+
+export interface Member {
+  user_id: string
+  email: string
+  display_name?: string | null
 }
 
 const ptMonths = {
@@ -15,17 +22,22 @@ const ptMonths = {
   'julho': '07', 'agosto': '08', 'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
 }
 
-export const parseAmount = (val: any) => {
+export const parseAmount = (val: any): number => {
   if (typeof val === 'number') return val
-  let str = String(val)
+  if (!val) return 0
+  let str = String(val).trim()
+  
+  // Remove currency symbols and spaces
   str = str.replace(/[^\d.,-]/g, '')
   
   const lastDot = str.lastIndexOf('.')
   const lastComma = str.lastIndexOf(',')
   
   if (lastComma > lastDot) {
+    // European/Brazilian format: 1.000,00
     str = str.replace(/\./g, '').replace(',', '.')
   } else if (lastDot > lastComma) {
+    // US format: 1,000.00
     str = str.replace(/,/g, '')
   }
   
@@ -33,7 +45,22 @@ export const parseAmount = (val: any) => {
   return isNaN(num) ? 0 : num
 }
 
-export const processImportData = (rows: any[], householdId: string, setDetectedHeaders: (headers: string[]) => void): RawExpense[] => {
+const fuzzyMatchPayer = (input: string, members: Member[]): string => {
+  const cleanInput = input.toLowerCase().trim()
+  if (!cleanInput) return ''
+
+  for (const m of members) {
+    const name = (m.display_name || '').toLowerCase()
+    const email = m.email.toLowerCase()
+    
+    if (name.includes(cleanInput) || cleanInput.includes(name) || email.includes(cleanInput)) {
+      return m.display_name || m.email.split('@')[0]
+    }
+  }
+  return ''
+}
+
+export const processImportData = (rows: any[], householdId: string, members: Member[], setDetectedHeaders: (headers: string[]) => void): RawExpense[] => {
   const validRows = rows.filter(r => Object.values(r).some(val => val !== undefined && val !== null && String(val).trim() !== ''))
 
   if (validRows.length === 0) return []
@@ -44,18 +71,36 @@ export const processImportData = (rows: any[], householdId: string, setDetectedH
     const keys = Object.keys(r).filter(k => k !== '_sheetName')
     if (index === 0) setDetectedHeaders(keys)
 
-    const dateKey = keys.find(k => k.toLowerCase().includes('data') || k.toLowerCase().includes('date') || k.toLowerCase().includes('dia'))
-    const valKey = keys.find(k => k.toLowerCase().includes('valor') && !k.toLowerCase().includes('alê') && !k.toLowerCase().includes('maria'))
-    const payerKey = keys.find(k => k.toLowerCase() === 'pagador' || k.toLowerCase() === 'quem' || k.toLowerCase() === 'payer' || k.toLowerCase() === 'pessoa')
-    const descKey = keys.find(k => k.toLowerCase().includes('desc') || k.toLowerCase().includes('nome') || k.toLowerCase().includes('item') || k.toLowerCase().includes('lugar') || k.toLowerCase().includes('local'))
+    const dateKey = keys.find(k => {
+      const l = k.toLowerCase()
+      return l.includes('data') || l.includes('date') || l.includes('dia') || l === 'd'
+    })
+    
+    const valKey = keys.find(k => {
+      const l = k.toLowerCase()
+      return (l.includes('valor') || l.includes('preço') || l.includes('amount') || l.includes('total') || l === 'v') && 
+             !members.some(m => l.includes((m.display_name || '').toLowerCase()))
+    })
+    
+    const payerKey = keys.find(k => {
+      const l = k.toLowerCase()
+      return l === 'pagador' || l === 'quem' || l === 'payer' || l === 'pessoa' || l === 'membro' || l === 'p'
+    })
+    
+    const descKey = keys.find(k => {
+      const l = k.toLowerCase()
+      return l.includes('desc') || l.includes('nome') || l.includes('item') || l.includes('lugar') || l.includes('local') || l.includes('histórico')
+    })
 
     let rawDate = dateKey ? String(r[dateKey]).trim() : ''
-    let rawDesc = descKey ? String(r[descKey]).trim() : 'Mercado'
+    let rawDesc = descKey ? String(r[descKey]).trim() : 'Gasto Importado'
     const sheetName = r._sheetName ? String(r._sheetName).toLowerCase().trim() : ''
 
+    // Skip summary rows
     const lowerDate = rawDate.toLowerCase()
     if (lowerDate.includes('total') || lowerDate.includes('resta') || lowerDate.includes('gasto') || lowerDate.includes('falta') || lowerDate.includes('resumo')) return
 
+    // Date Parsing Logic
     if (/^\d{1,2}$/.test(rawDate)) {
       const monthNum = ptMonths[sheetName as keyof typeof ptMonths]
       if (monthNum) {
@@ -66,61 +111,77 @@ export const processImportData = (rows: any[], householdId: string, setDetectedH
         if (parseInt(monthNum) > currentMonth + 3) year = currentYear - 1
         rawDate = `${year}-${monthNum}-${day}`
       }
-    } else if (rawDate.includes('/')) {
-      const parts = rawDate.split('/')
+    } else if (rawDate.includes('/') || rawDate.includes('-')) {
+      const separator = rawDate.includes('/') ? '/' : '-'
+      const parts = rawDate.split(separator)
       if(parts.length === 3) {
-        const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2]
-        rawDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+        // Assume DD/MM/YYYY or YYYY/MM/DD
+        if (parts[0].length === 4) {
+          rawDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
+        } else {
+          const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2]
+          rawDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+        }
       }
     } else if (!isNaN(Number(rawDate)) && Number(rawDate) > 40000) {
+      // Excel Serial Date
       const excelDate = new Date(Math.round((Number(rawDate) - 25569) * 86400 * 1000))
       rawDate = excelDate.toISOString().split('T')[0]
     }
 
+    // Try to find payer and amount
     if (valKey && payerKey) {
       const numAmount = parseAmount(String(r[valKey]))
-      let rawPayer = payerKey ? String(r[payerKey]) : ''
+      const matchedPayer = fuzzyMatchPayer(String(r[payerKey]), members)
+      
       if (numAmount > 0) {
         newExpenses.push({
-          _id: 'temp_' + index,
+          _id: `temp_${index}`,
           household_id: householdId,
           date: rawDate,
           amount: numAmount,
-          payer: rawPayer,
+          payer: matchedPayer || String(r[payerKey]),
           description: rawDesc
         })
       }
     } else {
+      // Look for columns named after members
       let foundPayer = false
       keys.forEach(k => {
-        const lowerK = k.toLowerCase()
-        if (k !== dateKey && k !== descKey && !lowerK.includes('total') && !lowerK.includes('resta') && !lowerK.includes('falta') && !k.startsWith('__EMPTY')) {
+        const matchedPayer = fuzzyMatchPayer(k, members)
+        if (matchedPayer && k !== dateKey && k !== descKey) {
           const numAmount = parseAmount(String(r[k]))
           if (numAmount > 0) {
             foundPayer = true
-            let extractedPayer = k
-            if (lowerK.includes('alê') || lowerK.includes('ale')) extractedPayer = 'Alê'
-            else if (lowerK.includes('maria')) extractedPayer = 'Maria'
-
             newExpenses.push({
-              _id: 'temp_' + index + '_' + k,
+              _id: `temp_${index}_${k}`,
               household_id: householdId,
               date: rawDate,
               amount: numAmount,
-              payer: extractedPayer,
+              payer: matchedPayer,
               description: rawDesc
             })
           }
         }
       })
-      if (!foundPayer && rawDate && !isNaN(Date.parse(rawDate))) {
-        newExpenses.push({
-          _id: 'temp_' + index,
-          household_id: householdId,
-          date: rawDate,
-          amount: 0,
-          payer: '',
-          description: rawDesc
+
+      // Fallback: Check all columns for amounts if no payer found
+      if (!foundPayer) {
+        keys.forEach(k => {
+          const lowerK = k.toLowerCase()
+          if (k !== dateKey && k !== descKey && !lowerK.includes('total') && !lowerK.includes('resta') && !k.startsWith('__EMPTY')) {
+            const numAmount = parseAmount(String(r[k]))
+            if (numAmount > 0) {
+              newExpenses.push({
+                _id: `temp_${index}_${k}`,
+                household_id: householdId,
+                date: rawDate,
+                amount: numAmount,
+                payer: '',
+                description: rawDesc
+              })
+            }
+          }
         })
       }
     }
@@ -129,13 +190,19 @@ export const processImportData = (rows: any[], householdId: string, setDetectedH
   return newExpenses
 }
 
-export const handleFileImport = (file: File, householdId: string, setDetectedHeaders: (headers: string[]) => void, setPendingImports: (data: RawExpense[]) => void) => {
+export const handleFileImport = (
+  file: File, 
+  householdId: string, 
+  members: Member[],
+  setDetectedHeaders: (headers: string[]) => void, 
+  setPendingImports: (data: RawExpense[]) => void
+) => {
   if (file.name.endsWith('.csv')) {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const processed = processImportData(results.data as any[], householdId, setDetectedHeaders)
+        const processed = processImportData(results.data as any[], householdId, members, setDetectedHeaders)
         setPendingImports(processed)
       }
     })
@@ -151,7 +218,7 @@ export const handleFileImport = (file: File, householdId: string, setDetectedHea
         const dataWithSheet = data.map((r: any) => ({ ...r, _sheetName: wsname }))
         allData = allData.concat(dataWithSheet)
       }
-      const processed = processImportData(allData, householdId, setDetectedHeaders)
+      const processed = processImportData(allData, householdId, members, setDetectedHeaders)
       setPendingImports(processed)
     }
     reader.readAsBinaryString(file)

@@ -1,13 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Outfit } from 'next/font/google';
 import "./globals.css";
+
+const outfit = Outfit({ 
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
+});
 
 export const metadata: Metadata = {
   title: "Dividi | Finanças Compartilhadas",
   description: "Controle financeiro inteligente e divisão de despesas para casais e residências.",
   manifest: "/manifest.json",
   icons: {
-    icon: '/favicon.ico',
-    apple: '/icon-192x192.png',
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
   },
   appleWebApp: {
     capable: true,
@@ -32,10 +40,10 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className="h-full antialiased dark"
+      className={`h-full antialiased dark ${outfit.variable}`}
       style={{ colorScheme: 'dark' }}
     >
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-50 selection:bg-indigo-500/30">
+      <body className={`${outfit.className} min-h-full flex flex-col bg-slate-950 text-slate-50 selection:bg-indigo-500/30`}>
         {children}
       </body>
     </html>

@@ -247,16 +247,10 @@ export function useDashboardState({
     const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`
     
     const globalTotal = monthExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const globalAle = monthExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const globalMaria = monthExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
     const globalIncome = incomes.filter(i => i.date.startsWith(monthStr)).reduce((acc, i) => acc + Number(i.amount), 0)
-    const globalIncomeAle = incomes.filter(i => i.date.startsWith(monthStr) && i.payer === 'Alê').reduce((acc, i) => acc + Number(i.amount), 0)
-    const globalIncomeMaria = incomes.filter(i => i.date.startsWith(monthStr) && i.payer === 'Maria').reduce((acc, i) => acc + Number(i.amount), 0)
     const globalPlanned = categoryBudgets.reduce((sum, b) => sum + Number(b.monthly_limit), 0)
 
     const filteredTotal = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const aleFiltered = filteredExpenses.filter(exp => exp.payer === 'Alê').reduce((sum, exp) => sum + Number(exp.amount), 0)
-    const mariaFiltered = filteredExpenses.filter(exp => exp.payer === 'Maria').reduce((sum, exp) => sum + Number(exp.amount), 0)
     const filteredIncomeTotal = filteredIncomes.reduce((acc, i) => acc + Number(i.amount), 0)
 
     let currentLimit = globalPlanned
@@ -266,9 +260,9 @@ export function useDashboardState({
     }
 
     return { 
-      globalTotal, globalIncome, globalIncomeAle, globalIncomeMaria,
-      globalBalance: globalIncome - globalTotal, globalPlanned, globalAle, globalMaria,
-      filteredTotal, filteredIncomeTotal, ale: aleFiltered, maria: mariaFiltered, 
+      globalTotal, globalIncome,
+      globalBalance: globalIncome - globalTotal, globalPlanned,
+      filteredTotal, filteredIncomeTotal,
       remaining: currentLimit > 0 ? currentLimit - filteredTotal : 0,
       limit: currentLimit, weeklyLimit: currentLimit / totalWeeksInMonth,
       hideWeeklyProgress: categoryFilter === 'Contas'

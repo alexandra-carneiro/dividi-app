@@ -11,6 +11,7 @@ interface ExpenseModalProps {
   currency: string
   CATEGORIES: string[]
   isPending: boolean
+  members: any[]
 }
 
 export default function ExpenseModal({
@@ -22,7 +23,8 @@ export default function ExpenseModal({
   householdId,
   currency,
   CATEGORIES,
-  isPending
+  isPending,
+  members
 }: ExpenseModalProps) {
   if (!isFormOpen) return null
 
@@ -87,19 +89,26 @@ export default function ExpenseModal({
 
           <div>
             <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Quem pagou?</label>
-            <div className="flex gap-3">
-              <label className="flex-1 group cursor-pointer">
-                <input type="radio" name="payer" value="Alê" className="peer hidden" required defaultChecked={expenseToEdit?.payer === 'Alê'} /> 
-                <div className="flex items-center justify-center p-4 border border-white/10 bg-white/5 rounded-2xl peer-checked:border-indigo-500 peer-checked:bg-indigo-500/10 peer-checked:text-indigo-400 text-slate-400 font-black transition-all hover:bg-white/10 text-xs uppercase tracking-widest">
-                  Alê
-                </div>
-              </label>
-              <label className="flex-1 group cursor-pointer">
-                <input type="radio" name="payer" value="Maria" className="peer hidden" required defaultChecked={expenseToEdit?.payer === 'Maria'} /> 
-                <div className="flex items-center justify-center p-4 border border-white/10 bg-white/5 rounded-2xl peer-checked:border-rose-500 peer-checked:bg-rose-500/10 peer-checked:text-rose-400 text-slate-400 font-black transition-all hover:bg-white/10 text-xs uppercase tracking-widest">
-                  Maria
-                </div>
-              </label>
+            <div className="flex flex-wrap gap-3">
+              {members.map((m, idx) => {
+                const name = m.display_name || m.email.split('@')[0]
+                const colors = [
+                  'peer-checked:border-indigo-500 peer-checked:bg-indigo-500/10 peer-checked:text-indigo-400',
+                  'peer-checked:border-rose-500 peer-checked:bg-rose-500/10 peer-checked:text-rose-400',
+                  'peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-400',
+                  'peer-checked:border-amber-500 peer-checked:bg-amber-500/10 peer-checked:text-amber-400'
+                ]
+                const colorClass = colors[idx % colors.length]
+                
+                return (
+                  <label key={m.user_id} className="flex-1 min-w-[100px] group cursor-pointer">
+                    <input type="radio" name="payer" value={name} className="peer hidden" required defaultChecked={expenseToEdit?.payer === name} /> 
+                    <div className={`flex items-center justify-center p-4 border border-white/10 bg-white/5 rounded-2xl ${colorClass} text-slate-400 font-black transition-all hover:bg-white/10 text-xs uppercase tracking-widest`}>
+                      {name}
+                    </div>
+                  </label>
+                )
+              })}
             </div>
           </div>
 

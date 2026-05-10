@@ -22,17 +22,17 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
               <Wallet size={24} />
             </div>
             <div>
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">
                 Saldo {payerFilter === 'Todos' ? 'Disponível' : `de ${payerFilter}`}
               </p>
             </div>
           </div>
           <div className="group/info relative">
-            <Info size={16} className="text-slate-600 hover:text-white cursor-help transition-colors" />
+            <Info size={16} className="text-slate-400 hover:text-white cursor-help transition-colors" />
             <div className="absolute bottom-full right-0 mb-4 w-56 p-5 glass-morphism text-white text-[10px] rounded-[1.5rem] opacity-0 group-hover/info:opacity-100 transition-all pointer-events-none z-50 shadow-2xl border border-white/10 leading-relaxed font-bold">
               Cálculo de Liquidez: <br/><br/>
-              <span className="text-emerald-400">Receitas</span> <span className="text-slate-500">-</span> <span className="text-rose-400">Gastos</span> <br/>
-              <span className="text-slate-500">=</span> <span className="text-indigo-400 underline decoration-indigo-500/50 underline-offset-4">Capital Disponível</span>
+              <span className="text-emerald-400">Receitas</span> <span className="text-slate-400">-</span> <span className="text-rose-400">Gastos</span> <br/>
+              <span className="text-slate-400">=</span> <span className="text-indigo-400 underline decoration-indigo-500/50 underline-offset-4">Capital Disponível</span>
             </div>
           </div>
         </div>
@@ -50,7 +50,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
                 style={{ width: '100%' }}
               ></div>
            </div>
-           <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Ativo</span>
+           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ativo</span>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
               <TrendingUp size={24} />
             </div>
             <div>
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Total de Entradas</p>
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Total de Entradas</p>
             </div>
           </div>
           <ArrowUpRight size={20} className="text-emerald-500/50" />
@@ -73,7 +73,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
         </h3>
         
         <div className="mt-8 flex items-center gap-2">
-           <span className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest border border-white/5">
+           <span className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest border border-white/5">
              {payerFilter === 'Todos' ? 'Consolidado' : payerFilter}
            </span>
            <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">+ Lucro Operacional</p>
@@ -88,11 +88,11 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
               <TrendingDown size={24} />
             </div>
             <div>
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Total de Gastos</p>
+              <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Total de Gastos</p>
             </div>
           </div>
           <div className="group/info relative">
-            <Info size={16} className="text-slate-600 hover:text-white cursor-help transition-colors" />
+            <Info size={16} className="text-slate-400 hover:text-white cursor-help transition-colors" />
             <div className="absolute bottom-full right-0 mb-4 w-56 p-5 glass-morphism text-white text-[10px] rounded-[1.5rem] opacity-0 group-hover/info:opacity-100 transition-all pointer-events-none z-50 shadow-2xl border border-white/10 leading-relaxed font-bold">
               Monitoramento de Consumo: <br/><br/>
               Soma total de todos os <span className="text-rose-400 font-black italic">débitos</span> e transações realizadas no período selecionado.
@@ -105,7 +105,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
         </h3>
 
         <div className="mt-8 flex items-center gap-2">
-           <span className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-widest border border-white/5">
+           <span className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest border border-white/5">
              {payerFilter === 'Todos' ? 'Mensal' : payerFilter}
            </span>
            <p className="text-[9px] text-rose-400 font-bold uppercase tracking-widest">Debitado</p>

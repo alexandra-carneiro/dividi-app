@@ -17,6 +17,7 @@ interface RecurringExpensesModalProps {
   formatMoney: (v: number) => string
   CATEGORIES: string[]
   isPending: boolean
+  members: any[]
 }
 
 export default function RecurringExpensesModal({
@@ -34,7 +35,8 @@ export default function RecurringExpensesModal({
   handleDeleteRecurring,
   formatMoney,
   CATEGORIES,
-  isPending
+  isPending,
+  members
 }: RecurringExpensesModalProps) {
   if (!isRecurringOpen) return null
 
@@ -221,11 +223,13 @@ export default function RecurringExpensesModal({
                     </label>
                     <select 
                       name="payer" 
-                      defaultValue={recurringToEdit?.payer || 'Alê'} 
+                      defaultValue={recurringToEdit?.payer || (members[0]?.display_name || members[0]?.email?.split('@')[0])} 
                       className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white focus:border-indigo-500 focus:bg-white/10 outline-none transition-all appearance-none cursor-pointer"
                     >
-                      <option value="Alê" className="bg-slate-900">Alê</option>
-                      <option value="Maria" className="bg-slate-900">Maria</option>
+                      {members.map(m => {
+                        const name = m.display_name || m.email.split('@')[0]
+                        return <option key={m.user_id} value={name} className="bg-slate-900">{name}</option>
+                      })}
                     </select>
                   </div>
                   <div>

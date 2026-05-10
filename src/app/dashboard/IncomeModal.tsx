@@ -10,6 +10,7 @@ interface IncomeModalProps {
   householdId: string
   currency: string
   isPending: boolean
+  members: any[]
 }
 
 export default function IncomeModal({
@@ -20,7 +21,8 @@ export default function IncomeModal({
   handleAddIncome,
   householdId,
   currency,
-  isPending
+  isPending,
+  members
 }: IncomeModalProps) {
   if (!isIncomeFormOpen) return null
 
@@ -85,19 +87,18 @@ export default function IncomeModal({
 
           <div>
             <label className="block text-[10px] font-black uppercase text-slate-400 mb-2.5 tracking-[0.2em] ml-1">Quem recebeu?</label>
-            <div className="flex gap-3">
-              <label className="flex-1 group cursor-pointer">
-                <input type="radio" name="payer" value="Alê" className="peer hidden" required defaultChecked={incomeToEdit?.payer === 'Alê'} /> 
-                <div className="flex items-center justify-center p-4 border border-white/10 bg-white/5 rounded-2xl peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-400 text-slate-400 font-black transition-all hover:bg-white/10 text-xs uppercase tracking-widest">
-                  Alê
-                </div>
-              </label>
-              <label className="flex-1 group cursor-pointer">
-                <input type="radio" name="payer" value="Maria" className="peer hidden" required defaultChecked={incomeToEdit?.payer === 'Maria'} /> 
-                <div className="flex items-center justify-center p-4 border border-white/10 bg-white/5 rounded-2xl peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-400 text-slate-400 font-black transition-all hover:bg-white/10 text-xs uppercase tracking-widest">
-                  Maria
-                </div>
-              </label>
+            <div className="flex flex-wrap gap-3">
+              {members.map((m) => {
+                const name = m.display_name || m.email.split('@')[0]
+                return (
+                  <label key={m.user_id} className="flex-1 min-w-[100px] group cursor-pointer">
+                    <input type="radio" name="payer" value={name} className="peer hidden" required defaultChecked={incomeToEdit?.payer === name} /> 
+                    <div className="flex items-center justify-center p-4 border border-white/10 bg-white/5 rounded-2xl peer-checked:border-emerald-500 peer-checked:bg-emerald-500/10 peer-checked:text-emerald-400 text-slate-400 font-black transition-all hover:bg-white/10 text-xs uppercase tracking-widest text-center">
+                      {name}
+                    </div>
+                  </label>
+                )
+              })}
             </div>
           </div>
 

@@ -86,7 +86,7 @@ export default function DashboardClient(props: any) {
 
   const onFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) handleFileImport(file, householdId, setDetectedHeaders, setPendingImports)
+    if (file) handleFileImport(file, householdId, members, setDetectedHeaders, setPendingImports)
   }
 
   const onExportExcel = () => {
@@ -162,7 +162,7 @@ export default function DashboardClient(props: any) {
                    <div className="flex-1">
                       <div className="flex items-center gap-3 mb-8">
                         <h3 className="text-xl font-black text-white tracking-tight italic uppercase">Radar Estratégico</h3>
-                        <button onClick={() => setShowRadarInfo(!showRadarInfo)} aria-label="Informações sobre o Radar Estratégico" className="text-slate-600 hover:text-indigo-400 transition-colors">
+                        <button onClick={() => setShowRadarInfo(!showRadarInfo)} aria-label="Informações sobre o Radar Estratégico" className="text-slate-400 hover:text-indigo-400 transition-colors">
                            <HelpCircle size={18} />
                         </button>
                       </div>
@@ -197,7 +197,7 @@ export default function DashboardClient(props: any) {
                       </svg>
                       <div className="absolute flex flex-col items-center">
                          <span className="text-4xl font-black">{percentage}%</span>
-                         <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Utilizado</span>
+                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Utilizado</span>
                       </div>
                    </div>
                 </div>
@@ -208,7 +208,7 @@ export default function DashboardClient(props: any) {
                    <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mb-6">
                       <TrendingUp size={32} />
                    </div>
-                   <h4 className="text-sm font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Saldo Projetado</h4>
+                   <h4 className="text-sm font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Saldo Projetado</h4>
                    <p className={`text-4xl font-black ${totals.globalBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {formatMoney(totals.globalBalance)}
                    </p>
@@ -270,7 +270,7 @@ export default function DashboardClient(props: any) {
                       <button 
                         key={m}
                         onClick={() => setViewMode(m as any)}
-                        className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                        className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-300'}`}
                       >
                         {m === 'day' ? 'Dia' : m === 'week' ? 'Semana' : 'Mês'}
                       </button>
@@ -280,12 +280,12 @@ export default function DashboardClient(props: any) {
 
                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                   <div className="flex items-center gap-2 bg-slate-950/50 p-1.5 rounded-[1.5rem] border border-white/5">
-                    {['Todos', 'Alê', 'Maria'].map(p => (
+                    {['Todos', ...members.map((m: any) => m.display_name || m.email.split('@')[0])].map(p => (
                       <button
                         key={p}
                         onClick={() => setPayerFilter(p as any)}
                         className={`px-8 py-2.5 rounded-[1.25rem] text-[10px] font-black transition-all uppercase tracking-widest ${
-                          payerFilter === p ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300'
+                          payerFilter === p ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400 hover:text-slate-300'
                         }`}
                       >
                         {p}
@@ -333,7 +333,7 @@ export default function DashboardClient(props: any) {
           recurringDate={recurringDate} setRecurringDate={setRecurringDate}
           handleApplyRecurring={handleApplyRecurring} handleAddRecurring={handleAddRecurring}
           handleDeleteRecurring={handleDeleteRecurring} formatMoney={formatMoney}
-          CATEGORIES={CATEGORIES} isPending={isPending}
+          CATEGORIES={CATEGORIES} isPending={isPending} members={members}
         />
 
         <SettingsModal 
@@ -359,7 +359,7 @@ export default function DashboardClient(props: any) {
           isIncomeFormOpen={isIncomeFormOpen} setIsIncomeFormOpen={setIsIncomeFormOpen}
           incomeToEdit={incomeToEdit} setIncomeToEdit={setIncomeToEdit}
           handleAddIncome={handleAddIncome} householdId={householdId}
-          currency={currency} isPending={isPending}
+          currency={currency} isPending={isPending} members={members}
         />
 
         <ExpenseModal 
@@ -367,6 +367,7 @@ export default function DashboardClient(props: any) {
           expenseToEdit={expenseToEdit} setExpenseToEdit={setExpenseToEdit}
           handleAddExpense={handleAddExpense} householdId={householdId}
           currency={currency} CATEGORIES={CATEGORIES} isPending={isPending}
+          members={members}
         />
 
         <InviteModal isInviteOpen={isInviteOpen} setIsInviteOpen={setIsInviteOpen} handleInvite={handleInvite} />

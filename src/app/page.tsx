@@ -84,35 +84,36 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-center gap-6 pt-10">
-              <div className="flex -space-x-3">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center text-[10px] font-black overflow-hidden relative">
-                    <Image 
-                      src={`https://i.pravatar.cc/100?u=${i}`} 
-                      alt="User avatar" 
-                      width={40}
-                      height={40}
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
+              <div className="flex items-center gap-6 pt-10">
+                <div className="flex -space-x-3">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center text-[10px] font-black overflow-hidden relative">
+                      <Image 
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`} 
+                        alt="User avatar" 
+                        width={40}
+                        height={40}
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+                  <span className="text-white font-black">+5.000</span> usuários economizando hoje
+                </p>
               </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                <span className="text-white">+5.000</span> usuários economizando hoje
-              </p>
-            </div>
           </div>
 
-          <div className="relative animate-in fade-in slide-in-from-right-8 duration-1000">
+          <div className="relative animate-in fade-in slide-in-from-right-8 duration-1000 min-h-[400px] lg:min-h-[600px]">
             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-[3rem] blur-2xl opacity-20 animate-pulse"></div>
-            <div className="relative glass-card rounded-[3rem] p-4 overflow-hidden shadow-2xl">
+            <div className="relative glass-card rounded-[3rem] p-4 overflow-hidden shadow-2xl aspect-[4/3]">
               <Image 
                 src="/app-mockup.png" 
                 alt="Dividi App Interface" 
                 width={800}
                 height={600}
                 priority
+                sizes="(max-width: 768px) 100vw, 800px"
                 className="w-full h-auto rounded-[2.2rem] shadow-2xl border border-white/5"
               />
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-indigo-600/80 backdrop-blur-md rounded-full flex items-center justify-center text-white cursor-pointer hover:scale-110 transition-transform md:hidden">
@@ -225,13 +226,13 @@ export default function Home() {
       <footer className="border-t border-white/5 py-12 bg-slate-950">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <Logo size="small" />
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
+          <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">
             © 2026 Dividi Inc. Desenvolvido por Avante Digital.
           </p>
           <div className="flex gap-8">
-            <a href="#" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">Termos</a>
-            <a href="#" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">Privacidade</a>
-            <a href="#" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">Suporte</a>
+            <a href="#" className="text-[10px] font-black text-slate-200 hover:text-white uppercase tracking-widest transition-colors">Termos</a>
+            <a href="#" className="text-[10px] font-black text-slate-200 hover:text-white uppercase tracking-widest transition-colors">Privacidade</a>
+            <a href="#" className="text-[10px] font-black text-slate-200 hover:text-white uppercase tracking-widest transition-colors">Suporte</a>
           </div>
         </div>
       </footer>
