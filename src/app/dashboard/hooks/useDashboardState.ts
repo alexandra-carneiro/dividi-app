@@ -164,6 +164,15 @@ export function useDashboardState({
   // Fetch Month Data
   useEffect(() => {
     const fetchMonthData = async () => {
+      // Refresh the browser session first to ensure the token is valid.
+      // This prevents expired sessions (e.g. after a Supabase pause) from
+      // returning empty data and overwriting valid server-loaded state.
+      const { error: sessionError } = await supabase.auth.refreshSession()
+      if (sessionError) {
+        console.warn('useDashboardState: session refresh failed, skipping client fetch to preserve server data.', sessionError.message)
+        return
+      }
+
       const year = currentDate.getFullYear()
       const month = currentDate.getMonth()
       const firstDay = new Date(year, month, 1).toISOString().split('T')[0]
@@ -174,7 +183,10 @@ export function useDashboardState({
         supabase.from('incomes').select('*').eq('household_id', householdId).gte('date', firstDay).lte('date', lastDay)
       ])
 
-      if (expsRes.data) {
+      // Only update state if the query succeeded and returned data.
+      // Checking for errors avoids overwriting valid server data with empty arrays
+      // when RLS blocks an unauthenticated client request.
+      if (expsRes.data && !expsRes.error) {
         setExpenses(prev => {
           const otherMonths = prev.filter(e => {
             const d = new Date(e.date + 'T12:00:00')
@@ -184,7 +196,7 @@ export function useDashboardState({
         })
       }
 
-      if (incsRes.data) {
+      if (incsRes.data && !incsRes.error) {
         setIncomes(prev => {
           const otherMonths = prev.filter(i => {
             const d = new Date(i.date + 'T12:00:00')
