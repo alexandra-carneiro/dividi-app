@@ -43,17 +43,11 @@ export default async function DashboardPage() {
   let householdData = null
 
   if (householdId) {
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
-
     const [expsRes, hhRes, recRes, budgetsRes, incomesRes, membersRes, profileRes] = await Promise.all([
       supabase
         .from('expenses')
         .select('*')
         .eq('household_id', householdId)
-        .gte('date', firstDay.split('T')[0])
-        .lte('date', lastDay.split('T')[0])
         .order('date', { ascending: false }),
       supabase
         .from('households')
