@@ -11,23 +11,6 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // --- MIGRATION LOGIC (Runs once per load temporarily) ---
-  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
-  await supabase.from('incomes').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
-  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
-  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
-
-  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
-  await supabase.from('recurring_expenses').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
-  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
-  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
-
-  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
-  await supabase.from('expenses').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
-  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
-  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
-  // --------------------------------------------------------
-
   // Verificar se o usuário já tem um household
   let { data: member } = await supabase
     .from('household_members')
@@ -59,6 +42,23 @@ export default async function DashboardPage() {
     await supabase.from('recurring_expenses').update({ household_id: householdId }).is('household_id', null)
   }
   // -----------------------------------------
+
+  // --- MIGRATION LOGIC (Runs once per load temporarily) ---
+  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
+  await supabase.from('incomes').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
+  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
+  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
+
+  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
+  await supabase.from('recurring_expenses').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
+  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
+  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
+
+  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
+  await supabase.from('expenses').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
+  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
+  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
+  // --------------------------------------------------------
 
   // Buscar despesas iniciais (Apenas do mês atual para carregar rápido)
   let initialExpenses: any[] = []
