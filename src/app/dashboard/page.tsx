@@ -52,6 +52,14 @@ export default async function DashboardPage() {
     }
   }
 
+  // --- RECOVER ORPHANED INCOMES/EXPENSES ---
+  if (householdId) {
+    await supabase.from('incomes').update({ household_id: householdId }).is('household_id', null)
+    await supabase.from('expenses').update({ household_id: householdId }).is('household_id', null)
+    await supabase.from('recurring_expenses').update({ household_id: householdId }).is('household_id', null)
+  }
+  // -----------------------------------------
+
   // Buscar despesas iniciais (Apenas do mês atual para carregar rápido)
   let initialExpenses: any[] = []
   let initialRecurring: any[] = []
