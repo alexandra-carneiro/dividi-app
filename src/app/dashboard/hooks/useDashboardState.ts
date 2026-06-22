@@ -291,6 +291,12 @@ export function useDashboardState({
       incomeByMember[payer] = (incomeByMember[payer] || 0) + Number(i.amount)
     })
 
+    const expensesByMember: Record<string, number> = {}
+    monthExpenses.forEach(exp => {
+      const payer = exp.payer || 'Desconhecido'
+      expensesByMember[payer] = (expensesByMember[payer] || 0) + Number(exp.amount)
+    })
+
     return { 
       globalTotal, globalIncome,
       globalBalance: globalIncome - globalTotal, globalPlanned,
@@ -298,7 +304,8 @@ export function useDashboardState({
       remaining: currentLimit > 0 ? currentLimit - filteredTotal : 0,
       limit: currentLimit, weeklyLimit: currentLimit / totalWeeksInMonth,
       hideWeeklyProgress: categoryFilter === 'Contas',
-      incomeByMember
+      incomeByMember,
+      expensesByMember
     }
   }, [monthExpenses, filteredExpenses, filteredIncomes, incomes, categoryFilter, categoryBudgets, totalWeeksInMonth, currentDate])
 
