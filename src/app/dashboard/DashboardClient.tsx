@@ -126,8 +126,10 @@ export default function DashboardClient(props: any) {
       />
 
       {/* DEBUG INFO ONLY FOR HER TO SEE */}
-      <div className="fixed bottom-0 right-0 z-[1000] p-2 bg-red-500 text-white text-xs font-bold rounded-tl-lg">
-         DEBUG TOTAL RECEITAS: {props.initialIncomes?.length || 0}
+      <div className="fixed bottom-0 left-0 md:left-80 right-0 z-[1000] p-4 bg-red-500 text-white text-[10px] font-mono whitespace-pre-wrap break-all pointer-events-none">
+         TOTAL INCOMES: {props.initialIncomes?.length || 0}
+         {'\n'}PAYERS: {Array.from(new Set(props.initialIncomes?.map((i:any) => i.payer))).join(', ')}
+         {'\n'}DATES: {Array.from(new Set(props.initialIncomes?.map((i:any) => i.date.substring(0,7)))).join(', ')}
       </div>
 
       {/* TOAST PREMIUM */}
