@@ -1,12 +1,13 @@
 'use client'
 import Link from 'next/link'
-import { Plus, Receipt, LayoutGrid, LogOut, Settings, Calendar } from 'lucide-react'
+import { TrendingUp, Receipt, LayoutGrid, LogOut, Settings, Calendar } from 'lucide-react'
 import Logo from './Logo'
 
 interface SidebarProps {
   mainTab: 'overview' | 'history'
   setMainTab: (tab: 'overview' | 'history') => void
   setIsFormOpen: (open: boolean) => void
+  setIsIncomeFormOpen: (open: boolean) => void
   setIsSettingsOpen: (open: boolean) => void
   setIsRecurringOpen: (open: boolean) => void
   handleSignOut: () => void
@@ -16,6 +17,7 @@ export default function Sidebar({
   mainTab,
   setMainTab,
   setIsFormOpen,
+  setIsIncomeFormOpen,
   setIsSettingsOpen,
   setIsRecurringOpen,
   handleSignOut
@@ -59,10 +61,19 @@ export default function Sidebar({
               onClick={() => setIsFormOpen(true)}
               className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-black text-[11px] uppercase tracking-widest group"
             >
-              <div className="w-8 h-8 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all">
+              <div className="w-8 h-8 bg-rose-500/10 text-rose-400 rounded-lg flex items-center justify-center group-hover:bg-rose-500 group-hover:text-white transition-all">
                 <Receipt size={16} />
               </div>
               Novo Gasto
+            </button>
+            <button 
+              onClick={() => setIsIncomeFormOpen(true)}
+              className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all font-black text-[11px] uppercase tracking-widest group"
+            >
+              <div className="w-8 h-8 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                <TrendingUp size={16} />
+              </div>
+              Nova Receita
             </button>
             <button 
               onClick={() => setIsRecurringOpen(true)}

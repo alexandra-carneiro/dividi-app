@@ -120,7 +120,8 @@ export default function DashboardClient(props: any) {
       {/* SIDEBAR */}
       <Sidebar 
         mainTab={mainTab} setMainTab={setMainTab}
-        setIsFormOpen={setIsFormOpen} setIsSettingsOpen={setIsSettingsOpen}
+        setIsFormOpen={setIsFormOpen} setIsIncomeFormOpen={setIsIncomeFormOpen}
+        setIsSettingsOpen={setIsSettingsOpen}
         setIsRecurringOpen={setIsRecurringOpen} handleSignOut={handleSignOut}
       />
 
@@ -376,7 +377,8 @@ export default function DashboardClient(props: any) {
 
       <BottomNavigation 
         mainTab={mainTab} setMainTab={setMainTab}
-        setIsFormOpen={setIsFormOpen} setIsSettingsOpen={setIsSettingsOpen} setIsRecurringOpen={setIsRecurringOpen}
+        setIsFormOpen={setIsFormOpen} setIsIncomeFormOpen={setIsIncomeFormOpen}
+        setIsSettingsOpen={setIsSettingsOpen} setIsRecurringOpen={setIsRecurringOpen}
       />
     </div>
   )
