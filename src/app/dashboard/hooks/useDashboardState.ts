@@ -87,7 +87,12 @@ export function useDashboardState({
   const [searchTerm, setSearchTerm] = useState('')
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null)
   const [isPending, startTransition] = useTransition()
-  const [mainTab, setMainTab] = useState<'overview' | 'history'>('overview')
+  const initialTab = useMemo(() => {
+    const tabParam = searchParams.get('tab')
+    return (tabParam === 'history' || tabParam === 'overview') ? tabParam : 'overview'
+  }, [searchParams])
+
+  const [mainTab, setMainTab] = useState<'overview' | 'history'>(initialTab)
   const [recurringTab, setRecurringTab] = useState<'launch' | 'manage'>('launch')
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month')
 
@@ -100,15 +105,16 @@ export function useDashboardState({
     setToast({ message, type })
   }
 
-  // Sincronizar data com a URL
+  // Sincronizar data e aba com a URL
   useEffect(() => {
     const monthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-    if (searchParams.get('month') !== monthStr) {
+    if (searchParams.get('month') !== monthStr || searchParams.get('tab') !== mainTab) {
       const params = new URLSearchParams(searchParams.toString())
       params.set('month', monthStr)
+      params.set('tab', mainTab)
       router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     }
-  }, [currentDate, pathname, router, searchParams])
+  }, [currentDate, mainTab, pathname, router, searchParams])
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -233,7 +239,7 @@ export function useDashboardState({
       const lowSearch = searchTerm.toLowerCase()
       filtered = filtered.filter(exp => (exp.description?.toLowerCase().includes(lowSearch)) || (exp.category?.toLowerCase().includes(lowSearch)))
     }
-    return filtered
+    return filtered.sort((a, b) => b.date.localeCompare(a.date))
   }, [monthExpenses, categoryFilter, payerFilter, searchTerm])
 
   const filteredIncomes = useMemo(() => {
@@ -250,7 +256,7 @@ export function useDashboardState({
       const lowSearch = searchTerm.toLowerCase()
       filtered = filtered.filter(inc => (inc.description?.toLowerCase().includes(lowSearch)) || (inc.category?.toLowerCase().includes(lowSearch)))
     }
-    return filtered
+    return filtered.sort((a, b) => b.date.localeCompare(a.date))
   }, [incomes, currentDate, payerFilter, searchTerm])
 
   const totals = useMemo(() => {

@@ -29,7 +29,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
           </div>
           <div className="group/info relative">
             <Info size={16} className="text-slate-400 hover:text-white cursor-help transition-colors" />
-            <div className="absolute top-full right-0 mt-3 w-56 p-5 glass-morphism text-white text-[10px] rounded-[1.5rem] opacity-0 group-hover/info:opacity-100 transition-all pointer-events-none z-[999] shadow-2xl border border-white/10 leading-relaxed font-bold">
+            <div className="absolute top-full right-0 mt-3 w-56 p-5 glass-morphism bg-[#020617]/95 text-white text-[10px] rounded-[1.5rem] opacity-0 group-hover/info:opacity-100 transition-all pointer-events-none z-[999] shadow-2xl border border-white/10 leading-relaxed font-bold">
               Cálculo de Liquidez: <br/><br/>
               <span className="text-emerald-400">Receitas</span> <span className="text-slate-400">-</span> <span className="text-rose-400">Gastos</span> <br/>
               <span className="text-slate-400">=</span> <span className="text-indigo-400 underline decoration-indigo-500/50 underline-offset-4">Capital Disponível</span>
@@ -93,7 +93,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
           </div>
           <div className="group/info relative">
             <Info size={16} className="text-slate-400 hover:text-white cursor-help transition-colors" />
-            <div className="absolute top-full right-0 mt-3 w-56 p-5 glass-morphism text-white text-[10px] rounded-[1.5rem] opacity-0 group-hover/info:opacity-100 transition-all pointer-events-none z-[999] shadow-2xl border border-white/10 leading-relaxed font-bold">
+            <div className="absolute top-full right-0 mt-3 w-56 p-5 glass-morphism bg-[#020617]/95 text-white text-[10px] rounded-[1.5rem] opacity-0 group-hover/info:opacity-100 transition-all pointer-events-none z-[999] shadow-2xl border border-white/10 leading-relaxed font-bold">
               Monitoramento de Consumo: <br/><br/>
               Soma total de todos os <span className="text-rose-400 font-black italic">débitos</span> e transações realizadas no período selecionado.
             </div>
