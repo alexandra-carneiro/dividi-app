@@ -97,7 +97,7 @@ export default function ExpensesTab({
                             <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-400 uppercase rounded-md tracking-widest flex items-center gap-1 opacity-80"><div className={`w-1.5 h-1.5 rounded-full ${getAvatarColor(exp.payer).replace('/80', '')}`}></div> {exp.payer || 'Desconhecido'}</span>
                             {viewMode !== 'day' && <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>}
                           </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover/item:opacity-100 transition-opacity">
                             <button onClick={() => openEditExpense(exp)} className="p-2 hover:text-indigo-400 transition-colors"><Edit2 size={12} /></button>
                             <button onClick={() => handleDelete(exp.id)} className="p-2 hover:text-rose-400 transition-colors"><Trash2 size={12} /></button>
                           </div>

@@ -128,16 +128,24 @@ export default function RecurringExpensesModal({
                         />
                       </div>
 
-                      <button 
-                        onClick={() => {
-                          const dateVal = (document.getElementById(`date-${req.id}`) as HTMLInputElement).value
-                          handleApplyRecurring(req.id, dateVal)
-                        }} 
-                        className="bg-emerald-500 text-white hover:bg-emerald-400 px-8 py-4 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-3 group/btn active:scale-95"
-                      >
-                        <Repeat size={18} className="group-hover/btn:rotate-180 transition-transform duration-500" />
-                        <span className="text-xs font-black uppercase tracking-widest">Lançar</span>
-                      </button>
+                      <div className="flex items-center gap-3 w-full lg:w-auto mt-4 lg:mt-0 pt-4 lg:pt-0 border-t border-white/5 lg:border-t-0">
+                        <button 
+                          onClick={() => { setRecurringToEdit(req); setRecurringTab('manage'); }}
+                          className="flex-1 lg:flex-none p-4 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-indigo-400 rounded-2xl transition-all text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2"
+                        >
+                          <Edit2 size={16} /> Editar
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const dateVal = (document.getElementById(`date-${req.id}`) as HTMLInputElement).value
+                            handleApplyRecurring(req.id, dateVal)
+                          }} 
+                          className="flex-[2] lg:flex-none bg-emerald-500 text-white hover:bg-emerald-400 px-8 py-4 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-3 group/btn active:scale-95"
+                        >
+                          <Repeat size={18} className="group-hover/btn:rotate-180 transition-transform duration-500" />
+                          <span className="text-xs font-black uppercase tracking-widest">Lançar</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -277,7 +285,7 @@ export default function RecurringExpensesModal({
                       <p className="font-black text-white text-xl tracking-tight leading-tight mb-1">{req.description}</p>
                       <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{formatMoney(Number(req.amount))} • {req.payer}</p>
                     </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       <button onClick={() => setRecurringToEdit(req)} className="p-3 bg-white/5 text-slate-400 hover:text-indigo-400 hover:bg-white/10 rounded-2xl transition-all"><Edit2 size={16} /></button>
                       <button onClick={() => handleDeleteRecurring(req.id)} className="p-3 bg-white/5 text-slate-400 hover:text-rose-400 hover:bg-white/10 rounded-2xl transition-all"><Trash2 size={16} /></button>
                     </div>
