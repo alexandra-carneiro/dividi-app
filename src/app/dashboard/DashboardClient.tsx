@@ -22,7 +22,16 @@ import { exportExpensesToExcel } from './utils/ExportLogic'
 import { CATEGORIES, formatCurrency } from './utils/constants'
 import { updateCategoryBudget } from '../actions/budgets'
 
-export default function DashboardClient(props: any) {
+interface DashboardClientProps {
+  initialExpenses: any[]
+  initialRecurringExpenses: any[]
+  initialCategoryBudgets: any[]
+  initialIncomes: any[]
+  initialMembers: any[]
+  debugAllIncomes?: any[]
+}
+
+export default function DashboardClient(props: DashboardClientProps) {
   const state = useDashboardState(props)
   const [showRadarInfo, setShowRadarInfo] = useState(false)
   
@@ -127,9 +136,10 @@ export default function DashboardClient(props: any) {
 
       {/* DEBUG INFO ONLY FOR HER TO SEE */}
       <div className="fixed bottom-0 left-0 md:left-80 right-0 z-[1000] p-4 bg-red-500 text-white text-[10px] font-mono whitespace-pre-wrap break-all pointer-events-none">
-         TOTAL INCOMES: {props.initialIncomes?.length || 0}
-         {'\n'}PAYERS: {Array.from(new Set(props.initialIncomes?.map((i:any) => i.payer))).join(', ')}
-         {'\n'}DATES: {Array.from(new Set(props.initialIncomes?.map((i:any) => i.date.substring(0,7)))).join(', ')}
+         TOTAL INCOMES IN HH: {props.initialIncomes?.length || 0}
+         {'\n'}TOTAL INCOMES IN DB FOR USER: {props.debugAllIncomes?.length || 0}
+         {'\n'}PAYERS: {Array.from(new Set(props.debugAllIncomes?.map((i:any) => i.payer))).join(', ')}
+         {'\n'}DATES: {Array.from(new Set(props.debugAllIncomes?.map((i:any) => i.date.substring(0,7)))).join(', ')}
       </div>
 
       {/* TOAST PREMIUM */}
