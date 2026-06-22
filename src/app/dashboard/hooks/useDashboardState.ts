@@ -141,21 +141,22 @@ export function useDashboardState({
       const [year, month] = monthParam.split('-').map(Number)
       if (!isNaN(year) && !isNaN(month)) {
         const urlDate = new Date(year, month - 1, 1)
-        if (currentDate.getTime() !== urlDate.getTime()) setCurrentDate(urlDate)
+        setCurrentDate(prev => prev.getTime() !== urlDate.getTime() ? urlDate : prev)
       }
     }
-
+    
+    // Also sync tabs
     const tabParam = searchParams.get('tab') as any
-    if (tabParam && tabParam !== mainTab) setMainTab(tabParam)
-
-    const typeParam = searchParams.get('type') as any
-    if (typeParam && typeParam !== activeTab) setActiveTab(typeParam)
-
+    if (tabParam) setMainTab(prev => prev !== tabParam ? tabParam : prev)
+    
     const viewParam = searchParams.get('view') as any
-    if (viewParam && viewParam !== viewMode) setViewMode(viewParam)
+    if (viewParam) setViewMode(prev => prev !== viewParam ? viewParam : prev)
+    
+    const typeParam = searchParams.get('type') as any
+    if (typeParam) setActiveTab(prev => prev !== typeParam ? typeParam : prev)
 
     const payerParam = searchParams.get('payer')
-    if (payerParam && payerParam !== payerFilter) setPayerFilter(payerParam)
+    if (payerParam) setPayerFilter(prev => prev !== payerParam ? payerParam : prev)
 
     const modalParam = searchParams.get('modal')
     if (modalParam === 'expense' && !isFormOpen) setIsFormOpen(true)
@@ -221,54 +222,7 @@ export function useDashboardState({
     }
   }, [householdId, supabase])
 
-  // Fetch Month Data
-  useEffect(() => {
-    const fetchMonthData = async () => {
-      // Refresh the browser session first to ensure the token is valid.
-      // This prevents expired sessions (e.g. after a Supabase pause) from
-      // returning empty data and overwriting valid server-loaded state.
-      const { error: sessionError } = await supabase.auth.refreshSession()
-      if (sessionError) {
-        console.warn('useDashboardState: session refresh failed, skipping client fetch to preserve server data.', sessionError.message)
-        return
-      }
 
-      const year = currentDate.getFullYear()
-      const month = currentDate.getMonth()
-      const firstDay = new Date(year, month, 1).toISOString().split('T')[0]
-      const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0]
-
-      const [expsRes, incsRes] = await Promise.all([
-        supabase.from('expenses').select('*').eq('household_id', householdId).gte('date', firstDay).lte('date', lastDay),
-        supabase.from('incomes').select('*').eq('household_id', householdId).gte('date', firstDay).lte('date', lastDay)
-      ])
-
-      // Only update state if the query succeeded and returned data.
-      // Checking for errors avoids overwriting valid server data with empty arrays
-      // when RLS blocks an unauthenticated client request.
-      if (expsRes.data && !expsRes.error) {
-        setExpenses(prev => {
-          const otherMonths = prev.filter(e => {
-            const d = new Date(e.date + 'T12:00:00')
-            return d.getFullYear() !== year || d.getMonth() !== month
-          })
-          return [...otherMonths, ...expsRes.data!]
-        })
-      }
-
-      if (incsRes.data && !incsRes.error) {
-        setIncomes(prev => {
-          const otherMonths = prev.filter(i => {
-            const d = new Date(i.date + 'T12:00:00')
-            return d.getFullYear() !== year || d.getMonth() !== month
-          })
-          return [...otherMonths, ...incsRes.data!]
-        })
-      }
-    }
-
-    fetchMonthData()
-  }, [currentDate, householdId, supabase])
 
   // Computed Values
   const monthExpenses = useMemo(() => {
