@@ -314,6 +314,7 @@ export default function DashboardClient(props: any) {
 
               {activeTab === 'expenses' && (
                 <ExpensesTab 
+                  payerFilter={payerFilter} setPayerFilter={setPayerFilter} members={members}
                   filteredExpenses={filteredExpenses} weeks={weeks} totals={totals}
                   monthlyBudget={props.initialMonthlyBudget} totalWeeksInMonth={totalWeeksInMonth}
                   currency={currency} formatMoney={formatMoney}
