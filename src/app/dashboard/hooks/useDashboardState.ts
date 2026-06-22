@@ -36,8 +36,15 @@ export function useDashboardState({
   initialIncomes: any[],
   initialMembers: any[]
 }) {
+  const normalizedIncomes = initialIncomes.map(inc => {
+    let p = (inc.payer || '').toLowerCase()
+    if (p.includes('alexandra') || p.includes('alê') || p.includes('ale')) inc.payer = 'alexandracarneiro'
+    if (p.includes('maria')) inc.payer = 'mariaclaratrifoi1'
+    return inc
+  })
+
   const [expenses, setExpenses] = useState(initialExpenses)
-  const [incomes, setIncomes] = useState(initialIncomes)
+  const [incomes, setIncomes] = useState(normalizedIncomes)
   const [members, setMembers] = useState(initialMembers)
   const [recurringExpenses, setRecurringExpenses] = useState(initialRecurringExpenses)
   const [monthlyBudget, setMonthlyBudget] = useState(initialMonthlyBudget)
