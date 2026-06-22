@@ -11,6 +11,18 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
+  // --- MIGRATION LOGIC (Runs once per load temporarily) ---
+  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alexandra')
+  await supabase.from('incomes').update({ payer: 'mariaclaratrifoi1' }).eq('payer', 'Maria')
+  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alê')
+
+  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alexandra')
+  await supabase.from('recurring_expenses').update({ payer: 'mariaclaratrifoi1' }).eq('payer', 'Maria')
+  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alê')
+
+  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alê')
+  // --------------------------------------------------------
+
   // Verificar se o usuário já tem um household
   let { data: member } = await supabase
     .from('household_members')
