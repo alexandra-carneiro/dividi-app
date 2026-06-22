@@ -12,15 +12,20 @@ export default async function DashboardPage() {
   }
 
   // --- MIGRATION LOGIC (Runs once per load temporarily) ---
-  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alexandra')
-  await supabase.from('incomes').update({ payer: 'mariaclaratrifoi1' }).eq('payer', 'Maria')
-  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alê')
+  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
+  await supabase.from('incomes').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
+  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
+  await supabase.from('incomes').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
 
-  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alexandra')
-  await supabase.from('recurring_expenses').update({ payer: 'mariaclaratrifoi1' }).eq('payer', 'Maria')
-  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alê')
+  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
+  await supabase.from('recurring_expenses').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
+  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
+  await supabase.from('recurring_expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
 
-  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).eq('payer', 'Alê')
+  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alexandra%')
+  await supabase.from('expenses').update({ payer: 'mariaclaratrifoi1' }).ilike('payer', '%maria%')
+  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%alê%')
+  await supabase.from('expenses').update({ payer: 'alexandracarneiro' }).ilike('payer', '%ale%')
   // --------------------------------------------------------
 
   // Verificar se o usuário já tem um household
