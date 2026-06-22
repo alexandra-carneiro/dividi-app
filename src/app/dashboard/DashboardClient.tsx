@@ -221,7 +221,10 @@ export default function DashboardClient(props: any) {
             </div>
 
             {/* SUMMARY CARDS */}
-            <SummaryCards payerFilter={payerFilter} totals={totals} formatMoney={formatMoney} />
+            <SummaryCards 
+              payerFilter={payerFilter} totals={totals} formatMoney={formatMoney} 
+              onNavigate={(tab: 'expenses' | 'incomes') => { setActiveTab(tab); setMainTab('history'); }}
+            />
           </div>
         )}
 

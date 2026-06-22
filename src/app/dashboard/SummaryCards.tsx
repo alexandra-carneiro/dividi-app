@@ -5,15 +5,16 @@ interface SummaryCardsProps {
   payerFilter: string
   totals: any
   formatMoney: (v: number) => string
+  onNavigate: (tab: 'expenses' | 'incomes') => void
 }
 
-export default function SummaryCards({ payerFilter, totals, formatMoney }: SummaryCardsProps) {
+export default function SummaryCards({ payerFilter, totals, formatMoney, onNavigate }: SummaryCardsProps) {
   const balanceValue = payerFilter === 'Todos' ? totals.globalBalance : (totals.filteredIncomeTotal - totals.filteredTotal)
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
       {/* CARD DE SALDO - ELITE STYLE */}
-      <div className="glass-card rounded-[3rem] p-8 md:p-10 relative overflow-hidden group hover:border-white/20 transition-all duration-700 glow-primary">
+      <div onClick={() => onNavigate('expenses')} className="cursor-pointer glass-card rounded-[3rem] p-8 md:p-10 relative overflow-hidden group hover:border-white/20 transition-all duration-700 glow-primary hover:scale-[1.02] active:scale-95 shadow-xl hover:shadow-2xl">
         <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
         
         <div className="flex items-center justify-between mb-8">
@@ -55,7 +56,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
       </div>
 
       {/* CARD DE RECEITAS - ELITE STYLE */}
-      <div className="glass-card rounded-[3rem] p-8 md:p-10 relative overflow-hidden group hover:border-white/20 transition-all duration-700">
+      <div onClick={() => onNavigate('incomes')} className="cursor-pointer glass-card rounded-[3rem] p-8 md:p-10 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-700 hover:scale-[1.02] active:scale-95 shadow-xl hover:shadow-2xl">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-all duration-500 shadow-inner">
@@ -81,7 +82,7 @@ export default function SummaryCards({ payerFilter, totals, formatMoney }: Summa
       </div>
 
       {/* CARD DE GASTOS - ELITE STYLE */}
-      <div className="glass-card rounded-[3rem] p-8 md:p-10 relative overflow-hidden group hover:border-white/20 transition-all duration-700">
+      <div onClick={() => onNavigate('expenses')} className="cursor-pointer glass-card rounded-[3rem] p-8 md:p-10 relative overflow-hidden group hover:border-rose-500/30 transition-all duration-700 hover:scale-[1.02] active:scale-95 shadow-xl hover:shadow-2xl">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center group-hover:bg-rose-500 group-hover:text-white transition-all duration-500 shadow-inner">
