@@ -15,7 +15,7 @@ export default function InviteModal({
   if (!isInviteOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4" onClick={() => setIsInviteOpen(false)}>
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 md:pl-80" onClick={() => setIsInviteOpen(false)}>
       <form 
         onSubmit={handleInvite} 
         onClick={(e) => e.stopPropagation()} 

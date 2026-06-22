@@ -52,7 +52,7 @@ export default function RecurringExpensesModal({
   if (!isRecurringOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4" onClick={() => setIsRecurringOpen(false)}>
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 md:pl-80" onClick={() => setIsRecurringOpen(false)}>
       <div className="glass-morphism p-6 md:p-10 rounded-[2.5rem] shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar relative" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start mb-8">
           <div>

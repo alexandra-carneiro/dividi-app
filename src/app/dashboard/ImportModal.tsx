@@ -27,7 +27,7 @@ export default function ImportModal({
   const validCount = pendingImports.filter(e => e.date && !isNaN(e.amount) && e.payer).length
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4" onClick={() => setIsImportOpen(false)}>
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 md:pl-80" onClick={() => setIsImportOpen(false)}>
       <div 
         className="glass-morphism p-8 md:p-10 rounded-[3rem] shadow-2xl w-full max-w-4xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar relative" 
         onClick={(e) => e.stopPropagation()}

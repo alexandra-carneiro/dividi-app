@@ -27,7 +27,7 @@ export default function IncomeModal({
   if (!isIncomeFormOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }}>
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 md:pl-80" onClick={() => { setIsIncomeFormOpen(false); setIncomeToEdit(null) }}>
       <form 
         onSubmit={handleAddIncome} 
         onClick={(e) => e.stopPropagation()} 
