@@ -502,6 +502,9 @@ export function useDashboardState({
       const dateToUse = specificDate || recurringDate
       const result = await applyRecurringExpenses(householdId, dateToUse, expenseId)
       if (result.success) {
+        if (result.data) {
+          setExpenses(prev => [...prev, ...result.data])
+        }
         showToast(expenseId ? 'Gasto fixo lançado!' : `${result.count} gastos fixos lançados!`)
         if (!expenseId) setIsRecurringOpen(false)
       } else {

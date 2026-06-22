@@ -114,11 +114,11 @@ export async function applyRecurringExpenses(householdId: string, date: string, 
     }
   })
 
-  const { error: insError } = await supabase.from('expenses').insert(expensesToInsert)
+  const { data: insertedData, error: insError } = await supabase.from('expenses').insert(expensesToInsert).select()
   if (insError) return { error: insError.message }
 
   revalidatePath('/dashboard')
-  return { success: true, count: expensesToInsert.length }
+  return { success: true, count: expensesToInsert.length, data: insertedData }
 }
 
 export async function deleteRecurringExpense(id: string) {
