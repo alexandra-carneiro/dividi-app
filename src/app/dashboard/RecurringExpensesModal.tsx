@@ -110,7 +110,7 @@ export default function RecurringExpensesModal({
                       <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Pagador: <span className="text-slate-300">{req.payer}</span></p>
                     </div>
 
-                    <div className="flex flex-wrap items-end lg:items-center gap-6">
+                    <div className="flex flex-wrap lg:flex-nowrap items-end lg:items-center gap-6">
                       <div className="flex flex-col">
                         <p className="text-[9px] text-slate-400 font-black uppercase mb-2 tracking-widest text-center">Valor Base</p>
                         <div className="bg-white/5 px-6 py-3 rounded-2xl border border-white/10 min-w-[120px] text-center">
