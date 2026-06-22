@@ -149,13 +149,16 @@ export default function ExpensesTab({
                           <p className="font-bold text-sm text-slate-200 truncate">{exp.description || 'Gasto'}</p>
                           <span className="font-black text-sm text-white tracking-tighter italic">{formatMoney(Number(exp.amount))}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-400 uppercase rounded-md tracking-widest">{exp.category || 'Outros'}</span>
-                            <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-400 uppercase rounded-md tracking-widest flex items-center gap-1 opacity-80"><div className={`w-1.5 h-1.5 rounded-full ${getAvatarColor(exp.payer).replace('/80', '')}`}></div> {exp.payer || 'Desconhecido'}</span>
-                            {viewMode !== 'day' && <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>}
+                        <div className="flex justify-between items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-400 uppercase rounded-md tracking-widest shrink-0">{exp.category || 'Outros'}</span>
+                            <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-400 uppercase rounded-md tracking-widest flex items-center gap-1 opacity-80 min-w-0">
+                              <div className={`shrink-0 w-1.5 h-1.5 rounded-full ${getAvatarColor(exp.payer).replace('/80', '')}`}></div> 
+                              <span className="truncate">{exp.payer || 'Desconhecido'}</span>
+                            </span>
+                            {viewMode !== 'day' && <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest shrink-0">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>}
                           </div>
-                          <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover/item:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover/item:opacity-100 transition-opacity shrink-0">
                             <button onClick={() => openEditExpense(exp)} className="p-2 hover:text-indigo-400 transition-colors"><Edit2 size={12} /></button>
                             <button onClick={() => handleDelete(exp.id)} className="p-2 hover:text-rose-400 transition-colors"><Trash2 size={12} /></button>
                           </div>
