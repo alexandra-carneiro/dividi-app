@@ -32,6 +32,14 @@ export default function ExpensesTab({
     return <LayoutGrid size={16} className="text-indigo-500" />
   }
 
+  const getAvatarColor = (name: string) => {
+    if (!name) return 'bg-slate-600'
+    const colors = ['bg-indigo-600/80', 'bg-rose-600/80', 'bg-emerald-600/80', 'bg-amber-600/80', 'bg-purple-600/80', 'bg-cyan-600/80']
+    let hash = 0
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    return colors[Math.abs(hash) % colors.length]
+  }
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 space-y-12">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
@@ -75,8 +83,8 @@ export default function ExpensesTab({
                 {group.expenses.map((exp: any) => (
                   <div key={exp.id} className="p-4 hover:bg-white/[0.03] rounded-2xl transition-all duration-300 group/item relative">
                     <div className="flex gap-4 items-center">
-                      <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-black text-white text-[10px] shadow-lg ${exp.payer === 'Alê' ? 'bg-indigo-600/80' : 'bg-rose-600/80'}`}>
-                        {exp.payer.charAt(0)}
+                      <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-black text-white text-[10px] shadow-lg ${getAvatarColor(exp.payer)}`}>
+                        {exp.payer ? exp.payer.charAt(0).toUpperCase() : '?'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-center gap-2 mb-1">
@@ -86,6 +94,7 @@ export default function ExpensesTab({
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-400 uppercase rounded-md tracking-widest">{exp.category || 'Outros'}</span>
+                            <span className="text-[8px] font-black px-2 py-0.5 bg-white/5 text-slate-400 uppercase rounded-md tracking-widest flex items-center gap-1 opacity-80"><div className={`w-1.5 h-1.5 rounded-full ${getAvatarColor(exp.payer).replace('/80', '')}`}></div> {exp.payer || 'Desconhecido'}</span>
                             {viewMode !== 'day' && <span className="text-[8px] text-slate-700 font-black uppercase tracking-widest">{exp.date.split('-').reverse().slice(0,2).join('/')}</span>}
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
