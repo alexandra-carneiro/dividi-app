@@ -125,6 +125,11 @@ export default function DashboardClient(props: any) {
         setIsRecurringOpen={setIsRecurringOpen} handleSignOut={handleSignOut}
       />
 
+      {/* DEBUG INFO ONLY FOR HER TO SEE */}
+      <div className="fixed bottom-0 right-0 z-[1000] p-2 bg-red-500 text-white text-xs font-bold rounded-tl-lg">
+         DEBUG TOTAL RECEITAS: {props.initialIncomes?.length || 0}
+      </div>
+
       {/* TOAST PREMIUM */}
       {toast && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 md:left-[calc(50%+160px)] z-[300] animate-in fade-in slide-in-from-top-8 duration-500">
