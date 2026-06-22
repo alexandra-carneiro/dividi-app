@@ -111,9 +111,6 @@ export default async function DashboardPage() {
     const initialMembers = membersRes.data || []
     const initialDisplayName = profileRes.data?.display_name || user.email?.split('@')[0] || 'Usuário'
 
-    // BUTE FORCE FETCH ALL INCOMES VISIBLE TO USER
-    const { data: allIncomes } = await supabase.from('incomes').select('*')
-
     return (
       <DashboardClient 
         initialExpenses={initialExpenses} 
@@ -127,7 +124,6 @@ export default async function DashboardPage() {
         initialCategoryBudgets={initialCategoryBudgets || []}
         initialIncomes={initialIncomes}
         initialMembers={initialMembers}
-        debugAllIncomes={allIncomes || []}
       />
     )
   }

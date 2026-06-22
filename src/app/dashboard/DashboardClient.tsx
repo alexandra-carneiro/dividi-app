@@ -134,14 +134,6 @@ export default function DashboardClient(props: DashboardClientProps) {
         setIsRecurringOpen={setIsRecurringOpen} handleSignOut={handleSignOut}
       />
 
-      {/* DEBUG INFO ONLY FOR HER TO SEE */}
-      <div className="fixed bottom-0 left-0 md:left-80 right-0 z-[1000] p-4 bg-red-500 text-white text-[10px] font-mono whitespace-pre-wrap break-all pointer-events-none">
-         TOTAL INCOMES IN HH: {props.initialIncomes?.length || 0}
-         {'\n'}TOTAL INCOMES IN DB FOR USER: {props.debugAllIncomes?.length || 0}
-         {'\n'}PAYERS: {Array.from(new Set(props.debugAllIncomes?.map((i:any) => i.payer))).join(', ')}
-         {'\n'}DATES: {Array.from(new Set(props.debugAllIncomes?.map((i:any) => i.date.substring(0,7)))).join(', ')}
-      </div>
-
       {/* TOAST PREMIUM */}
       {toast && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 md:left-[calc(50%+160px)] z-[300] animate-in fade-in slide-in-from-top-8 duration-500">
