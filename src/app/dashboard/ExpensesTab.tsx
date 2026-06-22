@@ -169,6 +169,7 @@ export default function ExpensesTab({
           ))
         )}
       </div>
+      </div>
     </div>
   )
 }
