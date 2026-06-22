@@ -67,23 +67,23 @@ export function useDashboardState({
 
   const [currentDate, setCurrentDate] = useState(initialDate)
 
-  // Modals and UI State
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const modalParam = searchParams.get('modal')
+  const [isFormOpen, setIsFormOpen] = useState(modalParam === 'expense')
+  const [isSettingsOpen, setIsSettingsOpen] = useState(modalParam === 'settings')
   const [expenseToEdit, setExpenseToEdit] = useState<any>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [pendingImports, setPendingImports] = useState<any[]>([])
   const [detectedHeaders, setDetectedHeaders] = useState<string[]>([])
   const [isInviteOpen, setIsInviteOpen] = useState(false)
-  const [isRecurringOpen, setIsRecurringOpen] = useState(false)
+  const [isRecurringOpen, setIsRecurringOpen] = useState(modalParam === 'recurring')
   const [recurringToEdit, setRecurringToEdit] = useState<any>(null)
   const [recurringDate, setRecurringDate] = useState(new Date().toISOString().split('T')[0])
   const [categoryFilter, setCategoryFilter] = useState('Todas')
-  const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(false)
+  const [isIncomeFormOpen, setIsIncomeFormOpen] = useState(modalParam === 'income')
   const [incomeToEdit, setIncomeToEdit] = useState<any>(null)
   const [settingsTab, setSettingsTab] = useState<'budget' | 'family' | 'account' | 'support'>('budget')
-  const [payerFilter, setPayerFilter] = useState<string>('Todos')
-  const [activeTab, setActiveTab] = useState<'expenses' | 'incomes'>('expenses')
+  const [payerFilter, setPayerFilter] = useState<string>(searchParams.get('payer') || 'Todos')
+  const [activeTab, setActiveTab] = useState<'expenses' | 'incomes'>((searchParams.get('type') as any) || 'expenses')
   const [searchTerm, setSearchTerm] = useState('')
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -94,7 +94,7 @@ export function useDashboardState({
 
   const [mainTab, setMainTab] = useState<'overview' | 'history'>(initialTab)
   const [recurringTab, setRecurringTab] = useState<'launch' | 'manage'>('launch')
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('month')
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>((searchParams.get('view') as any) || 'month')
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -105,16 +105,70 @@ export function useDashboardState({
     setToast({ message, type })
   }
 
-  // Sincronizar data e aba com a URL
+  // SYNC STATE TO URL
   useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    let changed = false
+    
     const monthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
-    if (searchParams.get('month') !== monthStr || searchParams.get('tab') !== mainTab) {
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('month', monthStr)
-      params.set('tab', mainTab)
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    if (params.get('month') !== monthStr) { params.set('month', monthStr); changed = true; }
+    if (params.get('tab') !== mainTab) { params.set('tab', mainTab); changed = true; }
+    if (params.get('type') !== activeTab) { params.set('type', activeTab); changed = true; }
+    if (params.get('view') !== viewMode) { params.set('view', viewMode); changed = true; }
+    if (params.get('payer') !== payerFilter) { params.set('payer', payerFilter); changed = true; }
+    
+    let currentModal = null
+    if (isFormOpen) currentModal = 'expense'
+    else if (isIncomeFormOpen) currentModal = 'income'
+    else if (isSettingsOpen) currentModal = 'settings'
+    else if (isRecurringOpen) currentModal = 'recurring'
+    
+    if (currentModal) {
+      if (params.get('modal') !== currentModal) { params.set('modal', currentModal); changed = true; }
+    } else {
+      if (params.has('modal')) { params.delete('modal'); changed = true; }
     }
-  }, [currentDate, mainTab, pathname, router, searchParams])
+
+    if (changed) {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    }
+  }, [currentDate, mainTab, activeTab, viewMode, payerFilter, isFormOpen, isIncomeFormOpen, isSettingsOpen, isRecurringOpen])
+
+  // SYNC URL TO STATE (back/forward buttons)
+  useEffect(() => {
+    const monthParam = searchParams.get('month')
+    if (monthParam) {
+      const [year, month] = monthParam.split('-').map(Number)
+      if (!isNaN(year) && !isNaN(month)) {
+        const urlDate = new Date(year, month - 1, 1)
+        if (currentDate.getTime() !== urlDate.getTime()) setCurrentDate(urlDate)
+      }
+    }
+
+    const tabParam = searchParams.get('tab') as any
+    if (tabParam && tabParam !== mainTab) setMainTab(tabParam)
+
+    const typeParam = searchParams.get('type') as any
+    if (typeParam && typeParam !== activeTab) setActiveTab(typeParam)
+
+    const viewParam = searchParams.get('view') as any
+    if (viewParam && viewParam !== viewMode) setViewMode(viewParam)
+
+    const payerParam = searchParams.get('payer')
+    if (payerParam && payerParam !== payerFilter) setPayerFilter(payerParam)
+
+    const modalParam = searchParams.get('modal')
+    if (modalParam === 'expense' && !isFormOpen) setIsFormOpen(true)
+    if (modalParam === 'income' && !isIncomeFormOpen) setIsIncomeFormOpen(true)
+    if (modalParam === 'settings' && !isSettingsOpen) setIsSettingsOpen(true)
+    if (modalParam === 'recurring' && !isRecurringOpen) setIsRecurringOpen(true)
+    if (!modalParam) {
+      if (isFormOpen) setIsFormOpen(false)
+      if (isIncomeFormOpen) setIsIncomeFormOpen(false)
+      if (isSettingsOpen) setIsSettingsOpen(false)
+      if (isRecurringOpen) setIsRecurringOpen(false)
+    }
+  }, [searchParams])
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -277,13 +331,20 @@ export function useDashboardState({
       currentLimit = catBudget ? Number(catBudget.monthly_limit) : 0
     }
 
+    const incomeByMember: Record<string, number> = {}
+    incomes.filter(i => i.date.startsWith(monthStr)).forEach(i => {
+      const payer = i.payer || 'Desconhecido'
+      incomeByMember[payer] = (incomeByMember[payer] || 0) + Number(i.amount)
+    })
+
     return { 
       globalTotal, globalIncome,
       globalBalance: globalIncome - globalTotal, globalPlanned,
       filteredTotal, filteredIncomeTotal,
       remaining: currentLimit > 0 ? currentLimit - filteredTotal : 0,
       limit: currentLimit, weeklyLimit: currentLimit / totalWeeksInMonth,
-      hideWeeklyProgress: categoryFilter === 'Contas'
+      hideWeeklyProgress: categoryFilter === 'Contas',
+      incomeByMember
     }
   }, [monthExpenses, filteredExpenses, filteredIncomes, incomes, categoryFilter, categoryBudgets, totalWeeksInMonth, currentDate])
 

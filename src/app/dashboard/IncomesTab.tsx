@@ -6,6 +6,7 @@ interface IncomesTabProps {
   setPayerFilter: (p: any) => void
   filteredIncomes: any[]
   totals: any
+  members: any[]
   formatMoney: (v: number) => string
   openEditIncome: (income: any) => void
   handleDeleteIncome: (id: string) => void
@@ -20,8 +21,17 @@ export default function IncomesTab({
   formatMoney,
   openEditIncome,
   handleDeleteIncome,
-  setIsIncomeFormOpen
+  setIsIncomeFormOpen,
+  members
 }: IncomesTabProps) {
+  const getAvatarColor = (name: string) => {
+    if (!name) return 'bg-slate-600'
+    const colors = ['bg-indigo-600', 'bg-rose-600', 'bg-emerald-600', 'bg-amber-600', 'bg-purple-600', 'bg-cyan-600']
+    let hash = 0
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    return colors[Math.abs(hash) % colors.length]
+  }
+
   return (
     <section className="animate-in fade-in slide-in-from-bottom-8 duration-1000 space-y-12 pb-24">
       {/* HEADER DE RECEITAS */}
@@ -55,33 +65,31 @@ export default function IncomesTab({
           {payerFilter === 'Todos' && <div className="absolute top-4 right-4"><CheckCircle2 size={16} className="text-emerald-500/50" /></div>}
         </div>
 
-        <div 
-          onClick={() => setPayerFilter('Alê')}
-          className={`cursor-pointer glass-card rounded-[3rem] p-8 border transition-all duration-700 hover:scale-[1.02] active:scale-95 flex items-center gap-6 shadow-2xl relative overflow-hidden ${payerFilter === 'Alê' ? 'border-indigo-500/40 bg-indigo-500/5 glow-primary' : 'border-white/5 opacity-50 hover:opacity-80'}`}
-        >
-          <div className={`w-16 h-16 rounded-3xl flex items-center justify-center transition-all duration-500 ${payerFilter === 'Alê' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/30 rotate-6' : 'bg-white/5 text-slate-400'}`}>
-            <span className="font-black text-3xl italic">A</span>
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1.5">Renda Alê</p>
-            <p className="text-3xl font-black text-white tracking-tighter italic">{formatMoney(totals.globalIncomeAle || 0)}</p>
-          </div>
-          {payerFilter === 'Alê' && <div className="absolute top-4 right-4"><CheckCircle2 size={16} className="text-indigo-500/50" /></div>}
-        </div>
+        {members.map((m, idx) => {
+          const name = m.display_name || m.email.split('@')[0]
+          const isSelected = payerFilter === name
+          const colorClass = getAvatarColor(name)
+          const shadowClass = colorClass.replace('bg-', 'shadow-').replace('-600', '-500/30')
+          const glowClass = colorClass.replace('bg-', 'border-').replace('-600', '-500/40')
+          const bgGlowClass = colorClass.replace('bg-', 'bg-').replace('-600', '-500/5')
 
-        <div 
-          onClick={() => setPayerFilter('Maria')}
-          className={`cursor-pointer glass-card rounded-[3rem] p-8 border transition-all duration-700 hover:scale-[1.02] active:scale-95 flex items-center gap-6 shadow-2xl relative overflow-hidden ${payerFilter === 'Maria' ? 'border-rose-500/40 bg-rose-500/5' : 'border-white/5 opacity-50 hover:opacity-80'}`}
-        >
-          <div className={`w-16 h-16 rounded-3xl flex items-center justify-center transition-all duration-500 ${payerFilter === 'Maria' ? 'bg-rose-600 text-white shadow-xl shadow-rose-500/30 rotate-6' : 'bg-white/5 text-slate-400'}`}>
-            <span className="font-black text-3xl italic">M</span>
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1.5">Renda Maria</p>
-            <p className="text-3xl font-black text-white tracking-tighter italic">{formatMoney(totals.globalIncomeMaria || 0)}</p>
-          </div>
-          {payerFilter === 'Maria' && <div className="absolute top-4 right-4"><CheckCircle2 size={16} className="text-rose-500/50" /></div>}
-        </div>
+          return (
+            <div 
+              key={name}
+              onClick={() => setPayerFilter(name)}
+              className={`cursor-pointer glass-card rounded-[3rem] p-8 border transition-all duration-700 hover:scale-[1.02] active:scale-95 flex items-center gap-6 shadow-2xl relative overflow-hidden ${isSelected ? `${glowClass} ${bgGlowClass}` : 'border-white/5 opacity-50 hover:opacity-80'}`}
+            >
+              <div className={`w-16 h-16 rounded-3xl flex items-center justify-center transition-all duration-500 ${isSelected ? `${colorClass} text-white shadow-xl ${shadowClass} rotate-6` : 'bg-white/5 text-slate-400'}`}>
+                <span className="font-black text-3xl italic">{name.charAt(0).toUpperCase()}</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1.5">Renda {name}</p>
+                <p className="text-3xl font-black text-white tracking-tighter italic">{formatMoney((totals.incomeByMember && totals.incomeByMember[name]) || 0)}</p>
+              </div>
+              {isSelected && <div className="absolute top-4 right-4"><CheckCircle2 size={16} className={`opacity-50 ${colorClass.replace('bg-', 'text-')}`} /></div>}
+            </div>
+          )
+        })}
       </div>
 
       {/* LISTA DE RECEITAS - ELITE STYLE */}
@@ -113,8 +121,8 @@ export default function IncomesTab({
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
                   <div className="flex items-center gap-6 mb-6 sm:mb-0">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-white shadow-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${income.payer === 'Alê' ? 'bg-indigo-600 shadow-indigo-500/30' : 'bg-rose-600 shadow-rose-500/30'}`}>
-                      {income.payer.charAt(0)}
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-white shadow-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${getAvatarColor(income.payer)}`}>
+                      {income.payer ? income.payer.charAt(0).toUpperCase() : '?'}
                     </div>
                     <div>
                       <p className="font-black text-xl text-white tracking-tight group-hover:text-emerald-400 transition-colors duration-500">{income.description || 'Receita Financeira'}</p>

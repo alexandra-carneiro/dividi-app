@@ -302,7 +302,7 @@ export default function DashboardClient(props: any) {
               {activeTab === 'incomes' && (
                 <IncomesTab 
                   payerFilter={payerFilter} setPayerFilter={setPayerFilter}
-                  filteredIncomes={filteredIncomes} totals={totals}
+                  filteredIncomes={filteredIncomes} totals={totals} members={members}
                   formatMoney={formatMoney} openEditIncome={(i: any) => { setIncomeToEdit(i); setIsIncomeFormOpen(true); }}
                   handleDeleteIncome={handleDeleteIncome}
                   setIsIncomeFormOpen={setIsIncomeFormOpen}
