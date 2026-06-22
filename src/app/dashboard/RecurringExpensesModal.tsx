@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { X, Receipt, Settings, Repeat, Edit2, Trash2, Calendar, DollarSign, Type, Tag, User } from 'lucide-react'
 
 interface RecurringExpensesModalProps {
@@ -38,6 +39,16 @@ export default function RecurringExpensesModal({
   isPending,
   members
 }: RecurringExpensesModalProps) {
+  const defaultPayer = members[0]?.display_name || members[0]?.email?.split('@')[0] || ''
+  const [payerValue, setPayerValue] = useState(recurringToEdit?.payer || defaultPayer)
+
+  // Sincroniza o select quando o utilizador clica em "Editar" numa conta fixa diferente
+  useEffect(() => {
+    setPayerValue(recurringToEdit?.payer || defaultPayer)
+  }, [recurringToEdit])
+
+  // Sync payer when switching to edit mode
+  const getPayerDefault = (rec: any) => rec?.payer || defaultPayer
   if (!isRecurringOpen) return null
 
   return (
@@ -222,8 +233,10 @@ export default function RecurringExpensesModal({
                       <User size={12} className="text-indigo-400" /> Pagador
                     </label>
                     <select 
-                      name="payer" 
-                      defaultValue={recurringToEdit?.payer || (members[0]?.display_name || members[0]?.email?.split('@')[0])} 
+                      name="payer"
+                      required
+                      value={payerValue}
+                      onChange={(e) => setPayerValue(e.target.value)}
                       className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-white focus:border-indigo-500 focus:bg-white/10 outline-none transition-all appearance-none cursor-pointer"
                     >
                       {members.map(m => {

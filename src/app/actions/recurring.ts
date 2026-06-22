@@ -96,15 +96,23 @@ export async function applyRecurringExpenses(householdId: string, date: string, 
   if (recError) return { error: recError.message }
   if (!recurring || recurring.length === 0) return { success: true, count: 0 }
 
-  const expensesToInsert = recurring.map(rec => ({
-    household_id: householdId,
-    description: rec.description,
-    amount: rec.amount,
-    payer: rec.payer,
-    category: rec.category,
-    date: date,
-    created_by: user.id
-  }))
+  const expensesToInsert = recurring.map(rec => {
+    // O payer DEVE vir sempre da conta fixa — nunca pode ficar em branco.
+    // Se por algum motivo estiver vazio, lançamos um erro claro.
+    const payer = rec.payer?.trim()
+    if (!payer) {
+      throw new Error(`A conta fixa "${rec.description}" não tem um pagador definido. Edite-a antes de lançar.`)
+    }
+    return {
+      household_id: householdId,
+      description: rec.description,
+      amount: rec.amount,
+      payer: payer,          // sempre vem da conta fixa
+      category: rec.category,
+      date: date,
+      created_by: user.id    // quem clicou em Lançar (auditoria)
+    }
+  })
 
   const { error: insError } = await supabase.from('expenses').insert(expensesToInsert)
   if (insError) return { error: insError.message }
