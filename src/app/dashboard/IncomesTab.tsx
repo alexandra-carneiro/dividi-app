@@ -9,6 +9,7 @@ interface IncomesTabProps {
   formatMoney: (v: number) => string
   openEditIncome: (income: any) => void
   handleDeleteIncome: (id: string) => void
+  setIsIncomeFormOpen: (open: boolean) => void
 }
 
 export default function IncomesTab({
@@ -18,7 +19,8 @@ export default function IncomesTab({
   totals,
   formatMoney,
   openEditIncome,
-  handleDeleteIncome
+  handleDeleteIncome,
+  setIsIncomeFormOpen
 }: IncomesTabProps) {
   return (
     <section className="animate-in fade-in slide-in-from-bottom-8 duration-1000 space-y-12 pb-24">
@@ -28,6 +30,13 @@ export default function IncomesTab({
           <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em] mb-2">Monitor de Capital</p>
           <h4 className="text-4xl font-black text-white tracking-tighter italic">Gestão de Receitas</h4>
         </div>
+        <button
+          onClick={() => setIsIncomeFormOpen(true)}
+          className="group relative flex items-center gap-4 bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl hover:bg-emerald-500 transition-all duration-500"
+        >
+          <Plus size={18} />
+          <span>Nova Receita</span>
+        </button>
       </div>
 
       {/* RESUMO DE RECEITAS POR PAGADOR - BENTO STYLE */}

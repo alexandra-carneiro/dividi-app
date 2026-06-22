@@ -304,6 +304,7 @@ export default function DashboardClient(props: any) {
                   filteredIncomes={filteredIncomes} totals={totals}
                   formatMoney={formatMoney} openEditIncome={(i: any) => { setIncomeToEdit(i); setIsIncomeFormOpen(true); }}
                   handleDeleteIncome={handleDeleteIncome}
+                  setIsIncomeFormOpen={setIsIncomeFormOpen}
                 />
               )}
 
